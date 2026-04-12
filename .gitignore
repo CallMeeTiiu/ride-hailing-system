@@ -1,0 +1,25 @@
+# --- CHẶN CHO CẢ 3 DỰ ÁN ---
+**/node_modules/
+**/.env
+
+# --- CHO MAC OS ---
+.DS_Store
+
+# --- REACT NATIVE (IOS & ANDROID) ---
+# Android
+**/android/.gradle
+**/android/build/
+**/android/app/build/
+**/android/.idea
+*.apk
+*.aab
+
+# iOS
+**/ios/Pods/
+**/ios/build/
+**/ios/*.xcworkspace/xcuserdata/
+*.ipa
+
+# --- BACKEND ---
+**/dist/
+**/build/

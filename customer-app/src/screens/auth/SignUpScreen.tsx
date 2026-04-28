@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: FONTS.bold,
     fontSize: 32,
-    color: COLORS.textTitle,
+    color: COLORS.black,
     marginBottom: SIZES.padding * 1.5,
     lineHeight: 40,
   },

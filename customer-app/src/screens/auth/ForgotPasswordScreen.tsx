@@ -34,11 +34,10 @@ const ForgotPasswordScreen = () => {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
+          <Text style={styles.headerTitle}>Forgot Password</Text>
         </View>
 
         <View style={styles.content}>
-          <Text style={styles.headerTitle}>Forgot Password</Text>
-
           {/* Hình ảnh minh họa */}
           <Image 
             source={require('../../assets/images/forgot_password.png')} 
@@ -89,7 +88,14 @@ const ForgotPasswordScreen = () => {
           {/* Nút Continue */}
           <PrimaryButton 
             title="Continue" 
-            onPress={() => console.log("Tiếp tục với phương thức:", selectedMethod)}
+            onPress={() => { // mock
+              const value = selectedMethod === 'sms' ? '+1 111 ******99' : 'and***ley@yourdomain.com';
+              
+              navigation.navigate('FillOTP', { 
+                contactMethod: selectedMethod, 
+                contactValue: value 
+              });
+            }}
             // eslint-disable-next-line react-native/no-inline-styles
             style={{ marginTop: 30 }}
           />
@@ -109,8 +115,8 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
   headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
     paddingHorizontal: SIZES.padding,
     paddingTop: Platform.OS === 'android' ? 20 : 10,
     marginBottom: 20,
@@ -125,7 +131,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: FONTS.bold,
     fontSize: 24,
-    color: COLORS.textTitle,
+    color: COLORS.black,
   },
   content: {
     paddingHorizontal: SIZES.padding,

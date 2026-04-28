@@ -3,6 +3,7 @@ export const COLORS = {
   primaryLight: '#FFF8E8',  
   
   background: '#FFFFFF',   
+  backgroundLight: '#FFF9E5',
   surface: '#FFFFFF',       
   inputBg: '#f6f3f2',       
   

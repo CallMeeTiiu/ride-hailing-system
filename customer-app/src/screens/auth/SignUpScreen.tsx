@@ -10,6 +10,10 @@ import {
 } from 'react-native';
 import { COLORS, SIZES, FONTS } from '../../constants/theme';
 
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../../../App';
+
 import CustomInput from '../../components/common/CustomInput';
 import PrimaryButton from '../../components/common/PrimaryButton';
 import Hyperlink from '../../components/common/Hyperlink';
@@ -17,12 +21,21 @@ import Hyperlink from '../../components/common/Hyperlink';
 import { faUser, faEnvelope, faLock } from '@fortawesome/free-solid-svg-icons'; 
 
 const SignupScreen = () => {
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const [userName, setUserName] = React.useState('');
+
+  const handleCreateAccount = () => {
+    navigation.navigate('InfoInput', { userName: userName });
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         
         {/* Nút Back */}
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity 
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
 
@@ -34,6 +47,7 @@ const SignupScreen = () => {
           <CustomInput 
             label="User Name"
             iconName={faUser} 
+            onChangeText={(text) => setUserName(text)}
             placeholder="andrew_ainsley"
             autoCapitalize="none"
           />
@@ -63,7 +77,8 @@ const SignupScreen = () => {
           {/* Nút Đăng ký */}
           <PrimaryButton 
             title="Create" 
-            onPress={() => console.log("Sign up Triggered")} 
+            onPress={handleCreateAccount} 
+            // eslint-disable-next-line react-native/no-inline-styles
             style={{ marginTop: 15 }}
           />
 
@@ -72,7 +87,7 @@ const SignupScreen = () => {
             <Text style={styles.footerText}>You have already an account? </Text>
             <Hyperlink 
               title="Sign in" 
-              onPress={() => console.log("Chuyển sang Sign In")} 
+              onPress={() => navigation.navigate('Login')} 
             />
           </View>
 

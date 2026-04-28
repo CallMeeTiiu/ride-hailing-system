@@ -12,6 +12,10 @@ import {
 import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/theme';
 import { faEnvelope, faLock } from '@fortawesome/free-solid-svg-icons';
 
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../../../App';
+
 import CustomInput from '../../components/common/CustomInput';
 import PrimaryButton from '../../components/common/PrimaryButton';
 import Hyperlink from '../../components/common/Hyperlink';
@@ -19,12 +23,16 @@ import Hyperlink from '../../components/common/Hyperlink';
 const LoginScreen = () => {
   const [rememberMe, setRememberMe] = useState(false);
 
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         
         {/* Nút Back */}
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity 
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
 
@@ -65,7 +73,7 @@ const LoginScreen = () => {
           {/* Nút Sign In */}
           <PrimaryButton 
             title="Sign in" 
-            onPress={() => console.log("Login Triggered")} 
+            onPress={() => navigation.replace('Home')} 
           />
 
           {/* Quên mật khẩu */}
@@ -102,7 +110,7 @@ const LoginScreen = () => {
             <Text style={styles.footerText}>Don't have an account? </Text>
             <Hyperlink 
               title="Sign up" 
-              onPress={() => console.log("Chuyển sang Sign Up")} 
+              onPress={() => navigation.navigate('SignUp')} 
             />
           </View>
 

@@ -9,10 +9,16 @@ import {
 } from 'react-native';
 import { COLORS, SIZES, FONTS } from '../../constants/theme';
 
-import PrimaryButton from '../../components/common/primaryButton';
-import Hyperlink from '../../components/common/HyperLink';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../../../App';
+
+import PrimaryButton from '../../components/common/PrimaryButton';
+import Hyperlink from '../../components/common/Hyperlink';
 
 const WelcomeScreen = () => {
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.contentContainer}>
@@ -54,15 +60,18 @@ const WelcomeScreen = () => {
         {/* Nút đăng nhập chính */}
         <PrimaryButton
             title="Sign in with password"
-            onPress={() => {}}
+            onPress={() => navigation.navigate('Login')}
             activeOpacity={0.2}
-            style={{ marginTop: SIZES.padding }}
+            style={{ marginTop: SIZES.padding }} 
         />
 
         {/* Chuyển sang trang Đăng ký */}
         <View style={styles.footerContainer}>
           <Text style={styles.footerText}>Don't have an account? </Text>
-          <Hyperlink title="Sign up" activeOpacity={0.2} onPress={() => {}} />
+          <Hyperlink 
+          title="Sign up" 
+          activeOpacity={0.2} 
+          onPress={() => navigation.navigate('SignUp')} />
         </View>
       </View>
     </SafeAreaView>

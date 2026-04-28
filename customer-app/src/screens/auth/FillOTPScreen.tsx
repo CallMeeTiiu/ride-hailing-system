@@ -7,7 +7,7 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, useIsFocused } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -27,7 +27,11 @@ const FillOTPScreen = () => {
   const [otp, setOtp] = useState(['', '', '', '']);
   const inputRefs = useRef<Array<TextInput | null>>([]);
 
+  const isFocused = useIsFocused();
+
   useEffect(() => {
+    if (!isFocused) return;
+
     if (timeLeft === 0) {
       Alert.alert(
         "OTP Resent",
@@ -42,7 +46,8 @@ const FillOTPScreen = () => {
     }, 1000);
 
     return () => clearInterval(intervalId);
-  }, [timeLeft, contactValue]);
+    
+  }, [timeLeft, contactValue, isFocused]);
 
   const handleOtpChange = (text: string, index: number) => {
     const newOtp = [...otp];

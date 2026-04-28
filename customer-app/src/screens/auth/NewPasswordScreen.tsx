@@ -16,15 +16,32 @@ import { RootStackParamList } from '../../../App';
 import { COLORS, SIZES, FONTS } from '../../constants/theme';
 import CustomInput from '../../components/common/CustomInput';
 import PrimaryButton from '../../components/common/PrimaryButton';
+import SuccessPopup from '../../components/common/SuccessPopup';
 
 const NewPasswordScreen = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
-  
+
   const [rememberMe, setRememberMe] = useState(false);
+
+  const [showPopup, setShowPopup] = useState(false);
+  
+  const handleContinue = () => {
+    setShowPopup(true);
+    
+    setTimeout(() => {
+      setShowPopup(false);
+      navigation.replace('Home');
+    }, 3000);
+  };
 
   return (
     <View style={styles.safeArea}>
+      <SuccessPopup 
+        visible={showPopup} 
+        text="Your account is ready to use. You will be redirected to the Home page in a few seconds." 
+      />
+
       <ScrollView 
         contentContainerStyle={[
           styles.scrollContainer, 
@@ -84,11 +101,7 @@ const NewPasswordScreen = () => {
           {/* Nút Continue */}
           <PrimaryButton 
             title="Continue" 
-            onPress={() => {
-              // Reset toàn bộ luồng Auth và đẩy vào trang chủ
-              // Dùng replace để người dùng không bấm lùi lại trang quên mật khẩu được nữa
-              navigation.replace('Home');
-            }}
+            onPress={handleContinue}
             style={styles.continueButton}
           />
         </View>

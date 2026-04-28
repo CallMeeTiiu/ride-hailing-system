@@ -9,6 +9,7 @@ import SignUpScreen from './src/screens/auth/SignUpScreen';
 import InfoInputScreen from './src/screens/auth/InfoInputScreen';
 import ForgotPasswordScreen from './src/screens/auth/ForgotPasswordScreen';
 import FillOTPScreen from './src/screens/auth/FillOTPScreen';
+import NewPasswordScreen from './src/screens/auth/NewPasswordScreen';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -18,6 +19,7 @@ export type RootStackParamList = {
   Home: undefined;
   ForgotPassword: undefined;
   FillOTP: { contactMethod: string; contactValue: string };
+  NewPassword: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -44,6 +46,7 @@ const App = () => {
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         <Stack.Screen name="FillOTP" component={FillOTPScreen} />
+        <Stack.Screen name="NewPassword" component={NewPasswordScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

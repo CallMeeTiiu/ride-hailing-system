@@ -118,7 +118,7 @@ const FillOTPScreen = () => {
         <View style={styles.footer}>
           <PrimaryButton 
             title="Verify" 
-            onPress={() => console.log("OTP đang nhập là:", otp.join(''))} 
+            onPress={() => navigation.navigate('NewPassword')} 
           />
         </View>
 

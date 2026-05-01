@@ -1,18 +1,20 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, TouchableOpacityProps } from 'react-native';
-import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/theme';
+import theme from '../../constants/theme';
+import { useTheme } from '../../constants/ThemeContext';
 
 interface PrimaryButtonProps extends TouchableOpacityProps {
   title: string;
 }
 
 const PrimaryButton: React.FC<PrimaryButtonProps> = ({ title, style, ...props }) => {
+  const { colors } = useTheme();
   return (
     <TouchableOpacity 
-      style={[styles.button, style]} 
+      style={[styles.button, { backgroundColor: colors.primary}, style]} 
       {...props}
     >
-      <Text style={styles.buttonText}>{title}</Text>
+      <Text style={[ styles.buttonText, { color: colors.textBtn } ]}>{title}</Text>
     </TouchableOpacity>
   );
 };
@@ -21,16 +23,14 @@ const styles = StyleSheet.create({
   button: {
     width: '100%',
     height: 56,
-    backgroundColor: COLORS.primary,
-    borderRadius: SIZES.radiusButton,
+    borderRadius: theme.SIZES.radiusButton,
     justifyContent: 'center',
     alignItems: 'center',
-    ...SHADOWS.primaryGlow, 
+    ...theme.SHADOWS.primaryGlow, 
   },
   buttonText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: SIZES.body1,
-    color: COLORS.textTitle, 
+    fontFamily: theme.FONTS.semiBold,
+    fontSize: theme.SIZES.body1,
   }
 });
 

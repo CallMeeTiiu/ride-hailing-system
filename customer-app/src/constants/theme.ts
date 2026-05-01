@@ -1,4 +1,4 @@
-export const COLORS = {
+export const lightColors = {
   primary: '#FFBB1C',       
   primaryLight: '#FFF8E8',  
   
@@ -11,11 +11,36 @@ export const COLORS = {
   textIcon: '#837560',
   textBody: '#83756099',      
   textLight: '#9E9E9E',     
+
+  textBtn: '#271900',
   
   white: '#FFFFFF',
   black: '#000000',
   transparent: 'transparent',
 };
+
+export const darkColors = {
+  primary: '#FFBB1C',       
+  primaryLight: '#35383F',  
+  
+  background: '#181A20',   
+  backgroundLight: '#1F222A',
+  surface: '#000000',       
+  inputBg: '#1F222A',       
+  
+  textTitle: '#E0E0E0',   
+  textIcon: '#757575',
+  textBody: '#83756099',      
+  textLight: '#9E9E9E',   
+  
+  textBtn: '#35383F',
+  
+  white: '#FFFFFF',
+  black: '#000000',
+  transparent: 'transparent',
+};
+
+const COLORS = lightColors;
 
 export const SIZES = {
   base: 8,
@@ -60,5 +85,5 @@ export const SHADOWS = {
   }
 };
 
-const theme = { COLORS, SIZES, FONTS, SHADOWS };
+const theme = { COLORS, SIZES, FONTS, SHADOWS, lightColors, darkColors };
 export default theme;

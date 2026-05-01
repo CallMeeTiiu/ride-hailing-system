@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, Modal, ActivityIndicator } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faHandsClapping } from '@fortawesome/free-solid-svg-icons';
-import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/theme';
+import theme from '../../constants/theme';
+import { useTheme } from '../../constants/ThemeContext'
 
 interface SuccessPopupProps {
   visible: boolean;
@@ -10,6 +11,8 @@ interface SuccessPopupProps {
 }
 
 const SuccessPopup: React.FC<SuccessPopupProps> = ({ visible, text }) => {
+  const { colors } = useTheme();
+
   return (
     <Modal
       transparent={true}
@@ -19,18 +22,18 @@ const SuccessPopup: React.FC<SuccessPopupProps> = ({ visible, text }) => {
       {/* Lớp phủ màu đen mờ */}
       <View style={styles.overlay}>
         {/* Khối nội dung màu trắng */}
-        <View style={styles.popupContainer}>
+        <View style={[ styles.popupContainer, {backgroundColor: colors.background} ]}>
           
           {/* Vòng tròn vàng chứa Icon */}
-          <View style={styles.iconCircle}>
-            <FontAwesomeIcon icon={faHandsClapping} size={40} color={COLORS.background} />
+          <View style={[ styles.iconCircle, {backgroundColor: colors.primary} ]}>
+            <FontAwesomeIcon icon={faHandsClapping} size={40} color={colors.background} />
           </View>
 
-          <Text style={styles.title}>Congratulations!</Text>
-          <Text style={styles.description}>{text}</Text>
+          <Text style={[ styles.title, {color: colors.textTitle} ]}>Congratulations!</Text>
+          <Text style={[ styles.description, {color: colors.textTitle} ]}>{text}</Text>
 
           {/* Vòng xoay Loading */}
-          <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
+          <ActivityIndicator size="large" color={colors.primary} style={styles.loader} />
 
         </View>
       </View>
@@ -44,37 +47,33 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: SIZES.padding,
+    paddingHorizontal: theme.SIZES.padding,
   },
   popupContainer: {
     width: '100%',
-    backgroundColor: COLORS.background,
     borderRadius: 30,
     paddingVertical: 40,
     paddingHorizontal: 20,
     alignItems: 'center',
-    ...SHADOWS.primaryGlow,
+    ...theme.SHADOWS.primaryGlow,
   },
   iconCircle: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 30,
   },
   title: {
-    fontFamily: FONTS.bold,
+    fontFamily: theme.FONTS.bold,
     fontSize: 28,
-    color: COLORS.textTitle,
     marginBottom: 15,
     textAlign: 'center',
   },
   description: {
-    fontFamily: FONTS.regular,
-    fontSize: SIZES.body2,
-    color: COLORS.textTitle,
+    fontFamily: theme.FONTS.regular,
+    fontSize: theme.SIZES.body2,
     textAlign: 'center',
     lineHeight: 24,
   },

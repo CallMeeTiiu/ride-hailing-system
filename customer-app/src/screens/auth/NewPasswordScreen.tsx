@@ -13,7 +13,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { faLock } from '@fortawesome/free-solid-svg-icons';
 
 import { RootStackParamList } from '../../../App';
-import { COLORS, SIZES, FONTS } from '../../constants/theme';
+import theme from '../../constants/theme';
+import { useTheme } from '../../constants/ThemeContext';
 import CustomInput from '../../components/common/CustomInput';
 import PrimaryButton from '../../components/common/PrimaryButton';
 import SuccessPopup from '../../components/common/SuccessPopup';
@@ -35,8 +36,10 @@ const NewPasswordScreen = () => {
     }, 3000);
   };
 
+  const { colors } = useTheme();
+
   return (
-    <View style={styles.safeArea}>
+    <View style={[ styles.safeArea, {backgroundColor: colors.background} ]}>
       <SuccessPopup 
         visible={showPopup} 
         text="Your account is ready to use. You will be redirected to the Home page in a few seconds." 
@@ -53,7 +56,7 @@ const NewPasswordScreen = () => {
         {/* Header */}
         <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Text style={styles.backIcon}>←</Text>
+            <Text style={[ styles.backIcon, {color: colors.textTitle} ]}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Create New Password</Text>
         </View>
@@ -66,7 +69,7 @@ const NewPasswordScreen = () => {
             resizeMode="contain"
           />
 
-          <Text style={styles.description}>
+          <Text style={[ styles.description, {color: colors.textTitle} ]}>
             Create Your New Password
           </Text>
 
@@ -94,7 +97,7 @@ const NewPasswordScreen = () => {
               <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
                 {rememberMe && <Text style={styles.checkMark}>✓</Text>}
               </View>
-              <Text style={styles.rememberText}>Remember me</Text>
+              <Text style={[ styles.rememberText, {color: colors.textTitle} ]}>Remember me</Text>
             </TouchableOpacity>
           </View>
 
@@ -113,7 +116,6 @@ const NewPasswordScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   scrollContainer: {
     flexGrow: 1,
@@ -121,7 +123,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'column',
     alignItems: 'flex-start',
-    paddingHorizontal: SIZES.padding,
+    paddingHorizontal: theme.SIZES.padding,
     marginBottom: 30,
   },
   backButton: {
@@ -129,27 +131,25 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 28,
-    color: COLORS.textTitle,
   },
   headerTitle: {
-    fontFamily: FONTS.bold,
+    fontFamily: theme.FONTS.bold,
     fontSize: 24,
-    color: COLORS.black,
+    color: 'black',
   },
   content: {
     flex: 1,
-    paddingHorizontal: SIZES.padding,
+    paddingHorizontal: theme.SIZES.padding,
     alignItems: 'center',
   },
   illustration: {
-    width: SIZES.width,
+    width: theme.SIZES.width,
     height: 250,
     marginBottom: 40,
   },
   description: {
-    fontFamily: FONTS.medium,
-    fontSize: SIZES.body1,
-    color: COLORS.textTitle,
+    fontFamily: theme.FONTS.medium,
+    fontSize: theme.SIZES.body1,
     textAlign: 'left',
     width: '100%',
     marginBottom: 20,
@@ -170,13 +170,13 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: COLORS.primary,
+    borderColor: theme.COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
   },
   checkboxChecked: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: theme.COLORS.primary,
   },
   checkMark: {
     color: '#FFF',
@@ -184,9 +184,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   rememberText: {
-    fontFamily: FONTS.medium,
-    fontSize: SIZES.body2,
-    color: COLORS.textTitle,
+    fontFamily: theme.FONTS.medium,
+    fontSize: theme.SIZES.body2,
   },
   continueButton: {
     marginTop: 'auto',

@@ -7,7 +7,8 @@ import {
   TouchableOpacity, 
   SafeAreaView, 
 } from 'react-native';
-import { COLORS, SIZES, FONTS } from '../../constants/theme';
+import theme from '../../constants/theme';
+import { useTheme } from '../../constants/ThemeContext';
 
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -19,8 +20,10 @@ import Hyperlink from '../../components/common/Hyperlink';
 const WelcomeScreen = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
+  const { colors } = useTheme();
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[ styles.container, {backgroundColor: colors.background} ]}>
       <View style={styles.contentContainer}>
         {/* Hình ảnh minh họa */}
         <Image 
@@ -33,28 +36,28 @@ const WelcomeScreen = () => {
         <Text style={styles.title}>Let's you in</Text>
 
         {/* Nút đăng nhập Facebook */}
-        <TouchableOpacity style={styles.socialButton}>
+        <TouchableOpacity style={[ styles.socialButton, {backgroundColor: colors.inputBg} ]}>
           <Image 
             source={require('../../assets/images/facebook_icon.png')} 
             style={styles.socialIcon} 
           />
-          <Text style={styles.socialButtonText}>Continue with Facebook</Text>
+          <Text style={[ styles.socialButtonText, {color: colors.textTitle} ]}>Continue with Facebook</Text>
         </TouchableOpacity>
 
         {/* Nút đăng nhập Google */}
-        <TouchableOpacity style={styles.socialButton}>
+        <TouchableOpacity style={[ styles.socialButton, {backgroundColor: colors.inputBg} ]}>
           <Image 
             source={require('../../assets/images/google_icon.png')} 
             style={styles.socialIcon} 
           />
-          <Text style={styles.socialButtonText}>Continue with Google</Text>
+          <Text style={[ styles.socialButtonText, {color: colors.textTitle} ]}>Continue with Google</Text>
         </TouchableOpacity>
 
         {/* Thanh ngăn cách "or" */}
         <View style={styles.dividerContainer}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or</Text>
-          <View style={styles.dividerLine} />
+          <View style={[ styles.dividerLine, { backgroundColor: colors.inputBg} ]} />
+          <Text style={[ styles.dividerText, { color: colors.textBody} ]}>or</Text>
+          <View style={[ styles.dividerLine, { backgroundColor: colors.inputBg} ]} />
         </View>
 
         {/* Nút đăng nhập chính */}
@@ -62,12 +65,12 @@ const WelcomeScreen = () => {
             title="Sign in with password"
             onPress={() => navigation.navigate('Login')}
             activeOpacity={0.2}
-            style={{ marginTop: SIZES.padding }} 
+            style={{ marginTop: theme.SIZES.padding }} 
         />
 
         {/* Chuyển sang trang Đăng ký */}
         <View style={styles.footerContainer}>
-          <Text style={styles.footerText}>Don't have an account? </Text>
+          <Text style={[ styles.footerText, {color: colors.textBody} ]}>Don't have an account? </Text>
           <Hyperlink 
           title="Sign up" 
           activeOpacity={0.2} 
@@ -81,24 +84,23 @@ const WelcomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   contentContainer: {
     flex: 1,
-    paddingHorizontal: SIZES.padding,
+    paddingHorizontal: theme.SIZES.padding,
     alignItems: 'center',
   },
   illustration: {
-    width: SIZES.width, 
+    width: theme.SIZES.width, 
     height: 200,
-    padding: SIZES.padding,
+    padding: theme.SIZES.padding,
     marginTop: 75,
   },
   title: {
-    fontFamily: FONTS.bold,
-    fontSize: SIZES.h1,
-    color: COLORS.black,
-    marginVertical: SIZES.padding * 1.5,
+    fontFamily: theme.FONTS.bold,
+    fontSize: theme.SIZES.h1,
+    color: 'black',
+    marginVertical: theme.SIZES.padding * 1.5,
   },
   socialButton: {
     flexDirection: 'row',
@@ -106,10 +108,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: '100%',
     height: 56,
-    borderRadius: SIZES.radiusInput,
+    borderRadius: theme.SIZES.radiusInput,
     borderWidth: 1,
-    borderColor: COLORS.inputBg,
-    marginBottom: SIZES.padding,
+    marginBottom: theme.SIZES.padding,
   },
   socialIcon: {
     width: 24,
@@ -118,35 +119,31 @@ const styles = StyleSheet.create({
     left: 30, 
   },
   socialButtonText: {
-    fontFamily: FONTS.medium,
-    fontSize: SIZES.body1,
-    color: COLORS.textTitle,
+    fontFamily: theme.FONTS.medium,
+    fontSize: theme.SIZES.body1,
   },
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    marginVertical: SIZES.padding,
+    marginVertical: theme.SIZES.padding,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: COLORS.inputBg,
   },
   dividerText: {
-    fontFamily: FONTS.regular,
-    fontSize: SIZES.body2,
-    color: COLORS.textBody,
+    fontFamily: theme.FONTS.regular,
+    fontSize: theme.SIZES.body2,
     marginHorizontal: 15,
   },
   footerContainer: {
     flexDirection: 'row',
-    marginTop: SIZES.padding * 1.5,
+    marginTop: theme.SIZES.padding * 1.5,
   },
   footerText: {
-    fontFamily: FONTS.regular,
-    fontSize: SIZES.body2,
-    color: COLORS.textBody,
+    fontFamily: theme.FONTS.regular,
+    fontSize: theme.SIZES.body2,
   },
 });
 

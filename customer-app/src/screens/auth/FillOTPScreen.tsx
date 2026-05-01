@@ -12,7 +12,8 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RootStackParamList } from '../../../App';
-import { COLORS, SIZES, FONTS } from '../../constants/theme';
+import theme from '../../constants/theme';
+import { useTheme } from '../../constants/ThemeContext';
 import PrimaryButton from '../../components/common/PrimaryButton';
 
 const FillOTPScreen = () => {
@@ -78,21 +79,23 @@ const FillOTPScreen = () => {
     }
   };
 
+  const { colors } = useTheme();
+
   return (
-    <View style={styles.safeArea}>
+    <View style={[ styles.safeArea, {backgroundColor: colors.background} ]}>
       <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 30) }]}>
         
         {/* Header */}
         <View style={[styles.headerRow, { paddingTop: insets.top + 10 }]}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Text style={styles.backIcon}>←</Text>
+            <Text style={[ styles.backIcon, {color: colors.textTitle} ]}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Forgot Password</Text>
         </View>
 
         <View style={styles.content}>
           {/* Thông báo gửi mã tới đâu */}
-          <Text style={styles.description}>
+          <Text style={[ styles.description, {color: colors.textTitle} ]}>
             Code has been sent to {contactValue}
           </Text>
 
@@ -102,7 +105,7 @@ const FillOTPScreen = () => {
               <TextInput
                 key={index}
                 ref={(ref) => { inputRefs.current[index] = ref; }}
-                style={[styles.otpInput, digit !== '' && styles.otpInputActive]}
+                style={[styles.otpInput, digit !== '' && styles.otpInputActive, {color: colors.textTitle}]}
                 keyboardType="numeric"
                 maxLength={1}
                 value={digit}
@@ -114,7 +117,7 @@ const FillOTPScreen = () => {
           </View>
 
           {/* Bộ đếm thời gian */}
-          <Text style={styles.timerText}>
+          <Text style={[ styles.timerText, {color: colors.textBody} ]}>
             Resend code in <Text style={styles.timerCount}>{timeLeft} s</Text>
           </Text>
         </View>
@@ -135,7 +138,6 @@ const FillOTPScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   container: {
     flex: 1,
@@ -143,7 +145,7 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'column',
     alignItems: 'flex-start',
-    paddingHorizontal: SIZES.padding,
+    paddingHorizontal: theme.SIZES.padding,
     marginBottom: 40,
   },
   backButton: {
@@ -151,23 +153,21 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 28,
-    color: COLORS.textTitle,
   },
   headerTitle: {
-    fontFamily: FONTS.bold,
+    fontFamily: theme.FONTS.bold,
     fontSize: 24,
-    color: COLORS.black,
+    color: 'black',
   },
   content: {
     flex: 1,
-    paddingHorizontal: SIZES.padding,
+    paddingHorizontal: theme.SIZES.padding,
     justifyContent: 'center',
     alignItems: 'center',
   },
   description: {
-    fontFamily: FONTS.regular,
-    fontSize: SIZES.body1,
-    color: COLORS.textTitle,
+    fontFamily: theme.FONTS.regular,
+    fontSize: theme.SIZES.body1,
     textAlign: 'center',
     marginBottom: 40,
   },
@@ -186,24 +186,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAFAFA',
     textAlign: 'center',
     fontSize: 24,
-    fontFamily: FONTS.bold,
-    color: COLORS.textTitle,
+    fontFamily: theme.FONTS.bold,
   },
   otpInputActive: {
-    borderColor: COLORS.primary, 
+    borderColor: theme.COLORS.primary, 
     backgroundColor: '#FFF9E5',
   },
   timerText: {
-    fontFamily: FONTS.regular,
-    fontSize: SIZES.body2,
-    color: COLORS.textBody,
+    fontFamily: theme.FONTS.regular,
+    fontSize: theme.SIZES.body2,
   },
   timerCount: {
-    fontFamily: FONTS.medium,
-    color: COLORS.primary,
+    fontFamily: theme.FONTS.medium,
+    color: theme.COLORS.primary,
   },
   footer: {
-    paddingHorizontal: SIZES.padding,
+    paddingHorizontal: theme.SIZES.padding,
     paddingBottom: 30,
   }
 });

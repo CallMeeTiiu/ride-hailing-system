@@ -9,7 +9,8 @@ import {
   ScrollView,
   Platform
 } from 'react-native';
-import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/theme';
+import theme from '../../constants/theme';
+import { useTheme } from '../../constants/ThemeContext'
 import { faEnvelope, faLock } from '@fortawesome/free-solid-svg-icons';
 
 import { useNavigation } from '@react-navigation/native';
@@ -25,15 +26,17 @@ const LoginScreen = () => {
 
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
+  const { colors } = useTheme();
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[ styles.safeArea, {backgroundColor: colors.background} ]}>
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         
         {/* Nút Back */}
         <TouchableOpacity 
         style={styles.backButton}
         onPress={() => navigation.goBack()}>
-          <Text style={styles.backIcon}>←</Text>
+          <Text style={[ styles.backIcon, {color: colors.textTitle} ]}>←</Text>
         </TouchableOpacity>
 
         <View style={styles.content}>
@@ -66,7 +69,7 @@ const LoginScreen = () => {
               <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
                 {rememberMe && <Text style={styles.checkMark}>✓</Text>}
               </View>
-              <Text style={styles.rememberText}>Remember me</Text>
+              <Text style={[ styles.rememberText, {color: colors.textTitle} ]}>Remember me</Text>
             </TouchableOpacity>
           </View>
 
@@ -77,29 +80,28 @@ const LoginScreen = () => {
           />
 
           {/* Quên mật khẩu */}
-          <TouchableOpacity 
-          style={styles.forgotPassword}
-          onPress={() => navigation.navigate('ForgotPassword')}>
-            <Text style={styles.forgotPasswordText}>Forgot the password?</Text>
-          </TouchableOpacity>
+          <Hyperlink 
+            title="Forgot Password?" 
+            onPress={() => navigation.navigate('ForgotPassword')} 
+          />
 
           {/* Divider */}
           <View style={styles.dividerContainer}>
             <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or continue with</Text>
+            <Text style={[ styles.dividerText, {color: colors.textBody} ]}>or continue with</Text>
             <View style={styles.dividerLine} />
           </View>
 
           {/* Social Login (Đã bỏ Apple theo yêu cầu) */}
           <View style={styles.socialContainer}>
-            <TouchableOpacity style={styles.socialSquareButton}>
+            <TouchableOpacity style={[ styles.socialSquareButton, {backgroundColor: colors.background} ]}>
               <Image 
                 source={require('../../assets/images/facebook_icon.png')} 
                 style={styles.socialIcon} 
               />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.socialSquareButton}>
+            <TouchableOpacity style={[ styles.socialSquareButton, {backgroundColor: colors.background} ]}>
               <Image 
                 source={require('../../assets/images/google_icon.png')} 
                 style={styles.socialIcon} 
@@ -109,7 +111,7 @@ const LoginScreen = () => {
 
           {/* Footer Sign up */}
           <View style={styles.footerContainer}>
-            <Text style={styles.footerText}>Don't have an account? </Text>
+            <Text style={[ styles.footerText, {color: colors.textBody} ]}>Don't have an account? </Text>
             <Hyperlink 
               title="Sign up" 
               onPress={() => navigation.navigate('SignUp')} 
@@ -125,36 +127,34 @@ const LoginScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   scrollContainer: {
     flexGrow: 1,
     paddingBottom: 30,
   },
   backButton: {
-    paddingHorizontal: SIZES.padding,
+    paddingHorizontal: theme.SIZES.padding,
     paddingTop: Platform.OS === 'android' ? 20 : 10,
     marginBottom: 10,
   },
   backIcon: {
     fontSize: 28,
-    color: COLORS.textTitle,
   },
   content: {
-    paddingHorizontal: SIZES.padding,
+    paddingHorizontal: theme.SIZES.padding,
   },
   title: {
-    fontFamily: FONTS.bold,
+    fontFamily: theme.FONTS.bold,
     fontSize: 32, 
-    color: COLORS.black,
-    marginBottom: SIZES.padding * 1.5,
+    color: 'black',
+    marginBottom: theme.SIZES.padding * 1.5,
     lineHeight: 40,
   },
   rememberContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: SIZES.padding,
+    marginBottom: theme.SIZES.padding,
     marginTop: -5,
   },
   checkboxRow: {
@@ -166,13 +166,13 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: COLORS.primary,
+    borderColor: theme.COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
   },
   checkboxChecked: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: theme.COLORS.primary,
   },
   checkMark: {
     color: '#FFF',
@@ -180,18 +180,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   rememberText: {
-    fontFamily: FONTS.medium,
-    fontSize: SIZES.body2,
-    color: COLORS.textTitle,
-  },
-  forgotPassword: {
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  forgotPasswordText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: SIZES.body2,
-    color: COLORS.primary,
+    fontFamily: theme.FONTS.medium,
+    fontSize: theme.SIZES.body2,
   },
   dividerContainer: {
     flexDirection: 'row',
@@ -205,9 +195,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEEEEE',
   },
   dividerText: {
-    fontFamily: FONTS.regular,
-    fontSize: SIZES.body2,
-    color: COLORS.textBody,
+    fontFamily: theme.FONTS.regular,
+    fontSize: theme.SIZES.body2,
     marginHorizontal: 15,
   },
   socialContainer: {
@@ -218,13 +207,12 @@ const styles = StyleSheet.create({
   socialSquareButton: {
     width: 80,
     height: 60,
-    backgroundColor: COLORS.background,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#EEEEEE',
-    ...SHADOWS.light, 
+    ...theme.SHADOWS.light, 
   },
   socialIcon: {
     width: 24,
@@ -237,9 +225,8 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
   footerText: {
-    fontFamily: FONTS.regular,
-    fontSize: SIZES.body2,
-    color: COLORS.textBody,
+    fontFamily: theme.FONTS.regular,
+    fontSize: theme.SIZES.body2,
   }
 });
 

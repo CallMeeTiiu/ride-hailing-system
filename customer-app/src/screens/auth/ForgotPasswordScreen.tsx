@@ -16,7 +16,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faCommentDots, faEnvelope } from '@fortawesome/free-solid-svg-icons';
 
 import { RootStackParamList } from '../../../App';
-import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/theme';
+import theme from '../../constants/theme';
+import { useTheme } from '../../constants/ThemeContext' 
 import PrimaryButton from '../../components/common/PrimaryButton';
 
 const ForgotPasswordScreen = () => {
@@ -25,14 +26,16 @@ const ForgotPasswordScreen = () => {
   
   const [selectedMethod, setSelectedMethod] = useState<'sms' | 'email'>('sms');
 
+  const { colors } = useTheme();
+
   return (
-    <View style={styles.safeArea}>
+    <View style={[ styles.safeArea, {backgroundColor: colors.background} ]}>
       <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: Math.max(insets.bottom, 30) }]} showsVerticalScrollIndicator={false}>
         
         {/* Header với nút Back và Tiêu đề */}
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Text style={styles.backIcon}>←</Text>
+            <Text style={[ styles.backIcon, {color: colors.textTitle} ]}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Forgot Password</Text>
         </View>
@@ -45,7 +48,7 @@ const ForgotPasswordScreen = () => {
             resizeMode="contain"
           />
 
-          <Text style={styles.description}>
+          <Text style={[ styles.description, {color: colors.textTitle} ]}>
             Select which contact details should we use to reset your password
           </Text>
 
@@ -53,17 +56,18 @@ const ForgotPasswordScreen = () => {
           <TouchableOpacity 
             style={[
               styles.methodCard, 
-              selectedMethod === 'sms' && styles.methodCardSelected
+              selectedMethod === 'sms' && styles.methodCardSelected,
+              {backgroundColor: colors.background}
             ]}
             onPress={() => setSelectedMethod('sms')}
             activeOpacity={0.7}
           >
-            <View style={styles.iconCircle}>
-              <FontAwesomeIcon icon={faCommentDots} size={22} color={COLORS.primary} />
+            <View style={[ styles.iconCircle, {backgroundColor: colors.backgroundLight} ]}>
+              <FontAwesomeIcon icon={faCommentDots} size={22} color={theme.COLORS.primary} />
             </View>
             <View style={styles.methodInfo}>
-              <Text style={styles.methodLabel}>via SMS:</Text>
-              <Text style={styles.methodValue}>+1 111 ******99</Text>
+              <Text style={[ styles.methodLabel, {color: colors.textBody} ]}>via SMS:</Text>
+              <Text style={[ styles.methodValue, {color: colors.textTitle} ]}>+1 111 ******99</Text>
             </View>
           </TouchableOpacity>
 
@@ -71,17 +75,18 @@ const ForgotPasswordScreen = () => {
           <TouchableOpacity 
             style={[
               styles.methodCard, 
-              selectedMethod === 'email' && styles.methodCardSelected
+              selectedMethod === 'email' && styles.methodCardSelected,
+              {backgroundColor: colors.background}
             ]}
             onPress={() => setSelectedMethod('email')}
             activeOpacity={0.7}
           >
-            <View style={styles.iconCircle}>
-              <FontAwesomeIcon icon={faEnvelope} size={22} color={COLORS.primary} />
+            <View style={[ styles.iconCircle, {backgroundColor: colors.backgroundLight} ]}>
+              <FontAwesomeIcon icon={faEnvelope} size={22} color={theme.COLORS.primary} />
             </View>
             <View style={styles.methodInfo}>
-              <Text style={styles.methodLabel}>via Email:</Text>
-              <Text style={styles.methodValue}>and***ley@yourdomain.com</Text>
+              <Text style={[ styles.methodLabel, {color: colors.textBody} ]}>via Email:</Text>
+              <Text style={[ styles.methodValue, {color: colors.textTitle} ]}>and***ley@yourdomain.com</Text>
             </View>
           </TouchableOpacity>
 
@@ -108,7 +113,6 @@ const ForgotPasswordScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   scrollContainer: {
     flexGrow: 1,
@@ -117,7 +121,7 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'column',
     alignItems: 'flex-start',
-    paddingHorizontal: SIZES.padding,
+    paddingHorizontal: theme.SIZES.padding,
     paddingTop: Platform.OS === 'android' ? 20 : 10,
     marginBottom: 20,
   },
@@ -126,27 +130,25 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 28,
-    color: COLORS.textTitle,
   },
   headerTitle: {
-    fontFamily: FONTS.bold,
+    fontFamily: theme.FONTS.bold,
     fontSize: 24,
-    color: COLORS.black,
+    color: 'black',
   },
   content: {
-    paddingHorizontal: SIZES.padding,
+    paddingHorizontal: theme.SIZES.padding,
     paddingBottom: 40,
     alignItems: 'center',
   },
   illustration: {
-    width: SIZES.width,
+    width: theme.SIZES.width,
     height: 250,
     marginBottom: 20,
   },
   description: {
-    fontFamily: FONTS.medium,
-    fontSize: SIZES.body2,
-    color: COLORS.textTitle,
+    fontFamily: theme.FONTS.medium,
+    fontSize: theme.SIZES.body2,
     textAlign: 'left',
     width: '100%',
     marginBottom: 25,
@@ -160,18 +162,16 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 2,
     borderColor: '#EEEEEE',
-    backgroundColor: COLORS.background,
     marginBottom: 20,
   },
   methodCardSelected: {
-    borderColor: COLORS.primary,
-    ...SHADOWS.light,
+    borderColor: theme.COLORS.primary,
+    ...theme.SHADOWS.light,
   },
   iconCircle: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: COLORS.backgroundLight,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 20,
@@ -180,15 +180,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   methodLabel: {
-    fontFamily: FONTS.medium,
+    fontFamily: theme.FONTS.medium,
     fontSize: 14,
-    color: COLORS.textBody,
     marginBottom: 5,
   },
   methodValue: {
-    fontFamily: FONTS.bold,
+    fontFamily: theme.FONTS.bold,
     fontSize: 16,
-    color: COLORS.textTitle,
   },
 });
 

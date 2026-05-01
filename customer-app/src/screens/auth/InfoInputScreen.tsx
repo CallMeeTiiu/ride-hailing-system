@@ -8,7 +8,8 @@ import {
   TouchableOpacity,
   Platform 
 } from 'react-native';
-import { COLORS, SIZES, FONTS } from '../../constants/theme';
+import theme from '../../constants/theme';
+import { useTheme } from '../../constants/ThemeContext' 
 
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -46,22 +47,24 @@ const InfoInputScreen = () => {
     navigation.replace('Home')
   };
 
+  const { colors }= useTheme();
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[ styles.safeArea, {backgroundColor: colors.background} ]}>
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         
         <TouchableOpacity 
         style={styles.backButton}
         onPress={() => navigation.goBack()}>
-          <Text style={styles.backIcon}>←</Text>
+          <Text style={[ styles.backIcon, {color: colors.textTitle} ]}>←</Text>
         </TouchableOpacity>
 
         <View style={styles.content}>
-          <Text style={styles.title}>
+          <Text style={[ styles.title, {color: colors.textTitle} ]}>
             Hello{"\n"}{formData.userName || "Friend"}!
           </Text>
 
-          <Text style={styles.subtitle}>
+          <Text style={[ styles.subtitle, {color: colors.textTitle} ]}>
             Please tell us more about you!
           </Text>
 
@@ -111,39 +114,35 @@ const InfoInputScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   scrollContainer: {
     flexGrow: 1,
     paddingBottom: 30,
   },
   backButton: {
-    paddingHorizontal: SIZES.padding,
+    paddingHorizontal: theme.SIZES.padding,
     paddingTop: Platform.OS === 'android' ? 20 : 10,
     marginBottom: 10,
   },
   backIcon: {
     fontSize: 28,
-    color: COLORS.textTitle,
   },
   content: {
     flex: 1,
-    paddingHorizontal: SIZES.padding,
+    paddingHorizontal: theme.SIZES.padding,
   },
   title: {
-    fontFamily: FONTS.bold,
-    fontSize: 40, 
-    color: COLORS.textTitle,
+    fontFamily: theme.FONTS.bold,
+    fontSize: 40,
     lineHeight: 48,
   },
   subtitle: {
-    fontFamily: FONTS.regular,
+    fontFamily: theme.FONTS.regular,
     fontSize: 16,
-    color: COLORS.textTitle,
-    marginBottom: SIZES.padding * 2,
+    marginBottom: theme.SIZES.padding * 2,
   },
   confirmButton: {
-    marginTop: SIZES.padding,
+    marginTop: theme.SIZES.padding,
     marginBottom: 10,
   }
 });

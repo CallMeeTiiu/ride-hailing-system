@@ -8,7 +8,8 @@ import {
   ScrollView,
   Platform,
 } from 'react-native';
-import { COLORS, SIZES, FONTS } from '../../constants/theme';
+import theme from '../../constants/theme';
+import { useTheme } from '../../constants/ThemeContext';
 
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -28,15 +29,17 @@ const SignupScreen = () => {
     navigation.navigate('InfoInput', { userName: userName });
   };
 
+  const { colors } = useTheme();
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[ styles.safeArea, {backgroundColor: colors.background} ]}>
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         
         {/* Nút Back */}
         <TouchableOpacity 
         style={styles.backButton}
         onPress={() => navigation.goBack()}>
-          <Text style={styles.backIcon}>←</Text>
+          <Text style={[ styles.backIcon, {color: colors.textTitle} ]}>←</Text>
         </TouchableOpacity>
 
         <View style={styles.content}>
@@ -84,7 +87,7 @@ const SignupScreen = () => {
 
           {/* Footer chuyển về Login */}
           <View style={styles.footerContainer}>
-            <Text style={styles.footerText}>You have already an account? </Text>
+            <Text style={[ styles.footerText, {color: colors.textBody} ]}>You have already an account? </Text>
             <Hyperlink 
               title="Sign in" 
               onPress={() => navigation.navigate('Login')} 
@@ -100,29 +103,27 @@ const SignupScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   scrollContainer: {
     flexGrow: 1,
     paddingBottom: 30,
   },
   backButton: {
-    paddingHorizontal: SIZES.padding,
+    paddingHorizontal: theme.SIZES.padding,
     paddingTop: Platform.OS === 'android' ? 20 : 10,
     marginBottom: 10,
   },
   backIcon: {
     fontSize: 28,
-    color: COLORS.textTitle,
   },
   content: {
-    paddingHorizontal: SIZES.padding,
+    paddingHorizontal: theme.SIZES.padding,
   },
   title: {
-    fontFamily: FONTS.bold,
+    fontFamily: theme.FONTS.bold,
     fontSize: 32,
-    color: COLORS.black,
-    marginBottom: SIZES.padding * 1.5,
+    color: 'black',
+    marginBottom: theme.SIZES.padding * 1.5,
     lineHeight: 40,
   },
   footerContainer: {
@@ -131,9 +132,8 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
   footerText: {
-    fontFamily: FONTS.regular,
-    fontSize: SIZES.body2,
-    color: COLORS.textBody,
+    fontFamily: theme.FONTS.regular,
+    fontSize: theme.SIZES.body2,
   }
 });
 

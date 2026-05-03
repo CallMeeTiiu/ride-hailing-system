@@ -76,7 +76,7 @@ const LoginScreen = () => {
           {/* Nút Sign In */}
           <PrimaryButton 
             title="Sign in" 
-            onPress={() => navigation.replace('Home')} 
+            onPress={() => navigation.replace('MainTabs')} 
           />
 
           {/* Quên mật khẩu */}

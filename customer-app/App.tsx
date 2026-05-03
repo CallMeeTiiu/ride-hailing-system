@@ -11,6 +11,8 @@ import ForgotPasswordScreen from './src/screens/auth/ForgotPasswordScreen';
 import FillOTPScreen from './src/screens/auth/FillOTPScreen';
 import NewPasswordScreen from './src/screens/auth/NewPasswordScreen';
 
+import MainTabNavigator from './src/navigation/MainTabNavigation';
+
 export type RootStackParamList = {
   Welcome: undefined;
   Login: undefined;
@@ -20,17 +22,10 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   FillOTP: { contactMethod: string; contactValue: string };
   NewPassword: undefined;
+  MainTabs: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
-
-const HomeScreen = () => (
-  // eslint-disable-next-line react-native/no-inline-styles
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-    <Text>Chào mừng bạn đã vào trang chủ!</Text>
-  </View>
-);
-import { View, Text } from 'react-native';
 
 const App = () => {
   return (
@@ -43,10 +38,10 @@ const App = () => {
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="SignUp" component={SignUpScreen} />
         <Stack.Screen name="InfoInput" component={InfoInputScreen} />
-        <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         <Stack.Screen name="FillOTP" component={FillOTPScreen} />
         <Stack.Screen name="NewPassword" component={NewPasswordScreen} />
+        <Stack.Screen name="MainTabs" component={MainTabNavigator} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -5,7 +5,9 @@ export const lightColors = {
   background: '#FFFFFF',   
   backgroundLight: '#FFF9E5',
   surface: '#FFFFFF',       
-  inputBg: '#f6f3f2',       
+  inputBg: '#f6f3f2',    
+  
+  border: '#e0e0e0',
   
   textTitle: '#616161',   
   textIcon: '#837560',
@@ -27,6 +29,8 @@ export const darkColors = {
   backgroundLight: '#1F222A',
   surface: '#000000',       
   inputBg: '#1F222A',       
+
+  border: '#e0e0e0',
   
   textTitle: '#E0E0E0',   
   textIcon: '#757575',
@@ -40,7 +44,7 @@ export const darkColors = {
   transparent: 'transparent',
 };
 
-const COLORS = lightColors;
+export const COLORS = lightColors;
 
 export const SIZES = {
   base: 8,

@@ -7,10 +7,13 @@ import {
   TouchableOpacity, 
   TextInput,
   ScrollView,
-  Image
+  Image,
+  Animated,         
+  PanResponder,    
+  Dimensions 
 } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faArrowLeft, faClock, faMagnifyingGlass, faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faClock, faMagnifyingGlass, faMapMarkerAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import theme from '../../constants/theme';
@@ -20,6 +23,52 @@ interface SearchBottomSheetProps {
   visible: boolean;
   onClose: () => void;
 }
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
+
+const SwipeableItem = ({ item, onDelete, children }: { item: any, onDelete: (id: string) => void, children: React.ReactNode }) => {
+  const translateX = React.useRef(new Animated.Value(0)).current;
+
+  const panResponder = React.useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (evt, gestureState) => {
+        return Math.abs(gestureState.dx) > 15 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
+      },
+      onPanResponderMove: (evt, gestureState) => {
+        if (gestureState.dx < 0) {
+          translateX.setValue(gestureState.dx);
+        }
+      },
+      onPanResponderRelease: (evt, gestureState) => {
+        if (gestureState.dx < -SCREEN_WIDTH * 0.3) {
+          Animated.timing(translateX, {
+            toValue: -SCREEN_WIDTH,
+            duration: 200,
+            useNativeDriver: true,
+          }).start(() => onDelete(item.id));
+        } else {
+          Animated.spring(translateX, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
+        }
+      }
+    })
+  ).current;
+
+  return (
+    <View style={styles.swipeContainer}>
+      <View style={styles.deleteBackground}>
+        <Text style={styles.deleteText}>Delete</Text>
+        <FontAwesomeIcon icon={faTrash} size={20} color="white" />
+      </View>
+      <Animated.View style={{ transform: [{ translateX }] }} {...panResponder.panHandlers}>
+        {children}
+      </Animated.View>
+    </View>
+  );
+};
 
 const SearchBottomSheet: React.FC<SearchBottomSheetProps> = ({ visible, onClose }) => {
   const { colors } = useTheme();
@@ -35,15 +84,19 @@ const SearchBottomSheet: React.FC<SearchBottomSheetProps> = ({ visible, onClose 
     }
   }, [visible]);
 
-  const locationsData = [
+  const [locations, setLocations] = useState([
     { id: '1', name: 'Grand Indonesia Mall', address: 'Jl. M.H. Thamrin No.1', distance: '1.2 km' },
     { id: '2', name: 'Soekarno-Hatta Airport', address: 'Tangerang City, Banten', distance: '15.5 km' },
     { id: '3', name: 'Central Park', address: 'Letjen S. Parman St', distance: '4.8 km' },
     { id: '4', name: 'Times Square', address: 'Manhattan, NY 10036, USA', distance: '8.3 km' },
     { id: '5', name: 'Empire State Building', address: '20 W 34th St., New York', distance: '9.1 km' },
-  ];
+  ]);
 
-  const filteredLocations = locationsData.filter(loc => 
+  const handleDeleteItem = (id: string) => {
+    setLocations(prev => prev.filter(item => item.id !== id));
+  };
+
+  const filteredLocations = locations.filter(loc => 
     loc.name.toLowerCase().includes(searchText.toLowerCase()) || 
     loc.address.toLowerCase().includes(searchText.toLowerCase())
   );
@@ -111,28 +164,30 @@ const SearchBottomSheet: React.FC<SearchBottomSheetProps> = ({ visible, onClose 
             </View>
 
             {filteredLocations.map((item) => (
-              <TouchableOpacity key={item.id} style={[styles.locationItem, { borderBottomColor: colors.border }]}>
-                {searchText.length > 0 ? (
-                  <View style={[styles.outerCircle, {backgroundColor: colors.backgroundLight}]}>
-                    <View style={styles.innerCircle}>
-                      <FontAwesomeIcon icon={faMapMarkerAlt} size={14} color={colors.textTitle} />
+              <SwipeableItem key={item.id} item={item} onDelete={handleDeleteItem}>
+                <TouchableOpacity key={item.id} activeOpacity={1} style={[styles.locationItem, { borderBottomColor: colors.border, backgroundColor: colors.background }]}>
+                    {searchText.length > 0 ? (
+                    <View style={[styles.outerCircle, {backgroundColor: colors.backgroundLight}]}>
+                        <View style={styles.innerCircle}>
+                        <FontAwesomeIcon icon={faMapMarkerAlt} size={14} color={colors.textTitle} />
+                        </View>
                     </View>
-                  </View>
-                ) : (
-                  <View style={styles.iconCircle}>
-                    <FontAwesomeIcon icon={faClock} size={16} color={colors.textBody} />
-                  </View>
-                )}
+                    ) : (
+                    <View style={styles.iconCircle}>
+                        <FontAwesomeIcon icon={faClock} size={16} color={colors.textBody} />
+                    </View>
+                    )}
 
-                <View style={styles.locationTextContainer}>
-                  <Text style={[styles.locationName, { color: colors.textTitle }]}>{item.name}</Text>
-                  <Text style={[styles.locationAddress, { color: colors.textBody }]} numberOfLines={1}>
-                    {item.address}
-                  </Text>
-                </View>
+                    <View style={styles.locationTextContainer}>
+                    <Text style={[styles.locationName, { color: colors.textTitle }]}>{item.name}</Text>
+                    <Text style={[styles.locationAddress, { color: colors.textBody }]} numberOfLines={1}>
+                        {item.address}
+                    </Text>
+                    </View>
 
-                <Text style={[styles.locationDistance, { color: colors.textTitle }]}>{item.distance}</Text>
-              </TouchableOpacity>
+                    <Text style={[styles.locationDistance, { color: colors.textTitle }]}>{item.distance}</Text>
+                </TouchableOpacity>
+              </SwipeableItem>
             ))}
 
             {filteredLocations.length === 0 && (
@@ -307,6 +362,29 @@ const styles = StyleSheet.create({
     fontFamily: theme.FONTS.regular,
     fontSize: 16,
     textAlign: 'center',
+    lineHeight: 24,
+  },
+  swipeContainer: {
+    position: 'relative',
+    marginBottom: 0, 
+  },
+  deleteBackground: {
+    ...StyleSheet.absoluteFillObject,
+    flexDirection: 'row',
+    backgroundColor: '#FF4D4D', 
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: 10,
+    paddingRight: 25,
+    borderRadius: 16, 
+    marginVertical: 5,
+  },
+  deleteText: {
+    fontFamily: theme.FONTS.regular,
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: 'white',
     lineHeight: 24,
   },
 });

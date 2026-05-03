@@ -1,0 +1,18 @@
+import React from 'react';
+import { View, StyleSheet, Text } from 'react-native';
+import { useTheme } from '../../constants/ThemeContext';
+import theme from '../../constants/theme';
+
+const MapBackground = () => {
+  const { colors } = useTheme();
+
+  return (
+    <View style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+      <Text style={{ fontFamily: theme.FONTS.bold, color: colors.textTitle, fontSize: theme.SIZES.h2 }}>
+        Map Placeholder
+      </Text>
+    </View>
+  );
+};
+
+export default MapBackground;

@@ -26,13 +26,14 @@ interface SearchBottomSheetProps {
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-const SwipeableItem = ({ item, onDelete, children }: { item: any, onDelete: (id: string) => void, children: React.ReactNode }) => {
+const SwipeableItem = ({ item, onDelete, swipeEnabled = true, children }: { item: any, onDelete: (id: string) => void, swipeEnabled?: boolean, children: React.ReactNode }) => {
   const translateX = React.useRef(new Animated.Value(0)).current;
 
   const panResponder = React.useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
       onMoveShouldSetPanResponder: (evt, gestureState) => {
+        if (!swipeEnabled) return false;
         return Math.abs(gestureState.dx) > 15 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
       },
       onPanResponderMove: (evt, gestureState) => {
@@ -84,22 +85,33 @@ const SearchBottomSheet: React.FC<SearchBottomSheetProps> = ({ visible, onClose 
     }
   }, [visible]);
 
-  const [locations, setLocations] = useState([
+  const allLocations = [
     { id: '1', name: 'Grand Indonesia Mall', address: 'Jl. M.H. Thamrin No.1', distance: '1.2 km' },
     { id: '2', name: 'Soekarno-Hatta Airport', address: 'Tangerang City, Banten', distance: '15.5 km' },
     { id: '3', name: 'Central Park', address: 'Letjen S. Parman St', distance: '4.8 km' },
     { id: '4', name: 'Times Square', address: 'Manhattan, NY 10036, USA', distance: '8.3 km' },
     { id: '5', name: 'Empire State Building', address: '20 W 34th St., New York', distance: '9.1 km' },
+    { id: '6', name: 'Statue of Liberty', address: 'New York, NY 10004, USA', distance: '12.4 km' }, 
+  ];
+
+  const [recentLocations, setRecentLocations] = useState([
+    allLocations[0], 
+    allLocations[1], 
+    allLocations[2]
   ]);
 
-  const handleDeleteItem = (id: string) => {
-    setLocations(prev => prev.filter(item => item.id !== id));
+  const handleDeleteRecent = (id: string) => {
+    setRecentLocations(prev => prev.filter(item => item.id !== id));
   };
 
-  const filteredLocations = locations.filter(loc => 
-    loc.name.toLowerCase().includes(searchText.toLowerCase()) || 
-    loc.address.toLowerCase().includes(searchText.toLowerCase())
-  );
+  const isSearching = searchText.length > 0;
+  
+  const displayData = isSearching 
+    ? allLocations.filter(loc => 
+        loc.name.toLowerCase().includes(searchText.toLowerCase()) || 
+        loc.address.toLowerCase().includes(searchText.toLowerCase())
+      )
+    : recentLocations;
 
   return (
     <Modal
@@ -158,13 +170,13 @@ const SearchBottomSheet: React.FC<SearchBottomSheetProps> = ({ visible, onClose 
 
               {searchText.length > 0 ? (
                 <Text style={[styles.resultCount, { color: theme.COLORS.primary }]}>
-                    {filteredLocations.length} {filteredLocations.length > 1 ? "founds" : "found"}
+                    {displayData.length} {displayData.length > 1 ? "founds" : "found"}
                 </Text>
               ) : ("")}
             </View>
 
-            {filteredLocations.map((item) => (
-              <SwipeableItem key={item.id} item={item} onDelete={handleDeleteItem}>
+            {displayData.map((item) => (
+              <SwipeableItem key={item.id} item={item} onDelete={handleDeleteRecent} swipeEnabled={!isSearching}>
                 <TouchableOpacity key={item.id} activeOpacity={1} style={[styles.locationItem, { borderBottomColor: colors.border, backgroundColor: colors.background }]}>
                     {searchText.length > 0 ? (
                     <View style={[styles.outerCircle, {backgroundColor: colors.backgroundLight}]}>
@@ -190,7 +202,7 @@ const SearchBottomSheet: React.FC<SearchBottomSheetProps> = ({ visible, onClose 
               </SwipeableItem>
             ))}
 
-            {filteredLocations.length === 0 && (
+            {displayData.length === 0 && (
               <View style={styles.notFoundContainer}>
                 <Image 
                   source={require('../../assets/images/no_locations_found.png')} 

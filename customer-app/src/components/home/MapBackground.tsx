@@ -7,12 +7,19 @@ const MapBackground = () => {
   const { colors } = useTheme();
 
   return (
-    <View style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+    <View style={[StyleSheet.absoluteFillObject, styles.container, {backgroundColor: colors.background}]}>
       <Text style={{ fontFamily: theme.FONTS.bold, color: colors.textTitle, fontSize: theme.SIZES.h2 }}>
         Map Placeholder
       </Text>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        justifyContent: 'center',
+        alignItems: 'center'
+    }
+})
 
 export default MapBackground;

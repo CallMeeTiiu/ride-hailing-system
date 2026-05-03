@@ -57,7 +57,6 @@ const BottomSearchBoard = () => {
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    // Không dùng flex: 1 vì chúng ta chỉ muốn khối này ôm trọn nội dung ở dưới cùng
   },
   locationButtonContainer: {
     alignItems: 'flex-end',
@@ -78,7 +77,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: theme.SIZES.padding,
-    gap: 10, // Tạo khoảng cách giữa các chip
+    gap: 10, 
   },
   chip: {
     flexDirection: 'row',
@@ -102,8 +101,8 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 30,
     paddingHorizontal: theme.SIZES.padding,
     paddingTop: 10,
-    paddingBottom: 25, // Đệm thêm một chút ở dưới
-    // Tạo bóng đổ nhẹ cho mép trên của board
+    paddingBottom: 25,
+    
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.1,

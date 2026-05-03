@@ -1,16 +1,12 @@
-import { Body, Controller, Get, Post } from '@nestjs/common'
-import { ApiTags, ApiOperation } from '@nestjs/swagger'
-import { CreateQuoteDto } from './rides/dto/create-quote.dto'
+import { Controller, Get } from '@nestjs/common'
+import { AppService } from './app.service'
 
-@ApiTags('rides')
-@Controller('rides')
+@Controller()
 export class AppController {
-  @Post('quote')
-  @ApiOperation({ summary: 'Lấy báo giá ước tính' })
-  getQuote(@Body() dto: CreateQuoteDto) {
-    return {
-      quote_id: 'mock-uuid-123',
-      estimated_fare: 50000,
-    }
+  constructor(private readonly appService: AppService) {}
+
+  @Get()
+  getHello(): string {
+    return this.appService.getHello()
   }
 }

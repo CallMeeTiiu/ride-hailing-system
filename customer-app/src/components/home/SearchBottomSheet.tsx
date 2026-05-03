@@ -6,7 +6,8 @@ import {
   StyleSheet, 
   TouchableOpacity, 
   TextInput,
-  ScrollView
+  ScrollView,
+  Image
 } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faArrowLeft, faClock, faMagnifyingGlass, faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons';
@@ -35,11 +36,11 @@ const SearchBottomSheet: React.FC<SearchBottomSheetProps> = ({ visible, onClose 
   }, [visible]);
 
   const locationsData = [
-    { id: '1', name: 'Grand Indonesia Mall', address: 'Jl. M.H. Thamrin No.1' },
-    { id: '2', name: 'Soekarno-Hatta Airport', address: 'Tangerang City, Banten' },
-    { id: '3', name: 'Central Park', address: 'Letjen S. Parman St' },
-    { id: '4', name: 'Times Square', address: 'Manhattan, NY 10036, USA' },
-    { id: '5', name: 'Empire State Building', address: '20 W 34th St., New York' },
+    { id: '1', name: 'Grand Indonesia Mall', address: 'Jl. M.H. Thamrin No.1', distance: '1.2 km' },
+    { id: '2', name: 'Soekarno-Hatta Airport', address: 'Tangerang City, Banten', distance: '15.5 km' },
+    { id: '3', name: 'Central Park', address: 'Letjen S. Parman St', distance: '4.8 km' },
+    { id: '4', name: 'Times Square', address: 'Manhattan, NY 10036, USA', distance: '8.3 km' },
+    { id: '5', name: 'Empire State Building', address: '20 W 34th St., New York', distance: '9.1 km' },
   ];
 
   const filteredLocations = locationsData.filter(loc => 
@@ -92,14 +93,22 @@ const SearchBottomSheet: React.FC<SearchBottomSheetProps> = ({ visible, onClose 
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContainer}>
-            {searchText.length > 0 ? (
-              <Text style={[styles.sectionTitle, { color: colors.textTitle }]}>
-                {/*eslint-disable-next-line react-native/no-inline-styles*/}
-                Result for <Text style={{ color: theme.COLORS.primary, fontWeight: 'bold' }}>"{searchText}"</Text>
-              </Text>
-            ) : (
-              <Text style={[styles.sectionTitle, { color: colors.textBody }]}>Recent Places</Text>
-            )}
+            <View style={styles.sectionHeaderRow}>
+              {searchText.length > 0 ? (
+                <Text style={[styles.sectionTitle, { color: colors.textTitle }]}>
+                  {/*eslint-disable-next-line react-native/no-inline-styles*/}
+                  Result for <Text style={{ color: theme.COLORS.primary, fontWeight: 'bold' }}>"{searchText}"</Text>
+                </Text>
+              ) : (
+                <Text style={[styles.sectionTitle, { color: colors.textBody }]}>Recent Places</Text>
+              )}
+
+              {searchText.length > 0 ? (
+                <Text style={[styles.resultCount, { color: theme.COLORS.primary }]}>
+                    {filteredLocations.length} {filteredLocations.length > 1 ? "founds" : "found"}
+                </Text>
+              ) : ("")}
+            </View>
 
             {filteredLocations.map((item) => (
               <TouchableOpacity key={item.id} style={[styles.locationItem, { borderBottomColor: colors.border }]}>
@@ -121,12 +130,22 @@ const SearchBottomSheet: React.FC<SearchBottomSheetProps> = ({ visible, onClose 
                     {item.address}
                   </Text>
                 </View>
+
+                <Text style={[styles.locationDistance, { color: colors.textTitle }]}>{item.distance}</Text>
               </TouchableOpacity>
             ))}
 
             {filteredLocations.length === 0 && (
-              <View style={styles.notFoundBox}>
-                 <Text style={{ fontFamily: theme.FONTS.regular, color: colors.textBody }}>No locations found.</Text>
+              <View style={styles.notFoundContainer}>
+                <Image 
+                  source={require('../../assets/images/no_locations_found.png')} 
+                  style={styles.notFoundImage}
+                  resizeMode="contain"
+                />
+                <Text style={[styles.notFoundTitle, { color: colors.textTitle }]}>Not Found</Text>
+                <Text style={[styles.notFoundText, { color: colors.textBody }]}>
+                  Sorry, the keyword you entered cannot be found, please check again or search with another keyword.
+                </Text>
               </View>
             )}
           </ScrollView>
@@ -211,6 +230,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 10,
   },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  resultCount: {
+    fontFamily: theme.FONTS.bold,
+    fontSize: 14,
+  },
   locationItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -254,10 +283,32 @@ const styles = StyleSheet.create({
     fontFamily: theme.FONTS.regular,
     fontSize: 13,
   },
-  notFoundBox: {
-    alignItems: 'center', 
-    marginTop: 30
-  }
+  locationDistance: {
+    fontFamily: theme.FONTS.bold,
+    fontSize: 14,
+    marginLeft: 10,
+  },
+  notFoundContainer: {
+    alignItems: 'center',
+    marginTop: 40,
+    paddingHorizontal: 20,
+  },
+  notFoundImage: {
+    width: 250,
+    height: 250,
+    marginBottom: 20,
+  },
+  notFoundTitle: {
+    fontFamily: theme.FONTS.bold,
+    fontSize: 24,
+    marginBottom: 15,
+  },
+  notFoundText: {
+    fontFamily: theme.FONTS.regular,
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
 });
 
 export default SearchBottomSheet;

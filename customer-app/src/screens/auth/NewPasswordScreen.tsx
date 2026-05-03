@@ -32,7 +32,7 @@ const NewPasswordScreen = () => {
     
     setTimeout(() => {
       setShowPopup(false);
-      navigation.replace('Home');
+      navigation.replace('MainTabs');
     }, 3000);
   };
 

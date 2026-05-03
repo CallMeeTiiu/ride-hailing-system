@@ -44,7 +44,7 @@ const InfoInputScreen = () => {
 
   const handleConfirm = () => {
     console.log("Data is ready to send to BackEnd:", formData);
-    navigation.replace('Home')
+    navigation.replace('MainTabs')
   };
 
   const { colors }= useTheme();

@@ -103,13 +103,18 @@ const SearchBottomSheet: React.FC<SearchBottomSheetProps> = ({ visible, onClose 
 
             {filteredLocations.map((item) => (
               <TouchableOpacity key={item.id} style={[styles.locationItem, { borderBottomColor: colors.border }]}>
-                <View style={styles.iconCircle}>
-                  <FontAwesomeIcon 
-                    icon={searchText.length > 0 ? faMapMarkerAlt : faClock} 
-                    size={16} 
-                    color={colors.textBody} 
-                  />
-                </View>
+                {searchText.length > 0 ? (
+                  <View style={[styles.outerCircle, {backgroundColor: colors.backgroundLight}]}>
+                    <View style={styles.innerCircle}>
+                      <FontAwesomeIcon icon={faMapMarkerAlt} size={14} color={colors.textTitle} />
+                    </View>
+                  </View>
+                ) : (
+                  <View style={styles.iconCircle}>
+                    <FontAwesomeIcon icon={faClock} size={16} color={colors.textBody} />
+                  </View>
+                )}
+
                 <View style={styles.locationTextContainer}>
                   <Text style={[styles.locationName, { color: colors.textTitle }]}>{item.name}</Text>
                   <Text style={[styles.locationAddress, { color: colors.textBody }]} numberOfLines={1}>
@@ -216,10 +221,26 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.05)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 15,
+  },
+  outerCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 176, 32, 0.2)', 
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  innerCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: theme.COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   locationTextContainer: {
     flex: 1,

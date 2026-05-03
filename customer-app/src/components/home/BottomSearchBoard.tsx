@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import SearchBottomSheet from './SearchBottomSheet';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faLocationDot, faCrosshairs } from '@fortawesome/free-solid-svg-icons';
@@ -9,6 +10,8 @@ import { useTheme } from '../../constants/ThemeContext';
 const BottomSearchBoard = () => {
   const { colors } = useTheme();
 
+  const [isSheetVisible, setIsSheetVisible] = useState(false);
+
   const suggestionChips = [
     { id: 1, label: 'Home', icon: faLocationDot },
     { id: 2, label: 'Office', icon: faLocationDot },
@@ -17,6 +20,10 @@ const BottomSearchBoard = () => {
 
   return (
     <View style={styles.container}>
+      <SearchBottomSheet 
+        visible={isSheetVisible} 
+        onClose={() => setIsSheetVisible(false)} 
+      />
       
       <View style={styles.locationButtonContainer}>
         <TouchableOpacity style={styles.locationButton} activeOpacity={0.8}>
@@ -42,7 +49,7 @@ const BottomSearchBoard = () => {
         <TouchableOpacity 
           style={[styles.searchBar, { backgroundColor: colors.inputBg }]}
           activeOpacity={0.9}
-          onPress={() => console.log('Mở Bottom Sheet Tìm kiếm...')}
+          onPress={() => setIsSheetVisible(true)}
         >
           <Text style={[styles.searchText, { color: colors.textBody }]}>Where would you go?</Text>
           <FontAwesomeIcon icon={faLocationDot} size={20} color={colors.textBody} />

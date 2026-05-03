@@ -20,6 +20,7 @@ const MainTabNavigator = () => {
 
   return (
     <Tab.Navigator
+      initialRouteName='HomeTab'
       screenOptions={() => ({
         headerShown: false,
         tabBarActiveTintColor: colors.primary,

@@ -104,6 +104,17 @@ const SearchBottomSheet: React.FC<SearchBottomSheetProps> = ({ visible, onClose 
     setRecentLocations(prev => prev.filter(item => item.id !== id));
   };
 
+  const handleSelectLocation = (selectedItem: any) => {
+    setSearchText(selectedItem.name);
+
+    setRecentLocations(prev => {
+      const filteredList = prev.filter(item => item.id !== selectedItem.id); 
+      return [selectedItem, ...filteredList]; 
+    });
+    
+    // navigate/load map logic
+  };
+
   const isSearching = searchText.length > 0;
   
   const displayData = isSearching 
@@ -176,8 +187,18 @@ const SearchBottomSheet: React.FC<SearchBottomSheetProps> = ({ visible, onClose 
             </View>
 
             {displayData.map((item) => (
-              <SwipeableItem key={item.id} item={item} onDelete={handleDeleteRecent} swipeEnabled={!isSearching}>
-                <TouchableOpacity key={item.id} activeOpacity={1} style={[styles.locationItem, { borderBottomColor: colors.border, backgroundColor: colors.background }]}>
+              <SwipeableItem 
+                key={item.id} 
+                item={item} 
+                onDelete={handleDeleteRecent} 
+                swipeEnabled={!isSearching}
+            >
+                <TouchableOpacity 
+                    key={item.id} 
+                    activeOpacity={1} 
+                    style={[styles.locationItem, { borderBottomColor: colors.border, backgroundColor: colors.background }]}
+                    onPress={() => handleSelectLocation(item)}
+                >
                     {searchText.length > 0 ? (
                     <View style={[styles.outerCircle, {backgroundColor: colors.backgroundLight}]}>
                         <View style={styles.innerCircle}>

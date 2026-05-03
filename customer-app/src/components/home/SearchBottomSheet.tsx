@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Modal, 
   View, 
@@ -9,7 +9,7 @@ import {
   ScrollView
 } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faArrowLeft, faLocationDot, faClock } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faClock, faMagnifyingGlass, faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import theme from '../../constants/theme';
@@ -24,12 +24,28 @@ const SearchBottomSheet: React.FC<SearchBottomSheetProps> = ({ visible, onClose 
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
-  // Dữ liệu giả lập cho lịch sử tìm kiếm
-  const recentLocations = [
+  const [searchText, setSearchText] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
+
+  useEffect(() => {
+    if (!visible) {
+      setSearchText('');
+      setIsFocused(false);
+    }
+  }, [visible]);
+
+  const locationsData = [
     { id: '1', name: 'Grand Indonesia Mall', address: 'Jl. M.H. Thamrin No.1' },
     { id: '2', name: 'Soekarno-Hatta Airport', address: 'Tangerang City, Banten' },
     { id: '3', name: 'Central Park', address: 'Letjen S. Parman St' },
+    { id: '4', name: 'Times Square', address: 'Manhattan, NY 10036, USA' },
+    { id: '5', name: 'Empire State Building', address: '20 W 34th St., New York' },
   ];
+
+  const filteredLocations = locationsData.filter(loc => 
+    loc.name.toLowerCase().includes(searchText.toLowerCase()) || 
+    loc.address.toLowerCase().includes(searchText.toLowerCase())
+  );
 
   return (
     <Modal
@@ -54,24 +70,45 @@ const SearchBottomSheet: React.FC<SearchBottomSheetProps> = ({ visible, onClose 
           </View>
 
           <View style={styles.inputContainer}>
-            <View style={[styles.searchBox, { backgroundColor: colors.inputBg }]}>
-              <FontAwesomeIcon icon={faLocationDot} size={18} color={theme.COLORS.primary} style={styles.inputIcon} />
+            <View style={[
+                styles.searchBox, 
+                // eslint-disable-next-line react-native/no-inline-styles
+                { 
+                    backgroundColor: isFocused ? colors.backgroundLight : colors.inputBg,
+                    borderColor: isFocused ? theme.COLORS.primary : 'transparent',
+                }]}>
+              <FontAwesomeIcon icon={faMagnifyingGlass} size={18} color={theme.COLORS.primary} style={styles.inputIcon} />
               <TextInput
                 style={[styles.input, { color: colors.textTitle }]}
                 placeholder="Where would you go?"
                 placeholderTextColor={colors.textBody}
                 autoFocus={true}
+                value={searchText}
+                onChangeText={setSearchText} 
+                onFocus={() => setIsFocused(true)} 
+                onBlur={() => setIsFocused(false)} 
               />
             </View>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContainer}>
-            <Text style={[styles.sectionTitle, { color: colors.textBody }]}>Recent Places</Text>
+            {searchText.length > 0 ? (
+              <Text style={[styles.sectionTitle, { color: colors.textTitle }]}>
+                {/*eslint-disable-next-line react-native/no-inline-styles*/}
+                Result for <Text style={{ color: theme.COLORS.primary, fontWeight: 'bold' }}>"{searchText}"</Text>
+              </Text>
+            ) : (
+              <Text style={[styles.sectionTitle, { color: colors.textBody }]}>Recent Places</Text>
+            )}
 
-            {recentLocations.map((item) => (
+            {filteredLocations.map((item) => (
               <TouchableOpacity key={item.id} style={[styles.locationItem, { borderBottomColor: colors.border }]}>
                 <View style={styles.iconCircle}>
-                  <FontAwesomeIcon icon={faClock} size={16} color={colors.textBody} />
+                  <FontAwesomeIcon 
+                    icon={searchText.length > 0 ? faMapMarkerAlt : faClock} 
+                    size={16} 
+                    color={colors.textBody} 
+                  />
                 </View>
                 <View style={styles.locationTextContainer}>
                   <Text style={[styles.locationName, { color: colors.textTitle }]}>{item.name}</Text>
@@ -81,6 +118,12 @@ const SearchBottomSheet: React.FC<SearchBottomSheetProps> = ({ visible, onClose 
                 </View>
               </TouchableOpacity>
             ))}
+
+            {filteredLocations.length === 0 && (
+              <View style={styles.notFoundBox}>
+                 <Text style={{ fontFamily: theme.FONTS.regular, color: colors.textBody }}>No locations found.</Text>
+              </View>
+            )}
           </ScrollView>
 
         </View>
@@ -142,6 +185,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: 56,
     borderRadius: 16,
+    borderWidth: 1,
     paddingHorizontal: 15,
   },
   inputIcon: {
@@ -188,6 +232,10 @@ const styles = StyleSheet.create({
   locationAddress: {
     fontFamily: theme.FONTS.regular,
     fontSize: 13,
+  },
+  notFoundBox: {
+    alignItems: 'center', 
+    marginTop: 30
   }
 });
 

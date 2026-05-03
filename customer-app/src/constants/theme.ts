@@ -4,9 +4,9 @@ export const lightColors = {
   
   background: '#FFFFFF',   
   backgroundLight: '#FFF9E5',
-  surface: '#FFFFFF',       
-  inputBg: '#f6f3f2',    
-  
+  surface: '#FFFFFF',   
+
+  inputBg: '#f6f3f2', 
   border: '#e0e0e0',
   
   textTitle: '#616161',   

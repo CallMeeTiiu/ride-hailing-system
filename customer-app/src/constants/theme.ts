@@ -3,10 +3,10 @@ export const lightColors = {
   primaryLight: '#FFF8E8',  
   
   background: '#FFFFFF',   
-  backgroundLight: '#FFF9E5',
-  surface: '#FFFFFF',       
-  inputBg: '#f6f3f2',    
-  
+  backgroundLight: '#FDEECC',
+  surface: '#FFFFFF',   
+
+  inputBg: '#f6f3f2', 
   border: '#e0e0e0',
   
   textTitle: '#616161',   

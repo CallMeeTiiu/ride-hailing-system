@@ -1,11 +1,23 @@
 import React from 'react';
-import { View, Text } from 'react-native';
-import theme from '../../constants/theme';
+import { View, StyleSheet } from 'react-native';
 
-const HomeScreen = () => (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.COLORS.background }}>
-        <Text style={{ fontSize: 20, fontFamily: theme.FONTS.bold, color: theme.COLORS.textTitle }}>Home Screen</Text>
+import MapBackground from '../../components/home/MapBackground';
+import BottomSearchBoard from '../../components/home/BottomSearchBoard';
+
+const HomeScreen = () => {
+  return (
+    <View style={styles.container}>
+      <MapBackground />
+      <BottomSearchBoard />
     </View>
-);
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'flex-end', 
+  }
+});
 
 export default HomeScreen;

@@ -15,6 +15,8 @@ export const lightColors = {
   textLight: '#9E9E9E',     
 
   textBtn: '#271900',
+
+  circleButtonBg: '#ffe4a3',
   
   white: '#FFFFFF',
   black: '#000000',

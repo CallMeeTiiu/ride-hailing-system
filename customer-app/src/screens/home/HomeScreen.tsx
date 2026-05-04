@@ -1,20 +1,22 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native'; 
 
 import { useTheme } from '../../constants/ThemeContext';
 
 import MapBackground from '../../components/home/MapBackground';
 import BottomSearchBoard from '../../components/home/BottomSearchBoard';
-import SearchBottomSheet from '../../components/home/SearchBottomSheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../../../App';
 
 const HomeScreen = () => {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
-  const [isSearchSheetVisible, setIsSearchSheetVisible] = useState(false);
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   return (
     <View style={styles.container}>
@@ -22,7 +24,7 @@ const HomeScreen = () => {
         <TouchableOpacity 
             style={[styles.circleButton, { backgroundColor: colors.circleButtonBg }]}
             activeOpacity={0.8}
-            onPress={() => setIsSearchSheetVisible(true)}
+            onPress={() => navigation.navigate('Search')}
           >
             <FontAwesomeIcon icon={faMagnifyingGlass} size={20} color={colors.textTitle} />
         </TouchableOpacity>
@@ -30,11 +32,6 @@ const HomeScreen = () => {
 
       <MapBackground />
       <BottomSearchBoard />
-
-      <SearchBottomSheet 
-        visible={isSearchSheetVisible}
-        onClose={() => setIsSearchSheetVisible(false)}
-      />
     </View>
   );
 };

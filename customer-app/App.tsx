@@ -12,6 +12,7 @@ import FillOTPScreen from './src/screens/auth/FillOTPScreen';
 import NewPasswordScreen from './src/screens/auth/NewPasswordScreen';
 
 import MainTabNavigator from './src/navigation/MainTabNavigation';
+import SearchScreen from './src/components/home/SearchScreen';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -23,6 +24,7 @@ export type RootStackParamList = {
   FillOTP: { contactMethod: string; contactValue: string };
   NewPassword: undefined;
   MainTabs: undefined;
+  Search: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -42,6 +44,7 @@ const App = () => {
         <Stack.Screen name="FillOTP" component={FillOTPScreen} />
         <Stack.Screen name="NewPassword" component={NewPasswordScreen} />
         <Stack.Screen name="MainTabs" component={MainTabNavigator} />
+        <Stack.Screen name="Search" component={SearchScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

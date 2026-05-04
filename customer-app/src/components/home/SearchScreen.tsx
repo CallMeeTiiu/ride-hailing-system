@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
 import { 
-  Modal, 
   View, 
   Text, 
   StyleSheet, 
@@ -10,19 +10,14 @@ import {
   Image,
   Animated,         
   PanResponder,    
-  Dimensions 
+  Dimensions
 } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faArrowLeft, faClock, faMagnifyingGlass, faMapMarkerAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import theme from '../../constants/theme';
 import { useTheme } from '../../constants/ThemeContext';
-
-interface SearchBottomSheetProps {
-  visible: boolean;
-  onClose: () => void;
-}
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -71,19 +66,14 @@ const SwipeableItem = ({ item, onDelete, swipeEnabled = true, children }: { item
   );
 };
 
-const SearchBottomSheet: React.FC<SearchBottomSheetProps> = ({ visible, onClose }) => {
+const SearchScreen = () => {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
+  const navigation = useNavigation();
+
   const [searchText, setSearchText] = useState('');
   const [isFocused, setIsFocused] = useState(false);
-
-  useEffect(() => {
-    if (!visible) {
-      setSearchText('');
-      setIsFocused(false);
-    }
-  }, [visible]);
 
   const allLocations = [
     { id: '1', name: 'Grand Indonesia Mall', address: 'Jl. M.H. Thamrin No.1', distance: '1.2 km' },
@@ -125,25 +115,14 @@ const SearchBottomSheet: React.FC<SearchBottomSheetProps> = ({ visible, onClose 
     : recentLocations;
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={true} 
-      onRequestClose={onClose} 
-    >
-      <View style={styles.overlay}>
-        <TouchableOpacity style={styles.dismissArea} activeOpacity={1} onPress={onClose} />
-
-        <View style={[styles.sheetContainer, { backgroundColor: colors.background, paddingBottom: insets.bottom }]}>
-          <View style={styles.header}>
-            <View style={styles.handleBar} />
-            <View style={styles.headerRow}>
-              <TouchableOpacity onPress={onClose} style={styles.backButton}>
-                <FontAwesomeIcon icon={faArrowLeft} size={20} color={colors.textTitle} />
-              </TouchableOpacity>
-              <Text style={[styles.headerTitle, { color: colors.textTitle }]}>Select Destination</Text>
-              <View style={styles.spacer} />
-            </View>
+    <View style={[styles.container, { backgroundColor: colors.background, top: insets.top + 10 }]}>
+          <View style={[styles.header]}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <FontAwesomeIcon icon={faArrowLeft} size={20} color={colors.textTitle} />
+            </TouchableOpacity>
+            <Text style={[styles.headerTitle, { color: colors.textTitle }]}>Select Destination</Text>
+            {/*eslint-disable-next-line react-native/no-inline-styles*/}
+            <View style={{ width: 20 }} /> 
           </View>
 
           <View style={styles.inputContainer}>
@@ -238,17 +217,13 @@ const SearchBottomSheet: React.FC<SearchBottomSheetProps> = ({ visible, onClose 
             )}
           </ScrollView>
 
-        </View>
-      </View>
-    </Modal>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)', 
-    justifyContent: 'flex-end', 
+  container: { 
+    flex: 1 
   },
   dismissArea: {
     flex: 1, 
@@ -261,9 +236,12 @@ const styles = StyleSheet.create({
     ...theme.SHADOWS.primaryGlow,
   },
   header: {
-    alignItems: 'center',
-    paddingHorizontal: theme.SIZES.padding,
-    marginBottom: 20,
+    flexDirection: 'row',
+    width: '100%', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    paddingHorizontal: 20, 
+    paddingVertical: 15 
   },
   handleBar: {
     width: 40,
@@ -422,4 +400,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SearchBottomSheet;
+export default SearchScreen;

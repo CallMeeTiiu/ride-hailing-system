@@ -36,12 +36,12 @@ const SelectAddressSheet: React.FC<SelectAddressSheetProps> = ({ visible, onClos
   const { colors } = useTheme();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   
-  const { allLocations, recentLocations } = useLocation();
+  const { allLocations, recentLocations, fromLocation, destinationLocation } = useLocation();
   const displayData = recentLocations.length > 0 ? recentLocations : allLocations;
 
-  const handleNavigateToSearch = () => {
+  const handleNavigateToSearch = (type: 'from' | 'destination') => {
     onClose();
-    navigation.navigate('Search'); 
+    navigation.navigate('Search', { type }); 
   };
 
   return (
@@ -82,20 +82,32 @@ const SelectAddressSheet: React.FC<SelectAddressSheetProps> = ({ visible, onClos
             {/* Cột chứa 2 ô Input giả */}
             <View style={styles.inputColumn}>
               <TouchableOpacity 
-                style={[styles.inputBox, { backgroundColor: colors.inputBg }]}
+                style={[styles.inputBox, { 
+                    backgroundColor: fromLocation ? colors.backgroundLight : colors.inputBg,
+                    borderColor: fromLocation ? colors.primary : colors.transparent}]}
                 activeOpacity={0.8}
-                onPress={handleNavigateToSearch}
+                onPress={() => handleNavigateToSearch('from')}
               >
-                <Text style={[styles.inputText, { color: colors.textBody }]}>From</Text>
+                <Text style={[styles.inputText, { 
+                    color: fromLocation ? colors.textTitle : colors.textBody 
+                }]}>
+                  {fromLocation ? fromLocation.name : 'From'}
+                </Text>
                 <FontAwesomeIcon icon={faCrosshairs} size={18} color={colors.textBody} />
               </TouchableOpacity>
 
               <TouchableOpacity 
-                style={[styles.inputBox, { backgroundColor: colors.inputBg }]}
+                style={[styles.inputBox, { 
+                    backgroundColor: destinationLocation ? colors.backgroundLight : colors.inputBg,
+                    borderColor: destinationLocation ? colors.primary : colors.transparent }]}
                 activeOpacity={0.8}
-                onPress={handleNavigateToSearch}
+                onPress={() => handleNavigateToSearch('destination')}
               >
-                <Text style={[styles.inputText, { color: colors.textBody }]}>Destination</Text>
+                <Text style={[styles.inputText, { 
+                    color: destinationLocation ? colors.textTitle : colors.textBody 
+                }]}>
+                  {destinationLocation ? destinationLocation.name : 'Destination'}
+                </Text>
                 <FontAwesomeIcon icon={faLocationDot} size={18} color={colors.textBody} />
               </TouchableOpacity>
             </View>
@@ -215,6 +227,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     height: 48,
     borderRadius: 12,
+    borderWidth: 2,
     paddingHorizontal: 15,
   },
   inputText: {

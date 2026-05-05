@@ -25,7 +25,7 @@ export type RootStackParamList = {
   FillOTP: { contactMethod: string; contactValue: string };
   NewPassword: undefined;
   MainTabs: undefined;
-  Search: undefined;
+  Search: { type?: 'from' | 'destination' } | undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();

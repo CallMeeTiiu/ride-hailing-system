@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigation } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { 
   View, 
   Text, 
@@ -19,6 +19,7 @@ import theme from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocation } from '../../contexts/LocationContext';
+import { RootStackParamList } from '../../../App';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -70,21 +71,32 @@ const SwipeableItem = ({ item, onDelete, swipeEnabled = true, children }: { item
 const SearchScreen = () => {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-
   const navigation = useNavigation();
+
+  const route = useRoute<RouteProp<RootStackParamList, 'Search'>>();
+  const searchType = route.params?.type;
 
   const [searchText, setSearchText] = useState('');
   const [isFocused, setIsFocused] = useState(false);
 
-  const { allLocations, recentLocations, addRecentLocation, removeRecentLocation } = useLocation();
+  const { allLocations, recentLocations, addRecentLocation, removeRecentLocation, setFromLocation, setDestinationLocation } = useLocation();
 
   const handleDeleteRecent = (id: string) => {
     removeRecentLocation(id);
   };
 
   const handleSelectLocation = (selectedItem: any) => {
-    setSearchText(selectedItem.name);
-    addRecentLocation(selectedItem); 
+    addRecentLocation(selectedItem);  
+    
+    if (searchType === 'from') {
+      setFromLocation(selectedItem);
+      navigation.goBack();
+    } else if (searchType === 'destination') {
+      setDestinationLocation(selectedItem);
+      navigation.goBack();
+    } else {
+      setSearchText(selectedItem.name); 
+    }
   };
 
   const isSearching = searchText.length > 0;

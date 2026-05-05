@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faLocationDot, faCrosshairs } from '@fortawesome/free-solid-svg-icons';
@@ -6,9 +6,18 @@ import { faLocationDot, faCrosshairs } from '@fortawesome/free-solid-svg-icons';
 import theme from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import SelectAddressSheet from './SelectAddressSheet';
+import { useLocation } from '../../contexts/LocationContext';
 
 const BottomSearchBoard = () => {
   const { colors } = useTheme();
+
+  const { fromLocation, destinationLocation } = useLocation();
+  
+  useEffect(() => {
+    if (fromLocation || destinationLocation) {
+      setIsAddressSheetVisible(true);
+    }
+  }, [fromLocation, destinationLocation]);
 
   const suggestionChips = [
     { id: 1, label: 'Home', icon: faLocationDot },

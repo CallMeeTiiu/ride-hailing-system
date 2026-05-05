@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faLocationDot, faCrosshairs } from '@fortawesome/free-solid-svg-icons';
 
 import theme from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
+import SelectAddressSheet from './SelectAddressSheet';
 
 const BottomSearchBoard = () => {
   const { colors } = useTheme();
@@ -14,6 +15,8 @@ const BottomSearchBoard = () => {
     { id: 2, label: 'Office', icon: faLocationDot },
     { id: 3, label: 'Apartment', icon: faLocationDot },
   ];
+
+  const [isAddressSheetVisible, setIsAddressSheetVisible] = useState(false);
 
   return (
     <View style={styles.container}>
@@ -41,13 +44,18 @@ const BottomSearchBoard = () => {
         <TouchableOpacity 
           style={[styles.searchBar, { backgroundColor: colors.inputBg }]}
           activeOpacity={0.9}
-          onPress={() => {}}
+          onPress={() => setIsAddressSheetVisible(true)}
         >
           <Text style={[styles.searchText, { color: colors.textBody }]}>Where would you go?</Text>
           <FontAwesomeIcon icon={faLocationDot} size={20} color={colors.textBody} />
         </TouchableOpacity>
 
       </View>
+
+      <SelectAddressSheet 
+        onClose={() => setIsAddressSheetVisible(false)} 
+        visible={isAddressSheetVisible}
+      />
 
     </View>
   );

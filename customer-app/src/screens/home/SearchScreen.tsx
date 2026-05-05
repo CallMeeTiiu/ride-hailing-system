@@ -76,16 +76,7 @@ const SearchScreen = () => {
   const [searchText, setSearchText] = useState('');
   const [isFocused, setIsFocused] = useState(false);
 
-  const allLocations = [
-    { id: '1', name: 'Grand Indonesia Mall', address: 'Jl. M.H. Thamrin No.1', distance: '1.2 km' },
-    { id: '2', name: 'Soekarno-Hatta Airport', address: 'Tangerang City, Banten', distance: '15.5 km' },
-    { id: '3', name: 'Central Park', address: 'Letjen S. Parman St', distance: '4.8 km' },
-    { id: '4', name: 'Times Square', address: 'Manhattan, NY 10036, USA', distance: '8.3 km' },
-    { id: '5', name: 'Empire State Building', address: '20 W 34th St., New York', distance: '9.1 km' },
-    { id: '6', name: 'Statue of Liberty', address: 'New York, NY 10004, USA', distance: '12.4 km' }, 
-  ];
-
-  const { recentLocations, addRecentLocation, removeRecentLocation } = useLocation();
+  const { allLocations, recentLocations, addRecentLocation, removeRecentLocation } = useLocation();
 
   const handleDeleteRecent = (id: string) => {
     removeRecentLocation(id);
@@ -97,13 +88,14 @@ const SearchScreen = () => {
   };
 
   const isSearching = searchText.length > 0;
+  const isSuggesting = recentLocations.length === 0;
   
   const displayData = isSearching 
     ? allLocations.filter(loc => 
         loc.name.toLowerCase().includes(searchText.toLowerCase()) || 
         loc.address.toLowerCase().includes(searchText.toLowerCase())
       )
-    : recentLocations;
+    : (recentLocations.length > 0 ? recentLocations : allLocations);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, top: insets.top + 10 }]}>
@@ -146,7 +138,9 @@ const SearchScreen = () => {
                   Result for <Text style={{ color: theme.COLORS.primary, fontWeight: 'bold' }}>"{searchText}"</Text>
                 </Text>
               ) : (
-                <Text style={[styles.sectionTitle, { color: colors.textBody }]}>Recent Places</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textBody }]}>
+                  {recentLocations.length > 0 ? "Recent Places" : "Suggested Places"}
+                </Text>
               )}
 
               {searchText.length > 0 ? (
@@ -162,14 +156,14 @@ const SearchScreen = () => {
                 item={item} 
                 onDelete={handleDeleteRecent} 
                 swipeEnabled={!isSearching}
-            >
+              >
                 <TouchableOpacity 
                     key={item.id} 
                     activeOpacity={1} 
                     style={[styles.locationItem, { borderBottomColor: colors.border, backgroundColor: colors.background }]}
                     onPress={() => handleSelectLocation(item)}
                 >
-                    {searchText.length > 0 ? (
+                    {isSearching || isSuggesting? (
                     <View style={[styles.outerCircle, {backgroundColor: colors.backgroundLight}]}>
                         <View style={styles.innerCircle}>
                         <FontAwesomeIcon icon={faMapMarkerAlt} size={14} color={colors.textTitle} />

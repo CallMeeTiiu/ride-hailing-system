@@ -8,7 +8,17 @@ export interface LocationItem {
   distance: string;
 }
 
-interface LocationContextType {
+export const ALL_LOCATIONS_DB: LocationItem[] = [
+  { id: '1', name: 'Grand Indonesia Mall', address: 'Jl. M.H. Thamrin No.1', distance: '1.2 km' },
+  { id: '2', name: 'Soekarno-Hatta Airport', address: 'Tangerang City, Banten', distance: '15.5 km' },
+  { id: '3', name: 'Central Park', address: 'Letjen S. Parman St', distance: '4.8 km' },
+  { id: '4', name: 'Times Square', address: 'Manhattan, NY 10036, USA', distance: '8.3 km' },
+  { id: '5', name: 'Empire State Building', address: '20 W 34th St., New York', distance: '9.1 km' },
+  { id: '6', name: 'Statue of Liberty', address: 'New York, NY 10004, USA', distance: '12.4 km' },
+];
+
+interface LocationContextType { 
+  allLocations: LocationItem[];
   recentLocations: LocationItem[];
   addRecentLocation: (item: LocationItem) => void;
   removeRecentLocation: (id: string) => void;
@@ -61,7 +71,13 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   return (
-    <LocationContext.Provider value={{ recentLocations, addRecentLocation, removeRecentLocation, clearAllRecent }}>
+    <LocationContext.Provider value={{ 
+        allLocations: ALL_LOCATIONS_DB,
+        recentLocations, 
+        addRecentLocation, 
+        removeRecentLocation, 
+        clearAllRecent 
+    }}>
       {children}
     </LocationContext.Provider>
   );

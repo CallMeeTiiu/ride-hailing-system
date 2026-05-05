@@ -1,21 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Modal, 
   View, 
   Text, 
   StyleSheet, 
   TouchableOpacity, 
-  ScrollView,
-  Dimensions,
   TouchableWithoutFeedback
 } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { 
   faLocationDot, 
   faCrosshairs, 
-  faBookmark, 
-  faChevronRight, 
-  faClock 
+  faPenToSquare
 } from '@fortawesome/free-solid-svg-icons';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -25,7 +21,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useLocation } from '../../contexts/LocationContext';
 import { RootStackParamList } from '../../../App';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+import PrimaryButton from '../common/PrimaryButton'; 
 
 interface SelectAddressSheetProps {
   visible: boolean;
@@ -36,12 +32,18 @@ const SelectAddressSheet: React.FC<SelectAddressSheetProps> = ({ visible, onClos
   const { colors } = useTheme();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   
-  const { allLocations, recentLocations, fromLocation, destinationLocation } = useLocation();
-  const displayData = recentLocations.length > 0 ? recentLocations : allLocations;
+  const { fromLocation, destinationLocation } = useLocation();
+
+  const [distance] = useState(4.5);
+
+  const isOrderReady = 
+    fromLocation !== null && 
+    destinationLocation !== null && 
+    fromLocation.id !== destinationLocation.id;
 
   const handleNavigateToSearch = (type: 'from' | 'destination') => {
-    onClose();
-    navigation.navigate('Search', { type }); 
+    onClose(); 
+    navigation.navigate('Search', { type });
   };
 
   return (
@@ -57,94 +59,97 @@ const SelectAddressSheet: React.FC<SelectAddressSheetProps> = ({ visible, onClos
         </TouchableWithoutFeedback>
 
         <View style={[styles.sheetContainer, { backgroundColor: colors.background }]}>
-          
           <View style={styles.dragHandle} />
-
           <Text style={[styles.title, { color: colors.textTitle }]}>Select Address</Text>
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-          {/* --- KHU VỰC NHẬP TỪ ĐÂU - ĐẾN ĐÂU --- */}
-          <View style={styles.routeSection}>
-            {/* Cột chứa Icon và Đường nét đứt */}
-            <View style={styles.iconColumn}>
-              {/* Icon From tự custom (Vòng tròn kép) */}
-              <View style={[styles.fromIconOuter, { borderColor: theme.COLORS.primary }]}>
-                <View style={[styles.fromIconInner, { backgroundColor: theme.COLORS.primary }]} />
-              </View>
-
-              {/* Đường nét đứt nối 2 icon */}
-              <View style={[styles.dashedLine, { borderColor: colors.textBody }]} />
-
-              {/* Icon Destination */}
-              <FontAwesomeIcon icon={faLocationDot} size={20} color={theme.COLORS.primary} />
-            </View>
-
-            {/* Cột chứa 2 ô Input giả */}
-            <View style={styles.inputColumn}>
-              <TouchableOpacity 
-                style={[styles.inputBox, { 
-                    backgroundColor: fromLocation ? colors.backgroundLight : colors.inputBg,
-                    borderColor: fromLocation ? colors.primary : colors.transparent}]}
-                activeOpacity={0.8}
-                onPress={() => handleNavigateToSearch('from')}
-              >
-                <Text style={[styles.inputText, { 
-                    color: fromLocation ? colors.textTitle : colors.textBody 
-                }]}>
-                  {fromLocation ? fromLocation.name : 'From'}
-                </Text>
-                <FontAwesomeIcon icon={faCrosshairs} size={18} color={colors.textBody} />
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={[styles.inputBox, { 
-                    backgroundColor: destinationLocation ? colors.backgroundLight : colors.inputBg,
-                    borderColor: destinationLocation ? colors.primary : colors.transparent }]}
-                activeOpacity={0.8}
-                onPress={() => handleNavigateToSearch('destination')}
-              >
-                <Text style={[styles.inputText, { 
-                    color: destinationLocation ? colors.textTitle : colors.textBody 
-                }]}>
-                  {destinationLocation ? destinationLocation.name : 'Destination'}
-                </Text>
-                <FontAwesomeIcon icon={faLocationDot} size={18} color={colors.textBody} />
-              </TouchableOpacity>
-            </View>
+          
+          <View style={styles.distanceRow}>
+            <Text style={[styles.distanceLabel, { color: colors.textTitle }]}>Distance</Text>
+            <Text style={[styles.distanceValue, { color: colors.textTitle }]}>{distance} km</Text>
           </View>
 
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-          {/* --- KHU VỰC SAVED PLACES --- */}
-          <TouchableOpacity style={styles.savedPlacesRow} activeOpacity={0.7}>
-            <View style={styles.savedPlacesLeft}>
-              <FontAwesomeIcon icon={faBookmark} size={20} color={theme.COLORS.primary} />
-              <Text style={[styles.savedPlacesText, { color: colors.textTitle }]}>Saved Places</Text>
-            </View>
-            <FontAwesomeIcon icon={faChevronRight} size={16} color={theme.COLORS.primary} />
-          </TouchableOpacity>
-
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-          {/* --- DANH SÁCH RECENT / SUGGESTED PLACES --- */}
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContainer}>
-            {displayData.map((item) => (
-              <TouchableOpacity 
-                key={item.id} 
-                style={styles.locationItem}
-                activeOpacity={0.7}
-              >
-                <FontAwesomeIcon icon={faClock} size={18} color={colors.textBody} style={styles.clockIcon} />
-                <View style={styles.locationTextContainer}>
-                  <Text style={[styles.locationName, { color: colors.textTitle }]}>{item.name}</Text>
-                  <Text style={[styles.locationAddress, { color: colors.textBody }]} numberOfLines={1}>
-                    {item.address}
-                  </Text>
+          {/* --- KHU VỰC ĐỊA ĐIỂM --- */}
+          <View style={styles.routeSection}>
+            <View style={styles.iconColumn}>
+              { fromLocation ? (
+                <View style={[ styles.outerCircle, {backgroundColor: colors.backgroundLight} ]}>
+                    <View style={styles.innerCircle}>
+                    <FontAwesomeIcon icon={faCrosshairs} size={12} color="black" />
+                    </View>
                 </View>
-                <Text style={[styles.distanceText, { color: colors.textTitle }]}>{item.distance}</Text>
+              ) : (
+                <View style={[ styles.outerCircle, {backgroundColor: colors.inputBg} ]}>
+                    <FontAwesomeIcon icon={faCrosshairs} size={12} color={colors.iconDisable} />
+                </View>
+              )}
+
+              <View style={[styles.dashedLine, { borderColor: colors.textBody }]} />
+
+              { destinationLocation ? (
+                <View style={[ styles.outerCircle, {backgroundColor: colors.backgroundLight} ]}>
+                    <View style={styles.innerCircle}>
+                    <FontAwesomeIcon icon={faLocationDot} size={12} color="black" />
+                    </View>
+                </View>
+              ) : (
+                <View style={[ styles.outerCircle, {backgroundColor: colors.inputBg} ]}>
+                    <FontAwesomeIcon icon={faLocationDot} size={12} color={colors.iconDisable} />
+                </View>
+              )}
+            </View>
+
+            {/* Cột phải: Chứa thông tin Text và Nút Edit */}
+            <View style={styles.contentColumn}>
+              <TouchableOpacity 
+                style={styles.locationItem} 
+                activeOpacity={0.7}
+                onPress={() => handleNavigateToSearch('from')}
+              >
+                <View style={styles.textContainer}>
+                  <Text style={[styles.locName, { color: colors.textTitle }]}>
+                    {fromLocation ? fromLocation.name : 'My Current Location'}
+                  </Text>
+                  {fromLocation ? (
+                    <Text style={[styles.locAddress, { color: colors.textBody }]} numberOfLines={1}>
+                        {fromLocation.address}
+                    </Text>
+                  ) : ("")}
+                  
+                </View>
+                <FontAwesomeIcon icon={faPenToSquare} size={16} color={theme.COLORS.primary} />
               </TouchableOpacity>
-            ))}
-          </ScrollView>
+
+              <TouchableOpacity 
+                style={styles.locationItem} 
+                activeOpacity={0.7}
+                onPress={() => handleNavigateToSearch('destination')}
+              >
+                <View style={styles.textContainer}>
+                  <Text style={[styles.locName, { color: colors.textTitle }]}>
+                    {destinationLocation ? destinationLocation.name : 'Select Destination'}
+                  </Text>
+                  {destinationLocation ? (
+                    <Text style={[styles.locAddress, { color: colors.textBody }]} numberOfLines={1}>
+                        {destinationLocation.address}
+                    </Text>
+                  ) : ("")}
+                </View>
+                <FontAwesomeIcon icon={faPenToSquare} size={16} color={theme.COLORS.primary} />
+              </TouchableOpacity>
+
+            </View>
+          </View>
+
+          <View style={styles.buttonContainer} >
+             <PrimaryButton
+               title="Continue to Order" 
+               disabled={!isOrderReady} 
+               onPress={() => {
+                  console.log("Tiến hành đặt xe!");
+               }}
+             />
+          </View>
 
         </View>
       </View>
@@ -163,10 +168,10 @@ const styles = StyleSheet.create({
   },
   sheetContainer: {
     width: '100%',
-    height: SCREEN_HEIGHT * 0.85,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     paddingTop: 10,
+    paddingBottom: 30, 
   },
   dragHandle: {
     width: 40,
@@ -182,6 +187,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 15,
   },
+  distanceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginBottom: 15,
+  },
+  distanceLabel: {
+    fontFamily: theme.FONTS.bold,
+    fontSize: 16,
+  },
+  distanceValue: {
+    fontFamily: theme.FONTS.regular,
+    fontSize: 14,
+  },
   divider: {
     height: 1,
     width: '100%',
@@ -192,94 +211,59 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   iconColumn: {
-    width: 30,
+    width: 40,
     alignItems: 'center',
-    marginRight: 10,
-    paddingVertical: 12, 
+    marginRight: 15,
   },
-  fromIconOuter: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
+  outerCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  fromIconInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+  innerCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: theme.COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   dashedLine: {
-    flex: 1,
+    height: 30, 
     borderLeftWidth: 1.5,
     borderStyle: 'dashed',
-    marginVertical: 5,
-    opacity: 0.5,
+    marginVertical: 4,
+    opacity: 0.4,
   },
-  inputColumn: {
+  contentColumn: {
     flex: 1,
-    gap: 15, 
-  },
-  inputBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    height: 48,
-    borderRadius: 12,
-    borderWidth: 2,
-    paddingHorizontal: 15,
-  },
-  inputText: {
-    fontFamily: theme.FONTS.regular,
-    fontSize: 15,
-  },
-  savedPlacesRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-  },
-  savedPlacesLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  savedPlacesText: {
-    fontFamily: theme.FONTS.bold,
-    fontSize: 16,
-    marginLeft: 15,
-  },
-  listContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    paddingBottom: 30,
   },
   locationItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 15,
+    justifyContent: 'space-between',
+    height: 36, 
   },
-  clockIcon: {
-    marginRight: 15,
-  },
-  locationTextContainer: {
+  textContainer: {
     flex: 1,
+    paddingRight: 10,
   },
-  locationName: {
+  locName: {
     fontFamily: theme.FONTS.semiBold,
     fontSize: 16,
-    marginBottom: 4,
+    marginBottom: 2,
   },
-  locationAddress: {
+  locAddress: {
     fontFamily: theme.FONTS.regular,
     fontSize: 13,
   },
-  distanceText: {
-    fontFamily: theme.FONTS.bold,
-    fontSize: 14,
-    marginLeft: 10,
-  },
+  buttonContainer: {
+    paddingHorizontal: 20,
+    marginTop: 10,
+  }
 });
 
 export default SelectAddressSheet;

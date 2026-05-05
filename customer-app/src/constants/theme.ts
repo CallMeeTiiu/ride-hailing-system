@@ -37,7 +37,9 @@ export const darkColors = {
   textTitle: '#E0E0E0',   
   textIcon: '#757575',
   textBody: '#83756099',      
-  textLight: '#9E9E9E',   
+  textLight: '#9E9E9E',
+  
+  circleButtonBg: '#ffe4a3',
   
   textBtn: '#35383F',
   

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native'; 
 
-import { useTheme } from '../../constants/ThemeContext';
+import { useTheme } from '../../contexts/ThemeContext';
 
 import MapBackground from '../../components/home/MapBackground';
 import BottomSearchBoard from '../../components/home/BottomSearchBoard';

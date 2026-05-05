@@ -14,7 +14,7 @@ import { faLock } from '@fortawesome/free-solid-svg-icons';
 
 import { RootStackParamList } from '../../../App';
 import theme from '../../constants/theme';
-import { useTheme } from '../../constants/ThemeContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import CustomInput from '../../components/common/CustomInput';
 import PrimaryButton from '../../components/common/PrimaryButton';
 import SuccessPopup from '../../components/common/SuccessPopup';

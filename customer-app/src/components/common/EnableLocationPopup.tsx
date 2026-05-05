@@ -8,8 +8,8 @@ import {
 } from 'react-native';
 
 import theme from '../../constants/theme';
-import { useTheme } from '../../constants/ThemeContext';
-import PrimaryButton from './PrimaryButton'; // Tái sử dụng nút Primary của bạn
+import { useTheme } from '../../contexts/ThemeContext';
+import PrimaryButton from './PrimaryButton';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faLocationDot } from '@fortawesome/free-solid-svg-icons';
 

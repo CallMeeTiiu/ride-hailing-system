@@ -16,8 +16,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faArrowLeft, faClock, faMagnifyingGlass, faMapMarkerAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 import theme from '../../constants/theme';
-import { useTheme } from '../../constants/ThemeContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocation } from '../../contexts/LocationContext';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -84,25 +85,15 @@ const SearchScreen = () => {
     { id: '6', name: 'Statue of Liberty', address: 'New York, NY 10004, USA', distance: '12.4 km' }, 
   ];
 
-  const [recentLocations, setRecentLocations] = useState([
-    allLocations[0], 
-    allLocations[1], 
-    allLocations[2]
-  ]);
+  const { recentLocations, addRecentLocation, removeRecentLocation } = useLocation();
 
   const handleDeleteRecent = (id: string) => {
-    setRecentLocations(prev => prev.filter(item => item.id !== id));
+    removeRecentLocation(id);
   };
 
   const handleSelectLocation = (selectedItem: any) => {
     setSearchText(selectedItem.name);
-
-    setRecentLocations(prev => {
-      const filteredList = prev.filter(item => item.id !== selectedItem.id); 
-      return [selectedItem, ...filteredList]; 
-    });
-    
-    // navigate/load map logic
+    addRecentLocation(selectedItem); 
   };
 
   const isSearching = searchText.length > 0;

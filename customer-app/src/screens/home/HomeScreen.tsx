@@ -11,6 +11,7 @@ import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../../App';
+import FloatingMapActions from '../../components/home/FloatingMapActions';
 
 const HomeScreen = () => {
   const { colors } = useTheme();
@@ -31,6 +32,7 @@ const HomeScreen = () => {
       </View>
 
       <MapBackground />
+      <FloatingMapActions />
       <BottomSearchBoard />
     </View>
   );

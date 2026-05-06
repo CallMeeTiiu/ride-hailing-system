@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Modal, ActivityIndicator } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faHandsClapping } from '@fortawesome/free-solid-svg-icons';
 import theme from '../../constants/theme';
-import { useTheme } from '../../constants/ThemeContext'
+import { useTheme } from '../../contexts/ThemeContext'
 
 interface SuccessPopupProps {
   visible: boolean;

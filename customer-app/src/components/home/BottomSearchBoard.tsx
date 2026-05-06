@@ -1,16 +1,23 @@
-import React, { useState } from 'react';
-import SearchBottomSheet from './SearchBottomSheet';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faLocationDot, faCrosshairs } from '@fortawesome/free-solid-svg-icons';
 
 import theme from '../../constants/theme';
-import { useTheme } from '../../constants/ThemeContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import SelectAddressSheet from './SelectAddressSheet';
+import { useLocation } from '../../contexts/LocationContext';
 
 const BottomSearchBoard = () => {
   const { colors } = useTheme();
 
-  const [isSheetVisible, setIsSheetVisible] = useState(false);
+  const { fromLocation, destinationLocation } = useLocation();
+  
+  useEffect(() => {
+    if (fromLocation || destinationLocation) {
+      setIsAddressSheetVisible(true);
+    }
+  }, [fromLocation, destinationLocation]);
 
   const suggestionChips = [
     { id: 1, label: 'Home', icon: faLocationDot },
@@ -18,13 +25,10 @@ const BottomSearchBoard = () => {
     { id: 3, label: 'Apartment', icon: faLocationDot },
   ];
 
+  const [isAddressSheetVisible, setIsAddressSheetVisible] = useState(false);
+
   return (
     <View style={styles.container}>
-      <SearchBottomSheet 
-        visible={isSheetVisible} 
-        onClose={() => setIsSheetVisible(false)} 
-      />
-      
       <View style={styles.locationButtonContainer}>
         <TouchableOpacity style={styles.locationButton} activeOpacity={0.8}>
           <FontAwesomeIcon icon={faCrosshairs} size={24} color={theme.COLORS.textTitle} />
@@ -49,13 +53,18 @@ const BottomSearchBoard = () => {
         <TouchableOpacity 
           style={[styles.searchBar, { backgroundColor: colors.inputBg }]}
           activeOpacity={0.9}
-          onPress={() => setIsSheetVisible(true)}
+          onPress={() => setIsAddressSheetVisible(true)}
         >
           <Text style={[styles.searchText, { color: colors.textBody }]}>Where would you go?</Text>
           <FontAwesomeIcon icon={faLocationDot} size={20} color={colors.textBody} />
         </TouchableOpacity>
 
       </View>
+
+      <SelectAddressSheet 
+        onClose={() => setIsAddressSheetVisible(false)} 
+        visible={isAddressSheetVisible}
+      />
 
     </View>
   );

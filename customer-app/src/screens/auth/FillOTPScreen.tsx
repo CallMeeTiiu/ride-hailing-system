@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RootStackParamList } from '../../../App';
 import theme from '../../constants/theme';
-import { useTheme } from '../../constants/ThemeContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import PrimaryButton from '../../components/common/PrimaryButton';
 
 const FillOTPScreen = () => {

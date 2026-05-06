@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import theme from './theme'; 
+import theme from '../constants/theme'; 
 
 interface ThemeContextProps {
   isDarkMode: boolean;

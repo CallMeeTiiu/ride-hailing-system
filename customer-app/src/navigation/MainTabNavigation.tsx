@@ -5,7 +5,7 @@ import { faHouse, faClipboardList, faUser } from '@fortawesome/free-solid-svg-ic
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import theme from '../constants/theme';
-import { useTheme } from '../constants/ThemeContext'
+import { useTheme } from '../contexts/ThemeContext'
 
 import HomeScreen from '../screens/home/HomeScreen';
 import BookingsScreen from '../screens/bookings/BookingsScreen';

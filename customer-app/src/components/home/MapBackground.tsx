@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Text } from 'react-native';
-import { useTheme } from '../../constants/ThemeContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import theme from '../../constants/theme';
 
 const MapBackground = () => {

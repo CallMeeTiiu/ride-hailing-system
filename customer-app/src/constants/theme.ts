@@ -11,10 +11,12 @@ export const lightColors = {
   
   textTitle: '#616161',   
   textIcon: '#837560',
-  textBody: '#83756099',      
-  textLight: '#9E9E9E',     
+  textBody: '#83756099',    
 
   textBtn: '#271900',
+
+  circleButtonBg: '#ffe4a3',
+  iconDisable: '#9e9e9e',
   
   white: '#FFFFFF',
   black: '#000000',
@@ -34,8 +36,10 @@ export const darkColors = {
   
   textTitle: '#E0E0E0',   
   textIcon: '#757575',
-  textBody: '#83756099',      
-  textLight: '#9E9E9E',   
+  textBody: '#83756099',   
+  
+  circleButtonBg: '#ffe4a3',
+  iconDisable: '#9e9e9e',
   
   textBtn: '#35383F',
   

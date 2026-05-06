@@ -10,7 +10,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import theme from '../../constants/theme';
-import { useTheme } from '../../constants/ThemeContext'
+import { useTheme } from '../../contexts/ThemeContext'
 
 interface CustomInputProps extends TextInputProps {
   label?: string;

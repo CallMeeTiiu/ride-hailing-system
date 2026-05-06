@@ -9,7 +9,7 @@ import {
   Platform 
 } from 'react-native';
 import theme from '../../constants/theme';
-import { useTheme } from '../../constants/ThemeContext' 
+import { useTheme } from '../../contexts/ThemeContext' 
 
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';

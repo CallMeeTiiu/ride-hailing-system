@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { 
-  Modal, 
   View, 
   Text, 
   StyleSheet, 
@@ -10,19 +10,16 @@ import {
   Image,
   Animated,         
   PanResponder,    
-  Dimensions 
+  Dimensions
 } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faArrowLeft, faClock, faMagnifyingGlass, faMapMarkerAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import theme from '../../constants/theme';
-import { useTheme } from '../../constants/ThemeContext';
-
-interface SearchBottomSheetProps {
-  visible: boolean;
-  onClose: () => void;
-}
+import { useTheme } from '../../contexts/ThemeContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocation } from '../../contexts/LocationContext';
+import { RootStackParamList } from '../../../App';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -71,79 +68,56 @@ const SwipeableItem = ({ item, onDelete, swipeEnabled = true, children }: { item
   );
 };
 
-const SearchBottomSheet: React.FC<SearchBottomSheetProps> = ({ visible, onClose }) => {
+const SearchScreen = () => {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
+
+  const route = useRoute<RouteProp<RootStackParamList, 'Search'>>();
+  const searchType = route.params?.type;
 
   const [searchText, setSearchText] = useState('');
   const [isFocused, setIsFocused] = useState(false);
 
-  useEffect(() => {
-    if (!visible) {
-      setSearchText('');
-      setIsFocused(false);
-    }
-  }, [visible]);
-
-  const allLocations = [
-    { id: '1', name: 'Grand Indonesia Mall', address: 'Jl. M.H. Thamrin No.1', distance: '1.2 km' },
-    { id: '2', name: 'Soekarno-Hatta Airport', address: 'Tangerang City, Banten', distance: '15.5 km' },
-    { id: '3', name: 'Central Park', address: 'Letjen S. Parman St', distance: '4.8 km' },
-    { id: '4', name: 'Times Square', address: 'Manhattan, NY 10036, USA', distance: '8.3 km' },
-    { id: '5', name: 'Empire State Building', address: '20 W 34th St., New York', distance: '9.1 km' },
-    { id: '6', name: 'Statue of Liberty', address: 'New York, NY 10004, USA', distance: '12.4 km' }, 
-  ];
-
-  const [recentLocations, setRecentLocations] = useState([
-    allLocations[0], 
-    allLocations[1], 
-    allLocations[2]
-  ]);
+  const { allLocations, recentLocations, addRecentLocation, removeRecentLocation, setFromLocation, setDestinationLocation } = useLocation();
 
   const handleDeleteRecent = (id: string) => {
-    setRecentLocations(prev => prev.filter(item => item.id !== id));
+    removeRecentLocation(id);
   };
 
   const handleSelectLocation = (selectedItem: any) => {
-    setSearchText(selectedItem.name);
-
-    setRecentLocations(prev => {
-      const filteredList = prev.filter(item => item.id !== selectedItem.id); 
-      return [selectedItem, ...filteredList]; 
-    });
+    addRecentLocation(selectedItem);  
     
-    // navigate/load map logic
+    if (searchType === 'from') {
+      setFromLocation(selectedItem);
+      navigation.goBack();
+    } else if (searchType === 'destination') {
+      setDestinationLocation(selectedItem);
+      navigation.goBack();
+    } else {
+      setSearchText(selectedItem.name); 
+    }
   };
 
   const isSearching = searchText.length > 0;
+  const isSuggesting = recentLocations.length === 0;
   
   const displayData = isSearching 
     ? allLocations.filter(loc => 
         loc.name.toLowerCase().includes(searchText.toLowerCase()) || 
         loc.address.toLowerCase().includes(searchText.toLowerCase())
       )
-    : recentLocations;
+    : (recentLocations.length > 0 ? recentLocations : allLocations);
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={true} 
-      onRequestClose={onClose} 
-    >
-      <View style={styles.overlay}>
-        <TouchableOpacity style={styles.dismissArea} activeOpacity={1} onPress={onClose} />
-
-        <View style={[styles.sheetContainer, { backgroundColor: colors.background, paddingBottom: insets.bottom }]}>
-          <View style={styles.header}>
-            <View style={styles.handleBar} />
-            <View style={styles.headerRow}>
-              <TouchableOpacity onPress={onClose} style={styles.backButton}>
-                <FontAwesomeIcon icon={faArrowLeft} size={20} color={colors.textTitle} />
-              </TouchableOpacity>
-              <Text style={[styles.headerTitle, { color: colors.textTitle }]}>Select Destination</Text>
-              <View style={styles.spacer} />
-            </View>
+    <View style={[styles.container, { backgroundColor: colors.background, top: insets.top + 10 }]}>
+          <View style={[styles.header]}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <FontAwesomeIcon icon={faArrowLeft} size={20} color={colors.textTitle} />
+            </TouchableOpacity>
+            <Text style={[styles.headerTitle, { color: colors.textTitle }]}>Select Destination</Text>
+            {/*eslint-disable-next-line react-native/no-inline-styles*/}
+            <View style={{ width: 20 }} /> 
           </View>
 
           <View style={styles.inputContainer}>
@@ -176,7 +150,9 @@ const SearchBottomSheet: React.FC<SearchBottomSheetProps> = ({ visible, onClose 
                   Result for <Text style={{ color: theme.COLORS.primary, fontWeight: 'bold' }}>"{searchText}"</Text>
                 </Text>
               ) : (
-                <Text style={[styles.sectionTitle, { color: colors.textBody }]}>Recent Places</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textBody }]}>
+                  {recentLocations.length > 0 ? "Recent Places" : "Suggested Places"}
+                </Text>
               )}
 
               {searchText.length > 0 ? (
@@ -192,14 +168,14 @@ const SearchBottomSheet: React.FC<SearchBottomSheetProps> = ({ visible, onClose 
                 item={item} 
                 onDelete={handleDeleteRecent} 
                 swipeEnabled={!isSearching}
-            >
+              >
                 <TouchableOpacity 
                     key={item.id} 
                     activeOpacity={1} 
                     style={[styles.locationItem, { borderBottomColor: colors.border, backgroundColor: colors.background }]}
                     onPress={() => handleSelectLocation(item)}
                 >
-                    {searchText.length > 0 ? (
+                    {isSearching || isSuggesting? (
                     <View style={[styles.outerCircle, {backgroundColor: colors.backgroundLight}]}>
                         <View style={styles.innerCircle}>
                         <FontAwesomeIcon icon={faMapMarkerAlt} size={14} color={colors.textTitle} />
@@ -238,17 +214,13 @@ const SearchBottomSheet: React.FC<SearchBottomSheetProps> = ({ visible, onClose 
             )}
           </ScrollView>
 
-        </View>
-      </View>
-    </Modal>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)', 
-    justifyContent: 'flex-end', 
+  container: { 
+    flex: 1 
   },
   dismissArea: {
     flex: 1, 
@@ -261,9 +233,12 @@ const styles = StyleSheet.create({
     ...theme.SHADOWS.primaryGlow,
   },
   header: {
-    alignItems: 'center',
-    paddingHorizontal: theme.SIZES.padding,
-    marginBottom: 20,
+    flexDirection: 'row',
+    width: '100%', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    paddingHorizontal: 20, 
+    paddingVertical: 15 
   },
   handleBar: {
     width: 40,
@@ -422,4 +397,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SearchBottomSheet;
+export default SearchScreen;

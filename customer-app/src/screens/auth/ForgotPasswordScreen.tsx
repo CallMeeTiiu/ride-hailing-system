@@ -17,7 +17,7 @@ import { faCommentDots, faEnvelope } from '@fortawesome/free-solid-svg-icons';
 
 import { RootStackParamList } from '../../../App';
 import theme from '../../constants/theme';
-import { useTheme } from '../../constants/ThemeContext' 
+import { useTheme } from '../../contexts/ThemeContext' 
 import PrimaryButton from '../../components/common/PrimaryButton';
 
 const ForgotPasswordScreen = () => {

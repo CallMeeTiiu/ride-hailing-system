@@ -10,12 +10,12 @@ interface PrimaryButtonProps extends TouchableOpacityProps {
   disabled?: boolean;
 }
 
-const PrimaryButton: React.FC<PrimaryButtonProps> = ({ title, onPress, style, disabled, ...props }) => {
+const PrimaryButton: React.FC<PrimaryButtonProps> = ({ title, onPress, style, disabled = false, ...props }) => {
   const { colors } = useTheme();
   return (
     <TouchableOpacity 
-      style={[styles.button, {backgroundColor: disabled ? colors.border : [theme.COLORS.primary, theme.SHADOWS.primaryGlow]}, style]} 
-      activeOpacity={disabled ? 1 : 0.3}
+      style={[styles.button, !disabled && styles.glow, {backgroundColor: disabled ? colors.border : theme.COLORS.primary}, style]} 
+      activeOpacity={disabled ? 1 : 0.2}
       onPress={disabled ? undefined : onPress}
       {...props}
     >
@@ -35,6 +35,9 @@ const styles = StyleSheet.create({
   buttonText: {
     fontFamily: theme.FONTS.semiBold,
     fontSize: theme.SIZES.body1,
+  },
+  glow: {
+    ...theme.SHADOWS.primaryGlow
   }
 });
 

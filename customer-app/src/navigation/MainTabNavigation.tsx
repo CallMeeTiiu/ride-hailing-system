@@ -8,7 +8,7 @@ import theme from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext'
 
 import HomeScreen from '../screens/home/HomeScreen';
-import BookingsScreen from '../screens/bookings/BookingsScreen';
+import BookingScreen from '../screens/booking/BookingScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
@@ -42,7 +42,7 @@ const MainTabNavigator = () => {
     >
       <Tab.Screen 
         name="BookingsTab" 
-        component={BookingsScreen} 
+        component={BookingScreen} 
         options={{
           tabBarLabel: 'Bookings',
           // eslint-disable-next-line react/no-unstable-nested-components

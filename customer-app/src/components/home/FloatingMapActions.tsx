@@ -7,6 +7,7 @@ import {
   ScrollView,
   Dimensions 
 } from 'react-native';
+import Animated, { useAnimatedStyle, interpolate, Extrapolation } from 'react-native-reanimated';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { 
   faCrosshairs, 
@@ -28,11 +29,22 @@ const suggestionChips = [
   { id: '4', label: 'School', icon: faSchool },
 ];
 
-const FloatingMapActions = () => {
+interface FloatingMapActionsProps {
+  animatedIndex: any;
+}
+
+const FloatingMapActions: React.FC<FloatingMapActionsProps> = ({ animatedIndex }) => {
   const { colors } = useTheme();
 
+  const floatingAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: interpolate(animatedIndex.value, [0, 0.3], [1, 0], Extrapolation.CLAMP),
+      zIndex: animatedIndex.value > 0.1 ? -1 : 1,
+    };
+  });
+
   return (
-    <View style={styles.floatingWrapper} pointerEvents="box-none">
+    <Animated.View style={[styles.floatingWrapper, floatingAnimatedStyle]} pointerEvents="box-none">
       
       <View style={styles.locationButtonContainer}>
         <TouchableOpacity style={styles.locationButton} activeOpacity={0.8}>
@@ -51,7 +63,7 @@ const FloatingMapActions = () => {
         </ScrollView>
       </View>
 
-    </View>
+    </Animated.View>
   );
 };
 

@@ -12,12 +12,15 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../../App';
 import FloatingMapActions from '../../components/home/FloatingMapActions';
+import { useSharedValue } from 'react-native-reanimated';
 
 const HomeScreen = () => {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+
+  const animatedSheetIndex = useSharedValue(0);
 
   return (
     <View style={styles.container}>
@@ -32,8 +35,8 @@ const HomeScreen = () => {
       </View>
 
       <MapBackground />
-      <FloatingMapActions />
-      <BottomSearchBoard />
+      <FloatingMapActions animatedIndex={animatedSheetIndex}/>
+      <BottomSearchBoard animatedIndex={animatedSheetIndex}/>
     </View>
   );
 };

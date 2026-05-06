@@ -304,7 +304,11 @@ const SheetAnimatedContent = ({
   );
 };
 
-const BottomSearchBoard = () => {
+interface BottomSearchBoardProps {
+  animatedIndex: any; 
+}
+
+const BottomSearchBoard: React.FC<BottomSearchBoardProps> = ({ animatedIndex }) => {
   const { colors } = useTheme();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   
@@ -338,6 +342,7 @@ const BottomSearchBoard = () => {
       ref={sheetRef}
       index={0} 
       snapPoints={snapPoints}
+      animatedIndex={animatedIndex}
       style={styles.sheetShadow}
       backgroundStyle={{ backgroundColor: colors.background }}
       handleIndicatorStyle={styles.dragHandle}

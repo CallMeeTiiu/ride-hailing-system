@@ -146,8 +146,11 @@ const SelectAddressSheet: React.FC<SelectAddressSheetProps> = ({ visible, onClos
                title="Continue to Order" 
                disabled={!isOrderReady} 
                onPress={() => {
-                  console.log("Tiến hành đặt xe!");
-               }}
+                if (isOrderReady) {
+                    onClose();
+                    navigation.navigate('SelectCar', {distance});
+                  }
+                }}
              />
           </View>
 

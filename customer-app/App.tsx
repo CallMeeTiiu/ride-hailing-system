@@ -14,6 +14,7 @@ import NewPasswordScreen from './src/screens/auth/NewPasswordScreen';
 
 import MainTabNavigator from './src/navigation/MainTabNavigation';
 import SearchScreen from './src/screens/home/SearchScreen';
+import SelectCarScreen from './src/screens/home/SelectCarScreen';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -26,6 +27,7 @@ export type RootStackParamList = {
   NewPassword: undefined;
   MainTabs: undefined;
   Search: { type?: 'from' | 'destination' } | undefined;
+  SelectCar: { distance: number };
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -47,6 +49,7 @@ const App = () => {
           <Stack.Screen name="NewPassword" component={NewPasswordScreen} />
           <Stack.Screen name="MainTabs" component={MainTabNavigator} />
           <Stack.Screen name="Search" component={SearchScreen} />
+          <Stack.Screen name="SelectCar" component={SelectCarScreen}/>
         </Stack.Navigator>
       </NavigationContainer>
     </LocationProvider>

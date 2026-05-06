@@ -4,7 +4,7 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 
 import MapBackground from '../../components/home/MapBackground';
-import BottomSearchBoard from '../../components/home/BottomSearchBoard';
+import BottomSearchBoard from '../../components/home/HomeBottomSheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';

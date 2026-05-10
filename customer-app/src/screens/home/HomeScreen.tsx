@@ -1,9 +1,8 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native'; 
+import { View, StyleSheet, TouchableOpacity, Image } from 'react-native'; 
 
 import { useTheme } from '../../contexts/ThemeContext';
 
-import MapBackground from '../../components/home/MapBackground';
 import BottomSearchBoard from '../../components/home/HomeBottomSheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
@@ -13,6 +12,9 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../../App';
 import FloatingMapActions from '../../components/home/FloatingMapActions';
 import { useSharedValue } from 'react-native-reanimated';
+import AppMap from '../../components/home/AppMap';
+import RadarAnimation from '../../components/home/RadarAnimation';
+import theme from '../../constants/theme';
 
 const HomeScreen = () => {
   const { colors } = useTheme();
@@ -24,17 +26,27 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
+      <AppMap>
+        <View style={styles.userCenterAnchor}>
+          <RadarAnimation />
+          <View style={[styles.avatarBorder, { borderColor: colors.primaryLight }]}>
+            <Image 
+              source={{ uri: 'https://i.pravatar.cc/150?u=user' }}
+              style={styles.userAvatar} 
+            />
+          </View>
+        </View>
+      </AppMap>
+
       <View style={[styles.topActionContainer, { top: insets.top + 10 }]}>
-        <TouchableOpacity 
-            style={[styles.circleButton, { backgroundColor: colors.circleButtonBg }]}
-            activeOpacity={0.8}
-            onPress={() => navigation.navigate('Search')}
-          >
-            <FontAwesomeIcon icon={faMagnifyingGlass} size={20} color={colors.textTitle} />
+        <TouchableOpacity
+          style={[styles.circleButton, { backgroundColor: colors.circleButtonBg }]}
+          activeOpacity={0.8}
+          onPress={() => navigation.navigate('Search')}
+        >
+          <FontAwesomeIcon icon={faMagnifyingGlass} size={20} color={colors.textTitle} />
         </TouchableOpacity>
       </View>
-
-      <MapBackground />
       <FloatingMapActions animatedIndex={animatedSheetIndex}/>
       <BottomSearchBoard animatedIndex={animatedSheetIndex}/>
     </View>
@@ -65,7 +77,25 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-  }
+  },
+  userCenterAnchor: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarBorder: {
+    width: 60, 
+    height: 60, 
+    borderRadius: 30, 
+    borderWidth: 4, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    backgroundColor: theme.COLORS.white,
+  },
+  userAvatar: { 
+    width: 50, 
+    height: 50, 
+    borderRadius: 25 
+  },
 });
 
 export default HomeScreen;

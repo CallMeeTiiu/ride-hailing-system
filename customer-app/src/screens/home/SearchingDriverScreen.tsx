@@ -1,12 +1,13 @@
 import React from 'react';
-import { StyleSheet, View, Image, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Image, Text } from 'react-native';
 
-import AppMap from '../../components/booking/AppMap';
+import AppMap from '../../components/home/AppMap';
 import { useTheme } from '../../contexts/ThemeContext';
 import theme from '../../constants/theme';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faArrowLeft, faCar } from '@fortawesome/free-solid-svg-icons';
-import RadarAnimation from '../../components/booking/RadarAnimation';
+import { faCar } from '@fortawesome/free-solid-svg-icons';
+import RadarAnimation from '../../components/home/RadarAnimation';
+import SwipeButton from '../../components/booking/SwipeButton';
 
 const mockDrivers = [
   { id: '1', dx: -100, dy: -150, rotation: '-45deg', avatar: 'https://i.pravatar.cc/150?u=d1' },
@@ -64,9 +65,6 @@ const SearchingDriverScreen = ({ navigation }: any) => {
 
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <FontAwesomeIcon icon={faArrowLeft} size={20} color={colors.textTitle} />
-        </TouchableOpacity>
         <View style={styles.headerTextWrapper}>
           <Text style={[styles.title, { color: colors.textTitle }]}>
             Searching for Driver
@@ -85,6 +83,27 @@ const SearchingDriverScreen = ({ navigation }: any) => {
          <Text style={[styles.statusSubTitle, { color: colors.textBody }]}>
            This may take a few seconds...
          </Text>
+      </View>
+
+      <View style={styles.searchingStatusWrapper}>
+         <View style={[styles.taxiIconBubble, { backgroundColor: colors.primary }]}>
+           <FontAwesomeIcon icon={faCar} size={18} color={colors.textBtn} />
+         </View>
+         <Text style={[styles.statusTitle, { color: colors.textTitle }]}>
+           Searching Ride...
+         </Text>
+         <Text style={[styles.statusSubTitle, { color: colors.textBody }]}>
+           This may take a few seconds...
+         </Text>
+      </View>
+
+      {/* GẮN SLIDER MỚI VÀO ĐÂY CHỖ NÀY */}
+      <View style={styles.bottomSliderWrapper}>
+        <SwipeButton 
+          onCancel={() => {
+            navigation.goBack();
+          }} 
+        />
       </View>
     </View>
   );
@@ -192,7 +211,15 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: 'center', 
     alignItems: 'center',
-  }
+  },
+  bottomSliderWrapper: {
+    position: 'absolute',
+    bottom: theme.SIZES.padding * 3.5,
+    left: theme.SIZES.padding,
+    right: theme.SIZES.padding,
+    alignItems: 'center',
+    zIndex: 10,
+  },
 });
 
 export default SearchingDriverScreen;

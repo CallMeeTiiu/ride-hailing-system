@@ -49,7 +49,7 @@ const Ring = ({ delay, color }: { delay: number; color: string }) => {
     <Animated.View 
       style={[
         styles.ring, 
-        { borderColor: color }, 
+        { backgroundColor: color }, 
         animatedStyle
       ]} 
     />
@@ -61,7 +61,6 @@ const RadarAnimation = () => {
 
   return (
     <View style={styles.container}>
-      {/* 3 vòng sóng với độ trễ cách nhau 1 giây */}
       <Ring delay={0} color={colors.primary} />
       <Ring delay={1000} color={colors.primary} />
       <Ring delay={2000} color={colors.primary} />
@@ -74,15 +73,12 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: -1, 
   },
   ring: {
     position: 'absolute',
     width: 60, 
     height: 60,
     borderRadius: 30,
-    borderWidth: 2,
-    borderStyle: 'dashed', 
   },
 });
 

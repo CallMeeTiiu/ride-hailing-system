@@ -1,121 +1,198 @@
 import React from 'react';
 import { StyleSheet, View, Image, Text, TouchableOpacity } from 'react-native';
-import { Marker } from 'react-native-maps';
-import AppMap from '../../components/booking/AppMap'; 
 
+import AppMap from '../../components/booking/AppMap';
+import { useTheme } from '../../contexts/ThemeContext';
 import theme from '../../constants/theme';
-import { useTheme } from '../../contexts/ThemeContext'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faArrowLeft, faCar } from '@fortawesome/free-solid-svg-icons';
+import RadarAnimation from '../../components/booking/RadarAnimation';
+
+const mockDrivers = [
+  { id: '1', dx: -100, dy: -150, rotation: '-45deg', avatar: 'https://i.pravatar.cc/150?u=d1' },
+  { id: '2', dx: 120, dy: -100, rotation: '45deg', avatar: 'https://i.pravatar.cc/150?u=d2' },
+  { id: '3', dx: -130, dy: 100, rotation: '-120deg', avatar: 'https://i.pravatar.cc/150?u=d3' },
+  { id: '4', dx: 100, dy: 180, rotation: '160deg', avatar: 'https://i.pravatar.cc/150?u=d4' },
+];
 
 const SearchingDriverScreen = ({ navigation }: any) => {
-  const userLocation = {
-    latitude: 10.762622,
-    longitude: 106.660172,
-    latitudeDelta: 0.015,
-    longitudeDelta: 0.0121,
-  };
-
   const { colors } = useTheme();
 
   return (
-    <View style={styles.container}>
-      <AppMap initialRegion={userLocation}>
-        {/* Điểm này sẽ đánh dấu chính xác giữa bản đồ trống */}
-        <Marker coordinate={userLocation} anchor={{ x: 0.5, y: 0.5 }}>
-          <View style={styles.userMarkerWrapper}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      
+      {/* 2. SỬ DỤNG BẢNG VẼ APPMAP */}
+      <AppMap>
+        
+        {/* RENDER MOCK DRIVERS */}
+        {mockDrivers.map((driver) => (
+          <View 
+            key={driver.id} 
+            style={[
+              styles.driverMarkerWrapper, 
+              { transform: [{ translateX: driver.dx }, { translateY: driver.dy }] }
+            ]}
+          >
+            {/* Ảnh Avatar của Driver trong cái "Ghim" */}
+            <View style={[styles.driverPin, { backgroundColor: colors.primary }]}>
+              <Image source={{ uri: driver.avatar }} style={styles.driverAvatar} />
+            </View>
+            {/* Tam giác nhỏ tạo hình cái ghim */}
+            <View style={[styles.pinTriangle, { borderTopColor: colors.primary }]} />
+            
+            {/* Icon xe taxi xoay theo hướng */}
+            <View style={[styles.carWrapper, { transform: [{ rotate: driver.rotation }] }]}>
+              <View style={[styles.carBody, { backgroundColor: colors.primary }]}>
+                 <FontAwesomeIcon icon={faCar} size={14} color={colors.textBtn} />
+              </View>
+            </View>
+          </View>
+        ))}
+
+        {/* TÂM BẢN ĐỒ: USER + RADAR */}
+        {/* Đặt ở cuối để nó nằm đè lên (layer cao hơn) nếu lỡ đụng các driver khác */}
+        <View style={styles.userCenterAnchor}>
+          <RadarAnimation />
+          <View style={[styles.avatarBorder, { borderColor: colors.primaryLight }]}>
             <Image 
               source={{ uri: 'https://i.pravatar.cc/150?u=user' }}
               style={styles.userAvatar} 
             />
           </View>
-        </Marker>
+        </View>
       </AppMap>
 
+      {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <FontAwesomeIcon icon={faArrowLeft} size={20} color={colors.textTitle} />
+          <FontAwesomeIcon icon={faArrowLeft} size={20} color={colors.textTitle} />
         </TouchableOpacity>
         <View style={styles.headerTextWrapper}>
-          <Text style={styles.title}>Searching for Driver</Text>
+          <Text style={[styles.title, { color: colors.textTitle }]}>
+            Searching for Driver
+          </Text>
         </View>
       </View>
 
+      {/* STATUS BOX */}
       <View style={styles.searchingStatusWrapper}>
-         <View style={styles.taxiIconBubble}>
-           <FontAwesomeIcon icon={faCar} size={20} color='black'/>
+         <View style={[styles.taxiIconBubble, { backgroundColor: colors.primary }]}>
+           <FontAwesomeIcon icon={faCar} size={18} color={colors.textBtn} />
          </View>
-         <Text style={styles.statusTitle}>Searching Ride...</Text>
-         <Text style={[ styles.statusSubTitle, {color: colors.textTitle} ]}>This may take a few seconds...</Text>
+         <Text style={[styles.statusTitle, { color: colors.textTitle }]}>
+           Searching Ride...
+         </Text>
+         <Text style={[styles.statusSubTitle, { color: colors.textBody }]}>
+           This may take a few seconds...
+         </Text>
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: 'white' 
-  },
+  container: { flex: 1 },
   header: { 
     position: 'absolute', 
     top: 50, 
-    left: 20, 
-    right: 20, 
+    left: theme.SIZES.padding, 
+    right: theme.SIZES.padding, 
     flexDirection: 'row', 
     alignItems: 'center', 
     zIndex: 10 
   },
   backButton: { 
-    padding: 8 
+    padding: theme.SIZES.base 
   },
   headerTextWrapper: { 
     flex: 1, 
     marginLeft: 10 
   },
   title: { 
-    fontSize: 24, 
-    fontWeight: '700', 
-    color: 'black' 
+    fontSize: theme.SIZES.h2, 
+    fontFamily: theme.FONTS.bold 
   },
   searchingStatusWrapper: { 
     position: 'absolute', 
-    top: 120, 
-    width: '100%', 
+    top: 120, width: '100%', 
     alignItems: 'center' 
   },
   taxiIconBubble: { 
-    width: 40, 
-    height: 40, 
-    borderRadius: 20, 
-    backgroundColor: theme.COLORS.primary, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    marginBottom: 10 
+    width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', 
+    marginBottom: 12, ...theme.SHADOWS.light 
   },
   statusTitle: { 
-    fontSize: 20, 
-    fontWeight: '700', 
-    marginBottom: 5 
+    fontSize: theme.SIZES.h3, 
+    fontFamily: theme.FONTS.bold, 
+    marginBottom: 6 
+
   },
   statusSubTitle: { 
-    fontSize: 14, 
+    fontSize: theme.SIZES.body2, 
+    fontFamily: theme.FONTS.medium 
+
   },
-  userMarkerWrapper: { 
+  userCenterAnchor: {
+    position: 'absolute', 
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 5,
+  },
+  avatarBorder: {
     width: 60, 
     height: 60, 
     borderRadius: 30, 
     borderWidth: 4, 
-    borderColor: 'rgba(251, 191, 36, 0.3)', 
     justifyContent: 'center', 
     alignItems: 'center', 
-    backgroundColor: 'white' 
+    backgroundColor: theme.COLORS.white,
   },
-  userAvatar: { 
+  userAvatar: {
     width: 50, 
     height: 50, 
     borderRadius: 25 
   },
+  driverMarkerWrapper: {
+    position: 'absolute',
+    alignItems: 'center',
+    zIndex: 2,
+  },
+  driverPin: {
+    width: 46, 
+    height: 46, 
+    borderRadius: 23,
+    justifyContent: 'center', 
+    alignItems: 'center',
+    padding: 3,
+  },
+  driverAvatar: {
+    width: '100%', 
+    height: '100%', 
+    borderRadius: 20,
+  },
+  pinTriangle: {
+    width: 0, 
+    height: 0, 
+    backgroundColor: 'transparent', 
+    borderStyle: 'solid',
+    borderLeftWidth: 6, 
+    borderRightWidth: 6, 
+    borderBottomWidth: 0, 
+    borderTopWidth: 8,
+    borderLeftColor: 'transparent', 
+    borderRightColor: 'transparent',
+    marginTop: -1,
+  },
+  carWrapper: {
+    marginTop: 5, 
+  },
+  carBody: {
+    width: 28, 
+    height: 40, 
+    borderRadius: 10,
+    justifyContent: 'center', 
+    alignItems: 'center',
+  }
 });
 
 export default SearchingDriverScreen;

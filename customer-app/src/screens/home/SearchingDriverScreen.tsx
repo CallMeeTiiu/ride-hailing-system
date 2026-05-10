@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, View, Image, Text } from 'react-native';
 
 import AppMap from '../../components/home/AppMap';
@@ -18,6 +18,17 @@ const mockDrivers = [
 
 const SearchingDriverScreen = ({ navigation }: any) => {
   const { colors } = useTheme();
+
+  // LOGIC ĐIỀU HƯỚNG TỰ ĐỘNG SAU 5 GIÂY
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // Tự động chuyển qua TravellingScreen nếu component vẫn còn mount
+      navigation.navigate('Travelling');
+    }, 5000);
+
+    // Cleanup function: Nếu user bấm Cancel (goBack) hoặc unmount, xóa timer ngay lập tức
+    return () => clearTimeout(timer);
+  }, [navigation]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

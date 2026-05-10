@@ -24,7 +24,6 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { RootStackParamList } from '../../../App';
 import PrimaryButton from '../../components/common/PrimaryButton';
 import MethodCard from '../../components/booking/MethodCard'; 
-import { useLocation } from '../../contexts/LocationContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const VEHICLE_METHODS = [
@@ -41,8 +40,6 @@ const SelectCarScreen = () => {
 
   const route = useRoute<RouteProp<RootStackParamList, 'SelectCar'>>();
   const { distance } = route.params;
-
-  const { fromLocation, destinationLocation } = useLocation();
 
   const [selectedMethodId, setSelectedMethodId] = useState<string | null>(null);
   const selectedVehicle = VEHICLE_METHODS.find(v => v.id === selectedMethodId);
@@ -118,11 +115,7 @@ const SelectCarScreen = () => {
           title="Confirm"
           disabled={!selectedMethodId} 
           onPress={() => {
-            console.log("=== THÔNG TIN CUỐC XE ===");
-            console.log("Từ:", fromLocation?.name);
-            console.log("Đến:", destinationLocation?.name);
-            console.log("Khoảng cách:", distance);
-            console.log("Loại xe:", selectedVehicle?.name, "- Giá:", selectedVehicle?.price);
+            navigation.navigate('SearchingDriver');
           }}
         />
       </View>

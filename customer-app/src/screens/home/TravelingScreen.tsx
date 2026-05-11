@@ -6,6 +6,9 @@ import UserMarker from '../../components/booking/UserMarker';
 import DriverBottomCard, { DriverData } from '../../components/booking/DriverBottomCard';
 import MessagePopup from '../../components/common/MessagePopup';
 
+import { useBookingHistory } from '../../contexts/BookingHistoryContext';
+import { useLocation } from '../../contexts/LocationContext';
+
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
 
@@ -24,6 +27,9 @@ const mockDriverData: DriverData = {
 const TravelingScreen = ({ navigation }: any) => {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+
+  const { addTrip } = useBookingHistory();
+  const { fromLocation, destinationLocation, setFromLocation, setDestinationLocation } = useLocation();
   
   // Quản lý trạng thái chuyến đi
   const [tripStatus, setTripStatus] = useState<'waiting' | 'traveling'>('waiting');
@@ -55,6 +61,21 @@ const TravelingScreen = ({ navigation }: any) => {
 
   const handleAcknowledgeDestination = () => {
     setShowDestinationPopup(false);
+
+    const newTrip = {
+      id: Date.now().toString(),
+      driver: mockDriverData,
+      fromLocation: fromLocation!,
+      destinationLocation: destinationLocation!,
+      completionTime: new Date().toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true, month: 'short', day: 'numeric' }),
+      rating: null, 
+    };
+
+    addTrip(newTrip);
+
+    setFromLocation(null);
+    setDestinationLocation(null);
+
     navigation.navigate('MainTabs'); 
   };
 
@@ -138,7 +159,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: theme.COLORS.primary, 
     borderWidth: 3,
-    borderColor: '#fff',
+    borderColor: 'white',
     ...theme.SHADOWS.light,
   }
 });

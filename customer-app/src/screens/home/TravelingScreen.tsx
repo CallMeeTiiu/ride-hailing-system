@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
+
 import AppMap from '../../components/home/AppMap';
 import UserMarker from '../../components/booking/UserMarker';
 import DriverBottomCard, { DriverData } from '../../components/booking/DriverBottomCard';
 import MessagePopup from '../../components/common/MessagePopup';
-import { useTheme } from '../../contexts/ThemeContext';
+
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
+
 import theme from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const mockDriverData: DriverData = {
@@ -18,28 +21,41 @@ const mockDriverData: DriverData = {
   avatar: "https://i.pravatar.cc/150?u=daniel",
 };
 
-const TravellingScreen = ({ navigation }: any) => {
+const TravelingScreen = ({ navigation }: any) => {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   
   // Quản lý trạng thái chuyến đi
   const [tripStatus, setTripStatus] = useState<'waiting' | 'traveling'>('waiting');
   const [showArrivalPopup, setShowArrivalPopup] = useState(false);
+  const [showDestinationPopup, setShowDestinationPopup] = useState(false);
 
   // Giả lập sự kiện tài xế đến nơi sau 5 giây
   useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+
     if (tripStatus === 'waiting') {
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         setShowArrivalPopup(true);
       }, 5000);
-      return () => clearTimeout(timer);
+    } else if (tripStatus === 'traveling') {
+      // Giai đoạn 2: Đang di chuyển, 5s sau báo tới nơi
+      timer = setTimeout(() => {
+        setShowDestinationPopup(true);
+      }, 5000);
     }
+
+    return () => clearTimeout(timer);
   }, [tripStatus]);
 
-  // Xử lý khi khách hàng bấm OK trên popup
   const handleAcknowledgeArrival = () => {
     setShowArrivalPopup(false);
-    setTripStatus('traveling'); // Chuyển trạng thái UI sang Traveling
+    setTripStatus('traveling'); 
+  };
+
+  const handleAcknowledgeDestination = () => {
+    setShowDestinationPopup(false);
+    navigation.navigate('MainTabs'); 
   };
 
   return (
@@ -87,6 +103,13 @@ const TravellingScreen = ({ navigation }: any) => {
         context="Your driver is almost at your pickup location. Please be ready!"
         onClose={handleAcknowledgeArrival}
       />
+
+      <MessagePopup 
+        visible={showDestinationPopup}
+        title="You have arrived at your destination!"
+        context="See you on the next trip :)"
+        onClose={handleAcknowledgeDestination}
+      />
     </View>
   );
 };
@@ -120,4 +143,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default TravellingScreen;
+export default TravelingScreen;

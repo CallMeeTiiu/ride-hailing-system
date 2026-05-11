@@ -17,7 +17,7 @@ import MainTabNavigator from './src/navigation/MainTabNavigation';
 import SearchScreen from './src/screens/home/SearchScreen';
 import SelectCarScreen from './src/screens/home/SelectCarScreen';
 import SearchingDriverScreen from './src/screens/home/SearchingDriverScreen';
-import TravellingScreen from './src/screens/home/TravellingScreen';
+import TravelingScreen from './src/screens/home/TravelingScreen';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -58,7 +58,7 @@ const App = () => {
             <Stack.Screen name="Search" component={SearchScreen} />
             <Stack.Screen name="SelectCar" component={SelectCarScreen}/>
             <Stack.Screen name="SearchingDriver" component={SearchingDriverScreen}  />
-            <Stack.Screen name="Travelling" component={TravellingScreen} />
+            <Stack.Screen name="Travelling" component={TravelingScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </LocationProvider>

@@ -30,7 +30,7 @@ const RatingListScreen = () => {
           renderItem={({ item }) => (
             <RatingCard 
               trip={item} 
-              onPress={() => navigation.navigate('RatingScreen', { tripId: item.id })}
+              onPress={() => navigation.navigate('Rating', { tripId: item.id })}
             />
           )}
           showsVerticalScrollIndicator={false}

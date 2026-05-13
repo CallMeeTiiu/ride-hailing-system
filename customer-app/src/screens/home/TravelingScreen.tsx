@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 
 import AppMap from '../../components/home/AppMap';
 import UserMarker from '../../components/booking/UserMarker';
@@ -9,11 +9,7 @@ import MessagePopup from '../../components/common/MessagePopup';
 import { useBookingHistory } from '../../contexts/BookingHistoryContext';
 import { useLocation } from '../../contexts/LocationContext';
 
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
-
 import theme from '../../constants/theme';
-import { useTheme } from '../../contexts/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const mockDriverData: DriverData = {
@@ -25,7 +21,6 @@ const mockDriverData: DriverData = {
 };
 
 const TravelingScreen = ({ navigation }: any) => {
-  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
   const { addTrip } = useBookingHistory();
@@ -76,23 +71,12 @@ const TravelingScreen = ({ navigation }: any) => {
     setFromLocation(null);
     setDestinationLocation(null);
 
-    navigation.navigate('MainTabs'); 
+    navigation.navigate('Rating', { tripId: newTrip.id });
   };
 
   return (
     <View style={styles.container}>
       <AppMap>
-        {/* Nút Back Floating (Nằm trên bản đồ, theo đúng design của bạn) */}
-        <TouchableOpacity 
-          style={[
-            styles.floatingBackButton, 
-            { backgroundColor: colors.circleButtonBg, top: insets.top + 20 }
-          ]}
-          onPress={() => navigation.goBack()}
-        >
-          <FontAwesomeIcon icon={faChevronLeft} size={20} color={colors.textTitle} />
-        </TouchableOpacity>
-
         {/* Marker Tài xế (Sau này sẽ truyền tọa độ động vào đây) */}
         <UserMarker 
           avatar={mockDriverData.avatar} 
@@ -110,8 +94,7 @@ const TravelingScreen = ({ navigation }: any) => {
           tripStatus={tripStatus}
           driverData={mockDriverData}
           distance="4.5"
-          arrivalTime="2 mins"
-          onCancel={() => navigation.goBack()}
+          arrivalTime="2 mins"          onCancel={() => navigation.goBack().goBack()}
           onChat={() => console.log("Chat with driver")}
           onCall={() => console.log("Call driver")}
         />

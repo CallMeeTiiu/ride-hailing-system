@@ -19,6 +19,8 @@ import SearchScreen from './src/screens/home/SearchScreen';
 import SelectCarScreen from './src/screens/home/SelectCarScreen';
 import SearchingDriverScreen from './src/screens/home/SearchingDriverScreen';
 import TravelingScreen from './src/screens/home/TravelingScreen';
+import RatingScreen from './src/screens/rating/RatingScreen'; 
+import RatingListScreen from './src/screens/rating/RatingListScreen';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -34,6 +36,8 @@ export type RootStackParamList = {
   SelectCar: { distance: number };
   SearchingDriver: undefined;
   Travelling: undefined;
+  Rating: {tripId: string };
+  RatingList: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -61,6 +65,8 @@ const App = () => {
               <Stack.Screen name="SelectCar" component={SelectCarScreen}/>
               <Stack.Screen name="SearchingDriver" component={SearchingDriverScreen}  />
               <Stack.Screen name="Travelling" component={TravelingScreen} />
+              <Stack.Screen name="Rating" component={RatingScreen} />
+              <Stack.Screen name="RatingList" component={RatingListScreen} />
             </Stack.Navigator>
           </NavigationContainer>
         </LocationProvider>

@@ -51,7 +51,7 @@ const RatingCard: React.FC<RatingCardProps> = ({ trip, onPress }) => {
           </Text>
         </View>
         <View style={[styles.locationRow, { marginTop: 8 }]}>
-          <FontAwesomeIcon icon={faMapMarkerAlt} size={14} color={colors.textBody} />
+          <FontAwesomeIcon icon={faMapMarkerAlt} size={14} color={theme.COLORS.primary} />
           <Text style={[styles.locationText, { color: colors.textTitle }]} numberOfLines={1}>
             <Text style={{ fontFamily: theme.FONTS.regular, color: colors.textBody }}>To: </Text>
             {trip.destinationLocation.name}
@@ -62,7 +62,7 @@ const RatingCard: React.FC<RatingCardProps> = ({ trip, onPress }) => {
       {/* 3. Footer: Thời gian hoàn thành và Nút Rate */}
       <View style={[styles.footerRow, { borderTopColor: colors.border }]}>
         <View style={styles.timeWrapper}>
-          <FontAwesomeIcon icon={faClock} size={14} color={colors.textBody} />
+          <FontAwesomeIcon icon={faClock} size={14} color={colors.primary} />
           <Text style={[styles.timeText, { color: colors.textBody }]}>{trip.completionTime}</Text>
         </View>
         <View style={[styles.rateBadge, { backgroundColor: colors.primaryLight }]}>

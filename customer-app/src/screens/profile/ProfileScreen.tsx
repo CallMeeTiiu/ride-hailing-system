@@ -23,20 +23,24 @@ import theme from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 
 import MenuItem from '../../components/profile/MenuItem';
+import { useUser } from '../../contexts/UserContext';
 
-const ProfileScreen = () => {
+const ProfileScreen = ({ navigation }: any) => {
   const { colors, isDarkMode, toggleTheme } = useTheme();
   const insets = useSafeAreaInsets();
 
+  const { user } = useUser();
+  if (!user) return null;
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top + 20 }]}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         
         {/* 1. Phần Thông tin User */}
         <View style={styles.userInfoSection}>
           <View style={styles.avatarContainer}>
             <Image 
-              source={{ uri: 'https://i.pravatar.cc/150?u=andrew' }} 
+              source={{ uri: user.avatar }} 
               style={styles.avatar} 
             />
             <TouchableOpacity style={[styles.editAvatarButton, { backgroundColor: theme.COLORS.primary }]} activeOpacity={0.8}>
@@ -44,8 +48,8 @@ const ProfileScreen = () => {
             </TouchableOpacity>
           </View>
           
-          <Text style={[styles.userName, { color: colors.textTitle }]}>Andrew Ainsley</Text>
-          <Text style={[styles.userPhone, { color: colors.textBody }]}>+1 111 467 378 399</Text>
+          <Text style={[styles.userName, { color: colors.textTitle }]}>{user.name}</Text>
+          <Text style={[styles.userPhone, { color: colors.textBody }]}>{user.phoneNumber}</Text>
         </View>
 
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
@@ -78,6 +82,7 @@ const ProfileScreen = () => {
             icon={faEye} 
             title="Dark Mode" 
             hasArrow={false}
+            onPress={toggleTheme}
             rightComponent={
               <Switch
                 trackColor={{ false: '#E0E0E0', true: theme.COLORS.primary }}
@@ -94,7 +99,9 @@ const ProfileScreen = () => {
             title="Logout" 
             isDanger={true}
             hasArrow={false}
-            onPress={() => console.log('Logout action')} 
+            onPress={() => {
+                navigation.replace('Login'); 
+            }} 
           />
         </View>
         

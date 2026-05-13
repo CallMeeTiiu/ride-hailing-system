@@ -2,8 +2,10 @@ import 'react-native-gesture-handler';
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { ThemeProvider } from './src/contexts/ThemeContext';
 import { LocationProvider } from './src/contexts/LocationContext';
 import { BookingHistoryProvider } from './src/contexts/BookingHistoryContext';
+import { UserProvider } from './src/contexts/UserContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import WelcomeScreen from './src/screens/auth/WelcomeScreen';
@@ -46,31 +48,35 @@ const App = () => {
   return (
     // eslint-disable-next-line react-native/no-inline-styles
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <BookingHistoryProvider>
-        <LocationProvider>
-          <NavigationContainer>
-            <Stack.Navigator 
-              initialRouteName="Welcome"
-              screenOptions={{ headerShown: false }} 
-            >
-              <Stack.Screen name="Welcome" component={WelcomeScreen} />
-              <Stack.Screen name="Login" component={LoginScreen} />
-              <Stack.Screen name="SignUp" component={SignUpScreen} />
-              <Stack.Screen name="InfoInput" component={InfoInputScreen} />
-              <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-              <Stack.Screen name="FillOTP" component={FillOTPScreen} />
-              <Stack.Screen name="NewPassword" component={NewPasswordScreen} />
-              <Stack.Screen name="MainTabs" component={MainTabNavigator} />
-              <Stack.Screen name="Search" component={SearchScreen} />
-              <Stack.Screen name="SelectCar" component={SelectCarScreen}/>
-              <Stack.Screen name="SearchingDriver" component={SearchingDriverScreen}  />
-              <Stack.Screen name="Travelling" component={TravelingScreen} />
-              <Stack.Screen name="Rating" component={RatingScreen} />
-              <Stack.Screen name="RatingList" component={RatingListScreen} />
-            </Stack.Navigator>
-          </NavigationContainer>
-        </LocationProvider>
-      </BookingHistoryProvider>
+      <UserProvider>
+        <BookingHistoryProvider>
+          <LocationProvider>
+            <ThemeProvider>
+              <NavigationContainer>
+                <Stack.Navigator 
+                  initialRouteName="Welcome"
+                  screenOptions={{ headerShown: false }} 
+                >
+                  <Stack.Screen name="Welcome" component={WelcomeScreen} />
+                  <Stack.Screen name="Login" component={LoginScreen} />
+                  <Stack.Screen name="SignUp" component={SignUpScreen} />
+                  <Stack.Screen name="InfoInput" component={InfoInputScreen} />
+                  <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+                  <Stack.Screen name="FillOTP" component={FillOTPScreen} />
+                  <Stack.Screen name="NewPassword" component={NewPasswordScreen} />
+                  <Stack.Screen name="MainTabs" component={MainTabNavigator} />
+                  <Stack.Screen name="Search" component={SearchScreen} />
+                  <Stack.Screen name="SelectCar" component={SelectCarScreen}/>
+                  <Stack.Screen name="SearchingDriver" component={SearchingDriverScreen}  />
+                  <Stack.Screen name="Travelling" component={TravelingScreen} />
+                  <Stack.Screen name="Rating" component={RatingScreen} />
+                  <Stack.Screen name="RatingList" component={RatingListScreen} />
+                </Stack.Navigator>
+              </NavigationContainer>
+            </ThemeProvider>
+          </LocationProvider>
+        </BookingHistoryProvider>
+      </UserProvider>
     </GestureHandlerRootView>
   );
 };

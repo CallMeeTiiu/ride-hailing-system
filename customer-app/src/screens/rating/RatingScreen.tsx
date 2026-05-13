@@ -8,6 +8,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import PrimaryButton from '../../components/common/PrimaryButton';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBookingHistory } from '../../contexts/BookingHistoryContext';
+import Hyperlink from '../../components/common/Hyperlink';
 
 const RatingScreen = ({ navigation, route }: any) => {
   const { colors } = useTheme();
@@ -46,14 +47,11 @@ const RatingScreen = ({ navigation, route }: any) => {
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
       <View style={styles.headerWrapper}>
           <Text style={[styles.headerTitle, { color: colors.textTitle }]}>Rate your Trip</Text>
-          <TouchableOpacity onPress={handleMaybeLater}>
-            <Text style={[styles.maybeLaterText, { color: theme.COLORS.primary }]}>Maybe Later</Text>
-          </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* 1. Card thông tin chuyến đi & Tài xế */}
-        <View style={[styles.tripCard, { backgroundColor: colors.backgroundLight }]}>
+        <View style={[styles.tripCard, { backgroundColor: colors.background }]}>
           <Image source={{ uri: tripData.driver.avatar }} style={styles.driverAvatar} />
           <Text style={[styles.driverName, { color: colors.textTitle }]}>{tripData.driver.name}</Text>
           <Text style={[styles.carInfo, { color: colors.textBody }]}>
@@ -104,16 +102,20 @@ const RatingScreen = ({ navigation, route }: any) => {
             onChangeText={setComment}
           />
         </View>
-      </ScrollView>
 
-      {/* Nút Submit */}
-      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
         <PrimaryButton 
           title="Submit Rating" 
           onPress={handleSubmit}
           disabled={rating === 0}
+          style={styles.submitButton}
         />
-      </View>
+        
+        <Hyperlink 
+          title="Maybe Later" 
+          onPress={handleMaybeLater}
+          style={styles.maybeLaterLink}
+        />
+      </ScrollView>
     </View>
   );
 };
@@ -141,7 +143,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: { 
     paddingHorizontal: theme.SIZES.padding, 
-    paddingBottom: 20 
+    paddingBottom: 60
   },
   tripCard: {
     width: '100%',
@@ -149,6 +151,8 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: 'center',
     marginBottom: 30,
+    borderColor: theme.COLORS.primary,
+    borderWidth: 2,
     ...theme.SHADOWS.light,
   },
   driverAvatar: { 
@@ -214,7 +218,14 @@ const styles = StyleSheet.create({
     fontFamily: theme.FONTS.regular,
   },
   footer: { 
-    paddingHorizontal: theme.SIZES.padding 
+    paddingHorizontal: theme.SIZES.padding,
+  },
+  submitButton: {
+    paddingHorizontal: theme.SIZES.padding
+  },
+  maybeLaterLink: {
+    marginTop: 20, 
+    alignSelf: 'center', 
   },
 });
 

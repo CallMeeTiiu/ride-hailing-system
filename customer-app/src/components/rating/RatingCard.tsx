@@ -50,7 +50,7 @@ const RatingCard: React.FC<RatingCardProps> = ({ trip, onPress }) => {
             {trip.fromLocation.name}
           </Text>
         </View>
-        <View style={[styles.locationRow, { marginTop: 8 }]}>
+        <View style={styles.locationRow}>
           <FontAwesomeIcon icon={faMapMarkerAlt} size={14} color={theme.COLORS.primary} />
           <Text style={[styles.locationText, { color: colors.textTitle }]} numberOfLines={1}>
             <Text style={{ fontFamily: theme.FONTS.regular, color: colors.textBody }}>To: </Text>
@@ -137,6 +137,7 @@ const styles = StyleSheet.create({
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 8,
   },
   locationText: {
     fontFamily: theme.FONTS.semiBold,

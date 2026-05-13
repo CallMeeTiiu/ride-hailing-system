@@ -20,6 +20,7 @@ export const lightColors = {
   
   white: '#FFFFFF',
   black: '#000000',
+  red: '#FF4D4D',
   transparent: 'transparent',
 };
 
@@ -45,6 +46,7 @@ export const darkColors = {
   
   white: '#FFFFFF',
   black: '#000000',
+  red: '#FF4D4D',
   transparent: 'transparent',
 };
 

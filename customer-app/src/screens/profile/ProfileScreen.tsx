@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -24,13 +24,24 @@ import { useTheme } from '../../contexts/ThemeContext';
 
 import MenuItem from '../../components/profile/MenuItem';
 import { useUser } from '../../contexts/UserContext';
+import ConfirmBottomSheet from '../../components/profile/ConfirmBottomSheet';
 
 const ProfileScreen = ({ navigation }: any) => {
+  const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
+
   const { colors, isDarkMode, toggleTheme } = useTheme();
   const insets = useSafeAreaInsets();
 
   const { user } = useUser();
   if (!user) return null;
+
+  const handleLogoutAction = () => {
+    setIsLogoutModalVisible(false);
+    
+    // Handle logic Logout: clear UserContext và AsyncStorageToken
+    
+    navigation.replace('Login');
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top + 20 }]}>
@@ -100,12 +111,23 @@ const ProfileScreen = ({ navigation }: any) => {
             isDanger={true}
             hasArrow={false}
             onPress={() => {
-                navigation.replace('Login'); 
+                setIsLogoutModalVisible(true);
             }} 
           />
         </View>
         
       </ScrollView>
+
+      <ConfirmBottomSheet 
+        visible={isLogoutModalVisible}
+        title="Logout"
+        message="Are you sure you want to log out?" 
+        cancelText="Cancel"
+        confirmText="Yes, Logout"
+        isTitleDanger={true}
+        onCancel={() => setIsLogoutModalVisible(false)} 
+        onConfirm={handleLogoutAction} 
+      />
     </View>
   );
 };

@@ -1,4 +1,3 @@
-// Định nghĩa các màu dùng chung cho cả 2 theme
 const commonColors = {
   primary: '#FFBB1C',
   border: '#e0e0e0',

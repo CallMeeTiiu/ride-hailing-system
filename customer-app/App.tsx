@@ -3,6 +3,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { LocationProvider } from './src/contexts/LocationContext';
+import { BookingHistoryProvider } from './src/contexts/BookingHistoryContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import WelcomeScreen from './src/screens/auth/WelcomeScreen';
@@ -17,7 +18,9 @@ import MainTabNavigator from './src/navigation/MainTabNavigation';
 import SearchScreen from './src/screens/home/SearchScreen';
 import SelectCarScreen from './src/screens/home/SelectCarScreen';
 import SearchingDriverScreen from './src/screens/home/SearchingDriverScreen';
-import TravellingScreen from './src/screens/home/TravellingScreen';
+import TravelingScreen from './src/screens/home/TravelingScreen';
+import RatingScreen from './src/screens/rating/RatingScreen'; 
+import RatingListScreen from './src/screens/rating/RatingListScreen';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -33,6 +36,8 @@ export type RootStackParamList = {
   SelectCar: { distance: number };
   SearchingDriver: undefined;
   Travelling: undefined;
+  Rating: {tripId: string };
+  RatingList: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -41,27 +46,31 @@ const App = () => {
   return (
     // eslint-disable-next-line react-native/no-inline-styles
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <LocationProvider>
-        <NavigationContainer>
-          <Stack.Navigator 
-            initialRouteName="Welcome"
-            screenOptions={{ headerShown: false }} 
-          >
-            <Stack.Screen name="Welcome" component={WelcomeScreen} />
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="SignUp" component={SignUpScreen} />
-            <Stack.Screen name="InfoInput" component={InfoInputScreen} />
-            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-            <Stack.Screen name="FillOTP" component={FillOTPScreen} />
-            <Stack.Screen name="NewPassword" component={NewPasswordScreen} />
-            <Stack.Screen name="MainTabs" component={MainTabNavigator} />
-            <Stack.Screen name="Search" component={SearchScreen} />
-            <Stack.Screen name="SelectCar" component={SelectCarScreen}/>
-            <Stack.Screen name="SearchingDriver" component={SearchingDriverScreen}  />
-            <Stack.Screen name="Travelling" component={TravellingScreen} />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </LocationProvider>
+      <BookingHistoryProvider>
+        <LocationProvider>
+          <NavigationContainer>
+            <Stack.Navigator 
+              initialRouteName="Welcome"
+              screenOptions={{ headerShown: false }} 
+            >
+              <Stack.Screen name="Welcome" component={WelcomeScreen} />
+              <Stack.Screen name="Login" component={LoginScreen} />
+              <Stack.Screen name="SignUp" component={SignUpScreen} />
+              <Stack.Screen name="InfoInput" component={InfoInputScreen} />
+              <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+              <Stack.Screen name="FillOTP" component={FillOTPScreen} />
+              <Stack.Screen name="NewPassword" component={NewPasswordScreen} />
+              <Stack.Screen name="MainTabs" component={MainTabNavigator} />
+              <Stack.Screen name="Search" component={SearchScreen} />
+              <Stack.Screen name="SelectCar" component={SelectCarScreen}/>
+              <Stack.Screen name="SearchingDriver" component={SearchingDriverScreen}  />
+              <Stack.Screen name="Travelling" component={TravelingScreen} />
+              <Stack.Screen name="Rating" component={RatingScreen} />
+              <Stack.Screen name="RatingList" component={RatingListScreen} />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </LocationProvider>
+      </BookingHistoryProvider>
     </GestureHandlerRootView>
   );
 };

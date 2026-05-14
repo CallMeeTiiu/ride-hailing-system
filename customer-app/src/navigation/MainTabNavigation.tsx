@@ -8,8 +8,8 @@ import theme from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext'
 
 import HomeScreen from '../screens/home/HomeScreen';
-import BookingScreen from '../screens/booking/BookingScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
+import RatingListScreen from '../screens/rating/RatingListScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -41,10 +41,10 @@ const MainTabNavigator = () => {
       })}
     >
       <Tab.Screen 
-        name="BookingsTab" 
-        component={BookingScreen} 
+        name="RatingTab" 
+        component={RatingListScreen} 
         options={{
-          tabBarLabel: 'Bookings',
+          tabBarLabel: 'Rating',
           // eslint-disable-next-line react/no-unstable-nested-components
           tabBarIcon: ({ color, size }) => (
             <FontAwesomeIcon icon={faClipboardList} color={color} size={size + 2} />

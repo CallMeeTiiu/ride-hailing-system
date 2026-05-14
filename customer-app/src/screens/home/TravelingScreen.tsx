@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+
 import AppMap from '../../components/home/AppMap';
 import UserMarker from '../../components/booking/UserMarker';
 import DriverBottomCard, { DriverData } from '../../components/booking/DriverBottomCard';
 import MessagePopup from '../../components/common/MessagePopup';
-import { useTheme } from '../../contexts/ThemeContext';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
+
+import { useBookingHistory } from '../../contexts/BookingHistoryContext';
+import { useLocation } from '../../contexts/LocationContext';
+
 import theme from '../../constants/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -18,44 +20,63 @@ const mockDriverData: DriverData = {
   avatar: "https://i.pravatar.cc/150?u=daniel",
 };
 
-const TravellingScreen = ({ navigation }: any) => {
-  const { colors } = useTheme();
+const TravelingScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
+
+  const { addTrip } = useBookingHistory();
+  const { fromLocation, destinationLocation, setFromLocation, setDestinationLocation } = useLocation();
   
   // Quản lý trạng thái chuyến đi
   const [tripStatus, setTripStatus] = useState<'waiting' | 'traveling'>('waiting');
   const [showArrivalPopup, setShowArrivalPopup] = useState(false);
+  const [showDestinationPopup, setShowDestinationPopup] = useState(false);
 
   // Giả lập sự kiện tài xế đến nơi sau 5 giây
   useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+
     if (tripStatus === 'waiting') {
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         setShowArrivalPopup(true);
       }, 5000);
-      return () => clearTimeout(timer);
+    } else if (tripStatus === 'traveling') {
+      // Giai đoạn 2: Đang di chuyển, 5s sau báo tới nơi
+      timer = setTimeout(() => {
+        setShowDestinationPopup(true);
+      }, 5000);
     }
+
+    return () => clearTimeout(timer);
   }, [tripStatus]);
 
-  // Xử lý khi khách hàng bấm OK trên popup
   const handleAcknowledgeArrival = () => {
     setShowArrivalPopup(false);
-    setTripStatus('traveling'); // Chuyển trạng thái UI sang Traveling
+    setTripStatus('traveling'); 
+  };
+
+  const handleAcknowledgeDestination = () => {
+    setShowDestinationPopup(false);
+
+    const newTrip = {
+      id: Date.now().toString(),
+      driver: mockDriverData,
+      fromLocation: fromLocation!,
+      destinationLocation: destinationLocation!,
+      completionTime: new Date().toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true, month: 'short', day: 'numeric' }),
+      rating: null, 
+    };
+
+    addTrip(newTrip);
+
+    setFromLocation(null);
+    setDestinationLocation(null);
+
+    navigation.navigate('Rating', { tripId: newTrip.id });
   };
 
   return (
     <View style={styles.container}>
       <AppMap>
-        {/* Nút Back Floating (Nằm trên bản đồ, theo đúng design của bạn) */}
-        <TouchableOpacity 
-          style={[
-            styles.floatingBackButton, 
-            { backgroundColor: colors.circleButtonBg, top: insets.top + 20 }
-          ]}
-          onPress={() => navigation.goBack()}
-        >
-          <FontAwesomeIcon icon={faChevronLeft} size={20} color={colors.textTitle} />
-        </TouchableOpacity>
-
         {/* Marker Tài xế (Sau này sẽ truyền tọa độ động vào đây) */}
         <UserMarker 
           avatar={mockDriverData.avatar} 
@@ -73,8 +94,7 @@ const TravellingScreen = ({ navigation }: any) => {
           tripStatus={tripStatus}
           driverData={mockDriverData}
           distance="4.5"
-          arrivalTime="2 mins"
-          onCancel={() => navigation.goBack()}
+          arrivalTime="2 mins"          onCancel={() => navigation.goBack().goBack()}
           onChat={() => console.log("Chat with driver")}
           onCall={() => console.log("Call driver")}
         />
@@ -86,6 +106,13 @@ const TravellingScreen = ({ navigation }: any) => {
         title="Driver is Arriving!"
         context="Your driver is almost at your pickup location. Please be ready!"
         onClose={handleAcknowledgeArrival}
+      />
+
+      <MessagePopup 
+        visible={showDestinationPopup}
+        title="You have arrived at your destination!"
+        context="See you on the next trip :)"
+        onClose={handleAcknowledgeDestination}
       />
     </View>
   );
@@ -115,9 +142,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: theme.COLORS.primary, 
     borderWidth: 3,
-    borderColor: '#fff',
+    borderColor: 'white',
     ...theme.SHADOWS.light,
   }
 });
 
-export default TravellingScreen;
+export default TravelingScreen;

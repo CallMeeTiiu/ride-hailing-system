@@ -89,7 +89,6 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
           <View style={styles.gridContainer}>
             {getDaysInMonth().map((day, index) => {
               const dateString = day ? `${currentMonth + 1}/${day}/${currentYear}` : "";
-              
               const isSelected = day !== null && selectedDate === dateString;
 
               return (
@@ -102,22 +101,22 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
                   onPress={() => day && handleDatePress(day)}
                   disabled={!day}
                 >
-                  <Text style={[
-                    styles.dayText, 
-                    // eslint-disable-next-line react-native/no-inline-styles
-                    { color: day ? colors.textTitle : 'transparent' },
-                    // eslint-disable-next-line react-native/no-inline-styles
-                    isSelected ? { color: 'white', fontFamily: theme.FONTS.bold } : undefined
-                  ]}>
-                    {day}
-                  </Text>
+                  {day !== null ? (
+                    <Text style={[
+                      styles.dayText, 
+                      { color: colors.textTitle },
+                      isSelected ? { color: colors.white, fontFamily: theme.FONTS.bold } : undefined
+                    ]}>
+                      {day}
+                    </Text>
+                  ) : null}
                 </TouchableOpacity>
               );
             })}
           </View>
 
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={{ color: theme.COLORS.primary, fontFamily: theme.FONTS.bold }}>Cancel</Text> [cite: 5]
+            <Text style={{ color: theme.COLORS.primary, fontFamily: theme.FONTS.bold }}>Cancel</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -166,10 +165,10 @@ const styles = StyleSheet.create({
   gridContainer: { 
     flexDirection: 'row', 
     flexWrap: 'wrap', 
-    justifyContent: 'space-around' 
+    justifyContent: 'flex-start' 
   },
   dayCell: { 
-    width: '14%', 
+    width: '14.28%', 
     aspectRatio: 1, 
     justifyContent: 'center', 
     alignItems: 'center', 

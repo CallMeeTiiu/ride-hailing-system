@@ -8,12 +8,10 @@ import {
   ScrollView, 
   KeyboardAvoidingView, 
   Platform,
-  Modal,
-  TouchableWithoutFeedback
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faArrowLeft, faCalendar, faEnvelope, faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faCalendar, faEnvelope, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 import theme from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useUser } from '../../contexts/UserContext';
@@ -54,16 +52,37 @@ const EditProfileScreen = ({ navigation }: any) => {
     navigation.goBack();
   };
 
-  const renderInput = (placeholder: string, field: keyof typeof formData, icon?: any, keyboardType: any = 'default') => (
-    <View style={[styles.inputContainer, { backgroundColor: colors.inputBg }]}>
-      <TextInput
-        style={[styles.input, { color: colors.textTitle }]}
-        placeholder={placeholder}
-        placeholderTextColor={colors.textBody}
-        value={formData[field]}
-        onChangeText={(text) => handleChange(field, text)}
-        keyboardType={keyboardType}
-      />
+  const renderInput = (
+    placeholder: string, 
+    field: keyof typeof formData, 
+    icon?: any, 
+    keyboardType: any = 'default',
+    editable: boolean = true
+  ) => (
+    // eslint-disable-next-line react-native/no-inline-styles
+    <View style={[styles.inputContainer, { backgroundColor: colors.inputBg, opacity: editable ? 1 : 0.6 }]}>
+      {editable ? (
+        <TextInput
+          style={[styles.input, { color: colors.textTitle }]}
+          placeholder={placeholder}
+          placeholderTextColor={colors.textBody}
+          value={formData[field]}
+          onChangeText={(text) => handleChange(field, text)}
+          keyboardType={keyboardType}
+        />
+      ) : (
+        // eslint-disable-next-line react-native/no-inline-styles
+        <View style={{ flex: 1, justifyContent: 'center' }}>
+          <Text 
+            style={[ styles.inputTail, {color: colors.textTitle} ]} 
+            numberOfLines={1} 
+            ellipsizeMode="tail"
+          >
+            {formData[field] || placeholder}
+          </Text>
+        </View>
+      )}
+
       {icon && (
         <FontAwesomeIcon icon={icon} size={20} color={colors.textTitle} style={styles.inputIcon} />
       )}
@@ -72,6 +91,7 @@ const EditProfileScreen = ({ navigation }: any) => {
 
   return (
     <KeyboardAvoidingView 
+      // eslint-disable-next-line react-native/no-inline-styles
       style={{ flex: 1 }} 
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
@@ -83,11 +103,13 @@ const EditProfileScreen = ({ navigation }: any) => {
             <FontAwesomeIcon icon={faArrowLeft} size={20} color={colors.textTitle} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.textTitle }]}>Edit Profile</Text>
+          {/* eslint-disable-next-line react-native/no-inline-styles */} 
           <View style={{ width: 40 }} />
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.formContainer}>
-          
+            
+          {renderInput('Email', 'email', faEnvelope, 'email-address', false)}
           {renderInput('Full Name', 'name')}
 
           <TouchableOpacity 
@@ -98,21 +120,44 @@ const EditProfileScreen = ({ navigation }: any) => {
             <FontAwesomeIcon icon={faCalendar} size={20} color={colors.textTitle} />
           </TouchableOpacity>
 
-          {renderInput('Email', 'email', faEnvelope, 'email-address')}
           {renderInput('Country', 'country')}
           {renderInput('Phone Number', 'phoneNumber', undefined, 'phone-pad')}
           
-          {/* GENDER COMBOBOX (Nút bấm mở Modal) */}
-          <TouchableOpacity 
-            style={[styles.inputContainer, { backgroundColor: colors.inputBg }]}
-            activeOpacity={0.7}
-            onPress={() => setShowGenderPicker(true)}
-          >
-            <Text style={[styles.inputLabel, { color: formData.gender ? colors.textTitle : colors.textBody }]}>
-              {formData.gender || 'Select Gender'}
-            </Text>
-            <FontAwesomeIcon icon={faChevronDown} size={16} color={colors.textTitle} style={styles.inputIcon} />
-          </TouchableOpacity>
+          {/* GENDER COMBOBOX */}
+          {/* eslint-disable-next-line react-native/no-inline-styles */}
+          <View style={{ zIndex: 10 }}>
+            <TouchableOpacity 
+              // eslint-disable-next-line react-native/no-inline-styles
+              style={[styles.inputContainer, { backgroundColor: colors.inputBg, marginBottom: showGenderPicker ? 10 : 20 }]}
+              activeOpacity={0.7}
+              onPress={() => setShowGenderPicker(!showGenderPicker)} 
+            >
+              <Text style={[styles.inputLabel, { color: formData.gender ? colors.textTitle : colors.textBody }]}>
+                {formData.gender || 'Select Gender'}
+              </Text>
+              <FontAwesomeIcon icon={showGenderPicker ? faChevronUp : faChevronDown} size={16} color={colors.textTitle} style={styles.inputIcon} />
+            </TouchableOpacity>
+
+            {/* List Dropdown sổ xuống ngay bên dưới */}
+            {showGenderPicker && (
+              <View style={[styles.dropdownContainer, { backgroundColor: colors.white, borderColor: colors.primary }]}>
+                {genderOptions.map((option, index) => (
+                  <TouchableOpacity 
+                    key={index}
+                    style={styles.dropdownItem}
+                    onPress={() => {
+                      handleChange('gender', option);
+                      setShowGenderPicker(false); 
+                    }}
+                  >
+                    <Text style={[styles.dropdownText, { color: formData.gender === option ? theme.COLORS.primary : colors.textTitle }]}>
+                      {option}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
 
         </ScrollView>
 
@@ -128,51 +173,14 @@ const EditProfileScreen = ({ navigation }: any) => {
         />
       </View>
 
-      {/* --- MODAL CHỌN GIỚI TÍNH --- */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={showGenderPicker}
-        onRequestClose={() => setShowGenderPicker(false)}
-      >
-        <TouchableWithoutFeedback onPress={() => setShowGenderPicker(false)}>
-          <View style={styles.overlay} />
-        </TouchableWithoutFeedback>
-
-        <View style={[styles.sheetContainer, { backgroundColor: colors.background, paddingBottom: insets.bottom + 20 }]}>
-          <View style={styles.handleIndicator} />
-          <Text style={[styles.sheetTitle, { color: colors.textTitle }]}>Select Gender</Text>
-          
-          {genderOptions.map((option, index) => {
-            const isSelected = formData.gender === option;
-            return (
-              <TouchableOpacity 
-                key={index}
-                style={[styles.optionItem, isSelected && { backgroundColor: colors.primaryLight }]}
-                onPress={() => {
-                  handleChange('gender', option);
-                  setShowGenderPicker(false);
-                }}
-              >
-                <Text style={[
-                  styles.optionText, 
-                  { color: isSelected ? theme.COLORS.primary : colors.textTitle },
-                  isSelected && { fontFamily: theme.FONTS.bold }
-                ]}>
-                  {option}
-                </Text>
-              </TouchableOpacity>
-            )
-          })}
-        </View>
-      </Modal>
-
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { 
+    flex: 1 
+  },
   header: {
     flexDirection: 'row', 
     alignItems: 'center', 
@@ -183,15 +191,16 @@ const styles = StyleSheet.create({
   backButton: { 
     padding: 10, 
     marginLeft: -10 
-},
+  },
   headerTitle: { 
     fontFamily: theme.FONTS.bold, 
     fontSize: 22 
-},
+  },
   formContainer: { 
     paddingHorizontal: theme.SIZES.padding, 
+    paddingTop: 20,
     paddingBottom: 20 
-},
+  },
   inputContainer: {
     flexDirection: 'row', 
     alignItems: 'center',
@@ -205,23 +214,28 @@ const styles = StyleSheet.create({
     fontFamily: theme.FONTS.semiBold, 
     fontSize: 16, 
     height: '100%' 
-    },
+  },
+  inputTail: {
+    fontFamily: theme.FONTS.semiBold, 
+    fontSize: 16, 
+    textAlignVertical: 'center' 
+  },
   inputLabel: { 
     flex: 1, 
     fontFamily: theme.FONTS.semiBold, 
     fontSize: 16 
-    },
+  },
   inputIcon: { 
     marginLeft: 10 
-    },
+  },
   footer: { 
     paddingHorizontal: theme.SIZES.padding, 
     paddingTop: 10 
-    },
+  },
   overlay: { 
     flex: 1, 
     backgroundColor: 'rgba(0, 0, 0, 0.5)' 
-    },
+  },
   sheetContainer: {
     position: 'absolute', bottom: 0, width: '100%',
     borderTopLeftRadius: 32, borderTopRightRadius: 32,
@@ -234,12 +248,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEEEEE', 
     borderRadius: 2, 
     marginBottom: 20 
-},
+  },
   sheetTitle: { 
     fontFamily: theme.FONTS.bold, 
     fontSize: 20, 
     marginBottom: 20 
-},
+  },
   optionItem: {
     width: '100%', paddingVertical: 18, borderRadius: 16,
     alignItems: 'center', marginBottom: 8,
@@ -247,7 +261,25 @@ const styles = StyleSheet.create({
   optionText: { 
     fontFamily: theme.FONTS.semiBold, 
     fontSize: 18 
-},
+  },
+  dropdownContainer: {
+    marginTop: -10, 
+    marginBottom: 20,
+    borderRadius: 16, 
+    borderWidth: 1,
+    overflow: 'hidden', 
+    ...theme.SHADOWS.light,
+  },
+  dropdownItem: { 
+    paddingVertical: 15, 
+    paddingHorizontal: 20, 
+    borderBottomWidth: 0.5, 
+    borderBottomColor: '#E0E0E0' 
+  },
+  dropdownText: { 
+    fontFamily: theme.FONTS.semiBold, 
+    fontSize: 16 
+  },
 });
 
 export default EditProfileScreen;

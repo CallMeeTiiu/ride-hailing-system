@@ -18,6 +18,7 @@ import theme from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useUser } from '../../contexts/UserContext';
 import PrimaryButton from '../../components/common/PrimaryButton';
+import CalendarPicker from '../../components/profile/CalendarPicker';
 
 const EditProfileScreen = ({ navigation }: any) => {
   const { colors } = useTheme();
@@ -33,7 +34,8 @@ const EditProfileScreen = ({ navigation }: any) => {
     gender: user?.gender || '',
   });
 
-  // State quản lý việc hiển thị modal chọn giới tính
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
   const [showGenderPicker, setShowGenderPicker] = useState(false);
   const genderOptions = ['Male', 'Female', 'Other', 'Secret'];
 
@@ -52,7 +54,6 @@ const EditProfileScreen = ({ navigation }: any) => {
     navigation.goBack();
   };
 
-  // Component render ô input chữ thông thường
   const renderInput = (placeholder: string, field: keyof typeof formData, icon?: any, keyboardType: any = 'default') => (
     <View style={[styles.inputContainer, { backgroundColor: colors.inputBg }]}>
       <TextInput
@@ -88,7 +89,15 @@ const EditProfileScreen = ({ navigation }: any) => {
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.formContainer}>
           
           {renderInput('Full Name', 'name')}
-          {renderInput('Date of Birth', 'dob', faCalendar)}
+
+          <TouchableOpacity 
+            style={[styles.inputContainer, { backgroundColor: colors.inputBg }]}
+            onPress={() => setShowDatePicker(true)}
+          >
+            <Text style={styles.inputLabel}>{formData.dob || 'Select Date of Birth'}</Text>
+            <FontAwesomeIcon icon={faCalendar} size={20} color={colors.textTitle} />
+          </TouchableOpacity>
+
           {renderInput('Email', 'email', faEnvelope, 'email-address')}
           {renderInput('Country', 'country')}
           {renderInput('Phone Number', 'phoneNumber', undefined, 'phone-pad')}
@@ -110,7 +119,13 @@ const EditProfileScreen = ({ navigation }: any) => {
         <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
           <PrimaryButton title="Update" onPress={handleUpdate} />
         </View>
-        
+
+        <CalendarPicker 
+            visible={showDatePicker}
+            selectedDate={formData.dob}
+            onClose={() => setShowDatePicker(false)}
+            onSelectDate={(date: string) => handleChange('dob', date)}
+        />
       </View>
 
       {/* --- MODAL CHỌN GIỚI TÍNH --- */}
@@ -159,37 +174,80 @@ const EditProfileScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: theme.SIZES.padding, marginBottom: 20,
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.SIZES.padding, 
+    marginBottom: 20,
   },
-  backButton: { padding: 10, marginLeft: -10 },
-  headerTitle: { fontFamily: theme.FONTS.bold, fontSize: 22 },
-  formContainer: { paddingHorizontal: theme.SIZES.padding, paddingBottom: 20 },
+  backButton: { 
+    padding: 10, 
+    marginLeft: -10 
+},
+  headerTitle: { 
+    fontFamily: theme.FONTS.bold, 
+    fontSize: 22 
+},
+  formContainer: { 
+    paddingHorizontal: theme.SIZES.padding, 
+    paddingBottom: 20 
+},
   inputContainer: {
-    flexDirection: 'row', alignItems: 'center',
+    flexDirection: 'row', 
+    alignItems: 'center',
     borderRadius: theme.SIZES.radiusInput || 16,
-    paddingHorizontal: 20, height: 60, marginBottom: 20,
+    paddingHorizontal: 20, 
+    height: 60, 
+    marginBottom: 20,
   },
-  input: { flex: 1, fontFamily: theme.FONTS.semiBold, fontSize: 16, height: '100%' },
-  inputLabel: { flex: 1, fontFamily: theme.FONTS.semiBold, fontSize: 16 },
-  inputIcon: { marginLeft: 10 },
-  footer: { paddingHorizontal: theme.SIZES.padding, paddingTop: 10 },
-
-  // Styles cho Modal Picker
-  overlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)' },
+  input: { 
+    flex: 1, 
+    fontFamily: theme.FONTS.semiBold, 
+    fontSize: 16, 
+    height: '100%' 
+    },
+  inputLabel: { 
+    flex: 1, 
+    fontFamily: theme.FONTS.semiBold, 
+    fontSize: 16 
+    },
+  inputIcon: { 
+    marginLeft: 10 
+    },
+  footer: { 
+    paddingHorizontal: theme.SIZES.padding, 
+    paddingTop: 10 
+    },
+  overlay: { 
+    flex: 1, 
+    backgroundColor: 'rgba(0, 0, 0, 0.5)' 
+    },
   sheetContainer: {
     position: 'absolute', bottom: 0, width: '100%',
     borderTopLeftRadius: 32, borderTopRightRadius: 32,
     paddingHorizontal: theme.SIZES.padding, paddingTop: 12,
     alignItems: 'center', ...theme.SHADOWS.light,
   },
-  handleIndicator: { width: 40, height: 4, backgroundColor: '#EEEEEE', borderRadius: 2, marginBottom: 20 },
-  sheetTitle: { fontFamily: theme.FONTS.bold, fontSize: 20, marginBottom: 20 },
+  handleIndicator: { 
+    width: 40, 
+    height: 4, 
+    backgroundColor: '#EEEEEE', 
+    borderRadius: 2, 
+    marginBottom: 20 
+},
+  sheetTitle: { 
+    fontFamily: theme.FONTS.bold, 
+    fontSize: 20, 
+    marginBottom: 20 
+},
   optionItem: {
     width: '100%', paddingVertical: 18, borderRadius: 16,
     alignItems: 'center', marginBottom: 8,
   },
-  optionText: { fontFamily: theme.FONTS.semiBold, fontSize: 18 },
+  optionText: { 
+    fontFamily: theme.FONTS.semiBold, 
+    fontSize: 18 
+},
 });
 
 export default EditProfileScreen;

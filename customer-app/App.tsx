@@ -23,6 +23,7 @@ import SearchingDriverScreen from './src/screens/home/SearchingDriverScreen';
 import TravelingScreen from './src/screens/home/TravelingScreen';
 import RatingScreen from './src/screens/rating/RatingScreen'; 
 import RatingListScreen from './src/screens/rating/RatingListScreen';
+import EditProfileScreen from './src/screens/profile/EditProfileScreen';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -40,6 +41,7 @@ export type RootStackParamList = {
   Travelling: undefined;
   Rating: {tripId: string };
   RatingList: undefined;
+  EditProfile: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -71,6 +73,7 @@ const App = () => {
                   <Stack.Screen name="Travelling" component={TravelingScreen} />
                   <Stack.Screen name="Rating" component={RatingScreen} />
                   <Stack.Screen name="RatingList" component={RatingListScreen} />
+                  <Stack.Screen name="EditProfile" component={EditProfileScreen} />
                 </Stack.Navigator>
               </NavigationContainer>
             </ThemeProvider>

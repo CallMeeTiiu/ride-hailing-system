@@ -12,6 +12,8 @@ export interface UserData {
   phoneNumber: string;
   avatar: string;
   email: string;
+  dob?: string;     
+  gender?: string;
   addresses: AddressItem[];
 }
 
@@ -29,6 +31,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     phoneNumber: "+1 111 467 378 399",
     avatar: "https://i.pravatar.cc/150?u=andrew",
     email: "andrew_ainsley@yourdomain.com",
+    dob: "12/27/1995",
+    gender: "Male",
     addresses: [
       { id: '1', title: 'Home', address: '1A Queen, New York, USA', isDefault: true },
       { id: '2', title: 'Office', address: '100 King St, New York, USA' }

@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
-import { useTheme } from '../../contexts/ThemeContext';
+import MapBackground from './MapBackground';
 
 interface AppMapProps {
   children?: React.ReactNode;
@@ -8,10 +8,10 @@ interface AppMapProps {
 }
 
 const AppMap = ({ children, style }: AppMapProps) => {
-  const { colors } = useTheme();
+
   return (
-    <View style={[styles.container, style, { backgroundColor: colors.inputBg }]}>
-      {/*  Markers (User, Driver, Radar)*/}
+    <View style={[styles.container, style]}>
+      <MapBackground />
       {children}
     </View>
   );

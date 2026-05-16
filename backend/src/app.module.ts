@@ -1,12 +1,38 @@
 import { Module } from '@nestjs/common'
+import { ConfigModule, ConfigService } from '@nestjs/config'
+import { TypeOrmModule } from '@nestjs/typeorm'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { AuthModule } from './auth/auth.module'
 import { RidesModule } from './rides/rides.module'
 import { DriversModule } from './drivers/drivers.module'
+import { UsersModule } from './users/users.module'
 
 @Module({
-  imports: [AuthModule, RidesModule, DriversModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get<string>('DB_HOST'),
+        port: configService.get<number>('DB_PORT'),
+        username: configService.get<string>('DB_USERNAME'),
+        password: configService.get<string>('DB_PASSWORD'),
+        database: configService.get<string>('DB_DATABASE'),
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        synchronize: true, // Chỉ dùng ở DEV, lên Prod đổi thành false
+        ssl: {
+          rejectUnauthorized: false,
+        },
+      }),
+      inject: [ConfigService],
+    }),
+    UsersModule,
+    AuthModule,
+    RidesModule,
+    DriversModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

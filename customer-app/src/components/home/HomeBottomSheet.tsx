@@ -102,7 +102,7 @@ const SheetAnimatedContent = ({
               onPress={() => handleNavigateToSearch('from')}
             >
               <View style={styles.textContainer}>
-                <Text style={[styles.locName, { color: colors.textTitle }]}>
+                <Text style={[styles.locName, { color: colors.textTitle }]} numberOfLines={1}>
                   {fromLocation ? fromLocation.name : 'My Current Location'}
                 </Text>
                 {fromLocation ? (
@@ -120,7 +120,7 @@ const SheetAnimatedContent = ({
               onPress={() => handleNavigateToSearch('destination')}
             >
               <View style={styles.textContainer}>
-                <Text style={[styles.locName, { color: colors.textTitle }]}>
+                <Text style={[styles.locName, { color: colors.textTitle }]} numberOfLines={1}>
                   {destinationLocation ? destinationLocation.name : 'Select Destination'}
                 </Text>
                 {destinationLocation ? (
@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     flex: 1,
-    paddingRight: 10,
+    paddingRight: 10
   },
   locName: {
     fontFamily: theme.FONTS.semiBold,

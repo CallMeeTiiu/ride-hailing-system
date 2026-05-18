@@ -10,14 +10,7 @@ export interface LocationItem {
   longitude: number;
 }
 
-export const ALL_LOCATIONS_DB: LocationItem[] = [
-  { id: '1', name: 'Grand Indonesia Mall', address: 'Jl. M.H. Thamrin No.1', distance: '1.2 km', latitude: -6.1949, longitude: 106.8209 },
-  { id: '2', name: 'Soekarno-Hatta Airport', address: 'Tangerang City, Banten', distance: '15.5 km', latitude: -6.1256, longitude: 106.6558 },
-  { id: '3', name: 'Central Park', address: 'Letjen S. Parman St', distance: '4.8 km', latitude: -6.1774, longitude: 106.7907 },
-  { id: '4', name: 'Times Square', address: 'Manhattan, NY 10036, USA', distance: '8.3 km', latitude: 40.7580, longitude: -73.9855 },
-  { id: '5', name: 'Empire State Building', address: '20 W 34th St., New York', distance: '9.1 km', latitude: 40.7484, longitude: -73.9857 },
-  { id: '6', name: 'Statue of Liberty', address: 'New York, NY 10004, USA', distance: '12.4 km', latitude: 40.6892, longitude: -74.0445 },
-];
+export const ALL_LOCATIONS_DB: LocationItem[] = [];
 
 interface LocationContextType { 
   allLocations: LocationItem[];

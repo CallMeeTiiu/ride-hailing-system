@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, Image } from 'react-native'; 
 
 import { useTheme } from '../../contexts/ThemeContext';
@@ -15,6 +15,7 @@ import { useSharedValue } from 'react-native-reanimated';
 import AppMap from '../../components/home/AppMap';
 import RadarAnimation from '../../components/home/RadarAnimation';
 import theme from '../../constants/theme';
+import { MapBackgroundRef } from '../../components/home/MapBackground';
 
 const HomeScreen = () => {
   const { colors } = useTheme();
@@ -24,9 +25,11 @@ const HomeScreen = () => {
 
   const animatedSheetIndex = useSharedValue(0);
 
+  const mapRef = useRef<MapBackgroundRef>(null);
+  
   return (
     <View style={styles.container}>
-      <AppMap>
+      <AppMap ref={mapRef}>
         <View style={styles.userCenterAnchor}>
           <RadarAnimation />
           <View style={[styles.avatarBorder, { borderColor: colors.primaryLight }]}>
@@ -47,7 +50,7 @@ const HomeScreen = () => {
           <FontAwesomeIcon icon={faMagnifyingGlass} size={20} color={colors.textTitle} />
         </TouchableOpacity>
       </View>
-      <FloatingMapActions animatedIndex={animatedSheetIndex}/>
+      <FloatingMapActions animatedIndex={animatedSheetIndex} />
       <BottomSearchBoard animatedIndex={animatedSheetIndex}/>
     </View>
   );

@@ -1,12 +1,30 @@
-import React, { useRef } from 'react';
+import React, { forwardRef, useImperativeHandle, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 
-const MapBackground = () => {
+export interface MapBackgroundRef {
+  flyToLocation: (lat: number, lng: number) => void;
+}
+
+const MapBackground = forwardRef<MapBackgroundRef>((props, ref) => {
   const webViewRef = useRef<WebView>(null);
 
-  const lat = 10.762622;
-  const lng = 106.660172;
+  // UIT location
+  const lat = 10.8700;
+  const lng = 106.8031;
+
+  useImperativeHandle(ref, () => ({
+    flyToLocation: (newLat: number, newLng: number) => {
+      const runJS = `
+        map.flyTo([${newLat}, ${newLng}], 17, {
+          animate: true,
+          duration: 1.5 
+        });
+        true; 
+      `;
+      webViewRef.current?.injectJavaScript(runJS);
+    }
+  }));
 
   const leafletHTML = `
     <!DOCTYPE html>
@@ -28,7 +46,8 @@ const MapBackground = () => {
           zoomControl: false 
         }).setView([${lat}, ${lng}], 15);
 
-        L.tileLayer('https://a.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png', {
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        // L.tileLayer('https://a.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png', {
           maxZoom: 19,
         }).addTo(map);
 
@@ -77,7 +96,7 @@ const MapBackground = () => {
       />
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

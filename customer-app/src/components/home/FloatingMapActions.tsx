@@ -102,9 +102,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 24,
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderColor: theme.COLORS.primary,
-    backgroundColor: 'transparent',
+    backgroundColor: theme.COLORS.white,
+    ...theme.SHADOWS.light,
   },
   chipText: {
     fontFamily: theme.FONTS.semiBold,

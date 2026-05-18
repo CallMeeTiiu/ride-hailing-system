@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { WebView } from 'react-native-webview';
+import { WebView, WebViewMessageEvent } from 'react-native-webview';
 
 const MapBackground = () => {
-  // Tọa độ trung tâm TP. Hồ Chí Minh
-  const lat = 298.762622;
+  const webViewRef = useRef<WebView>(null);
+
+  const lat = 10.762622;
   const lng = 106.660172;
 
   const leafletHTML = `
@@ -17,30 +18,54 @@ const MapBackground = () => {
       <style>
         body { padding: 0; margin: 0; }
         html, body, #map { height: 100%; width: 100%; }
-        /* Ẩn dòng chữ copyright ở góc dưới cho app sạch sẽ giống Grab/Uber */
         .leaflet-control-attribution { display: none; }
       </style>
     </head>
     <body>
       <div id="map"></div>
       <script>
-        // Khởi tạo bản đồ, tắt nút Zoom mặc định của Web
         var map = L.map('map', {
           zoomControl: false 
         }).setView([${lat}, ${lng}], 15);
 
-        // Gọi dữ liệu ảnh từ OpenStreetMap
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        L.tileLayer('https://a.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png', {
           maxZoom: 19,
         }).addTo(map);
+
+        map.on('moveend', function () {
+          var center = map.getCenter(); // Lấy tọa độ tâm màn hình
+          
+          // Đóng gói dữ liệu thành chuỗi JSON
+          var dataToRN = JSON.stringify({
+            type: 'onMapMove',
+            lat: center.lat,
+            lng: center.lng
+          });
+          
+          // Dùng hàm đặc biệt này để ném dữ liệu ra ngoài cho React Native chụp lấy
+          window.ReactNativeWebView.postMessage(dataToRN);
+        });
       </script>
     </body>
     </html>
   `;
 
+  const handleOnMessage = (event: WebViewMessageEvent) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      
+      if (data.type === 'onMapMove') {
+        console.log("📍 Tọa độ trung tâm Map hiện tại là:", data.lat, data.lng);
+      }
+    } catch (error) {
+      console.error("Lỗi khi đọc dữ liệu từ Map:", error);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <WebView
+        ref={webViewRef}
         originWhitelist={['*']}
         source={{ html: leafletHTML }}
         style={StyleSheet.absoluteFillObject}
@@ -48,6 +73,7 @@ const MapBackground = () => {
         bounces={false}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
+        onMessage={handleOnMessage}
       />
     </View>
   );

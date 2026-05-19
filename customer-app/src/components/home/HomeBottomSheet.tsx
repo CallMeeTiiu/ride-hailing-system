@@ -41,7 +41,7 @@ const SheetAnimatedContent = ({
   return (
     <View style={styles.contentContainer}>
       
-      {/* --- GIAO DIỆN 1: THU GỌN (Dùng absolute để nằm đè lên nhau) --- */}
+      {/* --- GIAO DIỆN 1: THU GỌN --- */}
       <Animated.View style={[styles.absoluteView, collapsedStyle]}>
         <TouchableOpacity 
           style={[styles.searchBar, { backgroundColor: colors.inputBackground }]}
@@ -55,6 +55,7 @@ const SheetAnimatedContent = ({
         </TouchableOpacity>
       </Animated.View>
 
+      {/* --- GIAO DIỆN 2: MỞ RỘNG --- */}
       {/* eslint-disable-next-line react-native/no-inline-styles */} 
       <Animated.View style={[expandedStyle, { paddingTop: 10 }]}>
         <Text style={[styles.title, { color: colors.textTitle }]}>Select Address</Text>
@@ -232,6 +233,7 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     position: 'relative',
+    paddingVertical: theme.SIZES.padding,
   },
   absoluteView: {
     position: 'absolute',

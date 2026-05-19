@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Image } from 'react-native'; 
 
 import { useTheme } from '../../contexts/ThemeContext';
@@ -16,6 +16,7 @@ import AppMap from '../../components/home/AppMap';
 import RadarAnimation from '../../components/home/RadarAnimation';
 import theme from '../../constants/theme';
 import { MapBackgroundRef } from '../../components/home/MapBackground';
+import { useLocation } from '../../contexts/LocationContext';
 
 const HomeScreen = () => {
   const { colors } = useTheme();
@@ -26,6 +27,35 @@ const HomeScreen = () => {
   const animatedSheetIndex = useSharedValue(0);
 
   const mapRef = useRef<MapBackgroundRef>(null);
+
+  const { fromLocation, destinationLocation } = useLocation();
+  useEffect(() => {
+    if (destinationLocation) {
+      const startLat = fromLocation ? fromLocation.latitude : 10.8700;
+      const startLng = fromLocation ? fromLocation.longitude : 106.8031;
+      
+      const endLat = destinationLocation.latitude;
+      const endLng = destinationLocation.longitude;
+
+      const fetchRoute = async () => {
+        try {
+          const url = `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${endLng},${endLat}?geometries=geojson`;
+          
+          const response = await fetch(url);
+          const data = await response.json();
+
+          if (data.routes && data.routes.length > 0) {
+            const routeGeometry = data.routes[0].geometry;
+            mapRef.current?.drawRoute(routeGeometry);
+          }
+        } catch (error) {
+          console.error("Error while fetching OSRM route:", error);
+        }
+      };
+
+      fetchRoute();
+    }
+  }, [fromLocation, destinationLocation]);
   
   return (
     <View style={styles.container}>

@@ -4,6 +4,7 @@ import { WebView, WebViewMessageEvent } from 'react-native-webview';
 
 export interface MapBackgroundRef {
   flyToLocation: (lat: number, lng: number) => void;
+  drawRoute: (geoJsonData: any) => void;
 }
 
 const MapBackground = forwardRef<MapBackgroundRef>((props, ref) => {
@@ -21,6 +22,21 @@ const MapBackground = forwardRef<MapBackgroundRef>((props, ref) => {
           duration: 1.5 
         });
         true; 
+      `;
+      webViewRef.current?.injectJavaScript(runJS);
+    },
+    drawRoute: (geoJsonData: any) => {
+      const runJS = `
+        if (window.routeLayer) {
+          map.removeLayer(window.routeLayer);
+        }
+        
+        window.routeLayer = L.geoJSON(${JSON.stringify(geoJsonData)}, {
+          style: { color: '#FF4D4D', weight: 5, opacity: 0.8 }
+        }).addTo(map);
+
+        map.fitBounds(window.routeLayer.getBounds(), { padding: [50, 50] });
+        true;
       `;
       webViewRef.current?.injectJavaScript(runJS);
     }

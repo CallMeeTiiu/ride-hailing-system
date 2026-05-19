@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Image } from 'react-native'; 
 
 import { useTheme } from '../../contexts/ThemeContext';
@@ -28,6 +28,8 @@ const HomeScreen = () => {
 
   const mapRef = useRef<MapBackgroundRef>(null);
 
+  const [distance, setDistance] = useState<string>('');
+
   const { fromLocation, destinationLocation } = useLocation();
   useEffect(() => {
     if (destinationLocation) {
@@ -45,15 +47,22 @@ const HomeScreen = () => {
           const data = await response.json();
 
           if (data.routes && data.routes.length > 0) {
-            const routeGeometry = data.routes[0].geometry;
-            mapRef.current?.drawRoute(routeGeometry);
+            const route = data.routes[0]; 
+            
+            mapRef.current?.drawRoute(route.geometry);
+            
+            const distanceInKm = (route.distance / 1000).toFixed(1);
+            setDistance(`${distanceInKm} km`); 
           }
         } catch (error) {
-          console.error("Error while fetching OSRM route:", error);
+          console.error("Lỗi khi vẽ tuyến đường OSRM:", error);
         }
       };
 
       fetchRoute();
+    } else {
+      mapRef.current?.clearRoute(); 
+      setDistance('');              
     }
   }, [fromLocation, destinationLocation]);
   
@@ -81,7 +90,7 @@ const HomeScreen = () => {
         </TouchableOpacity>
       </View>
       <FloatingMapActions animatedIndex={animatedSheetIndex} />
-      <BottomSearchBoard animatedIndex={animatedSheetIndex}/>
+      <BottomSearchBoard animatedIndex={animatedSheetIndex} distance={distance}/>
     </View>
   );
 };

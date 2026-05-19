@@ -82,23 +82,37 @@ const SearchScreen = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { allLocations, recentLocations, addRecentLocation, removeRecentLocation, setFromLocation, setDestinationLocation } = useLocation();
+  const { allLocations, recentLocations, addRecentLocation, removeRecentLocation, setFromLocation, setDestinationLocation, fromLocation } = useLocation();
+
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
+    return distance.toFixed(1) + ' km'; 
+  };
 
   const handleDeleteRecent = (id: string) => {
     removeRecentLocation(id);
   };
 
   const handleSelectLocation = (selectedItem: any) => {
-    addRecentLocation(selectedItem);  
+    const cleanItem = { ...selectedItem, distance: '' };
+    addRecentLocation(cleanItem);  
     
     if (searchType === 'from') {
-      setFromLocation(selectedItem);
+      setFromLocation(cleanItem);
       navigation.goBack();
     } else if (searchType === 'destination') {
-      setDestinationLocation(selectedItem);
+      setDestinationLocation(cleanItem);
       navigation.goBack();
     } else {
-      setSearchText(selectedItem.name); 
+      setSearchText(cleanItem.name); 
     }
   };
 
@@ -109,7 +123,6 @@ const SearchScreen = () => {
       return;
     }
 
-    // Debounce: Chờ 500ms sau khi ngừng gõ mới gọi API
     const delayDebounceFn = setTimeout(async () => {
       setIsLoading(true);
       try {
@@ -153,9 +166,19 @@ const SearchScreen = () => {
   const isSearching = searchText.length > 0;
   const isSuggesting = recentLocations.length === 0;
   
-  const displayData = isSearching 
+  const baseData = isSearching 
     ? searchResults 
     : (recentLocations.length > 0 ? recentLocations : allLocations);
+
+  const displayData = baseData.map(item => {
+    if (fromLocation && item.latitude && item.longitude) {
+      return {
+        ...item,
+        distance: calculateDistance(fromLocation.latitude, fromLocation.longitude, item.latitude, item.longitude)
+      };
+    }
+    return { ...item, distance: '' }; 
+  });
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top + 10, paddingBottom: insets.bottom + 10 }]}>

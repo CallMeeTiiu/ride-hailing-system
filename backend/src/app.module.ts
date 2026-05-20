@@ -7,6 +7,10 @@ import { AuthModule } from './auth/auth.module'
 import { RidesModule } from './rides/rides.module'
 import { DriversModule } from './drivers/drivers.module'
 import { UsersModule } from './users/users.module'
+import { RedisModule } from './redis/redis.module'
+import { LocationModule } from './location/location.module'
+import { GoogleModule } from './google/google.module'
+import { FirebaseModule } from './firebase/firebase.module'
 
 @Module({
   imports: [
@@ -32,6 +36,10 @@ import { UsersModule } from './users/users.module'
     AuthModule,
     RidesModule,
     DriversModule,
+    RedisModule,
+    LocationModule,
+    GoogleModule,
+    FirebaseModule,
   ],
   controllers: [AppController],
   providers: [AppService],

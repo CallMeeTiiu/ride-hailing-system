@@ -46,4 +46,15 @@ export class AuthController {
   async driverLogin(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
     return this.authService.driverLogin(loginDto)
   }
+
+  @Post('driver/register')
+  @ApiOperation({ summary: 'Tài xế: Đăng ký tài khoản' })
+  @ApiResponse({
+    status: 201,
+    description: 'Đăng ký thành công',
+    type: AuthResponseDto,
+  })
+  async driverRegister(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
+    return this.authService.driverRegister(loginDto)
+  }
 }

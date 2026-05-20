@@ -27,6 +27,9 @@ export class User {
   @Column({ type: 'text', nullable: true })
   password_hash: string
 
+  @Column({ type: 'text', nullable: true })
+  device_token: string
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date
 

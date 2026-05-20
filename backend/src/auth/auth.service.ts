@@ -118,4 +118,29 @@ export class AuthService {
 
     return this.generateTokens(user)
   }
+
+  async driverRegister(loginDto: LoginDto): Promise<AuthResponseDto> {
+    if (!loginDto.password) {
+      throw new BadRequestException('Vui lòng nhập mật khẩu')
+    }
+
+    const existingUser = await this.usersService.findByPhoneNumber(
+      loginDto.phone_number,
+    )
+
+    if (existingUser) {
+      throw new BadRequestException('Số điện thoại này đã được đăng ký')
+    }
+
+    const passwordHash = await bcrypt.hash(loginDto.password, 10)
+
+    const newUser = await this.usersService.save({
+      phone_number: loginDto.phone_number,
+      password_hash: passwordHash,
+      role: UserRole.DRIVER,
+      phone_verified_at: new Date(),
+    })
+
+    return this.generateTokens(newUser)
+  }
 }

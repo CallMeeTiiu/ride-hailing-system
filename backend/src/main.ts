@@ -10,7 +10,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Ride Hailing API')
-    .setDescription('Tài liệu API cho hệ thống gọi xe (MVP) - Khớp DB v1.0')
+    .setDescription('Tài liệu API cho hệ thống gọi xe v1.0')
     .setVersion('1.0')
     .addTag('Auth', 'Xác thực')
     .addTag('Rides', 'Đặt xe & Chuyến đi')

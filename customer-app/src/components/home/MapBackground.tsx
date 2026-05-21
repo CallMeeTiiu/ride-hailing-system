@@ -6,6 +6,7 @@ export interface MapBackgroundRef {
   flyToLocation: (lat: number, lng: number) => void;
   drawRoute: (geoJsonData: any) => void;
   clearRoute: () => void;
+  updateMarkers: (fromLat: number | null, fromLng: number | null, destLat: number | null, destLng: number | null) => void;
 }
 
 const MapBackground = forwardRef<MapBackgroundRef>((props, ref) => {
@@ -46,6 +47,37 @@ const MapBackground = forwardRef<MapBackgroundRef>((props, ref) => {
         if (window.routeLayer) {
           map.removeLayer(window.routeLayer);
           window.routeLayer = null; 
+        }
+        true;
+      `;
+      webViewRef.current?.injectJavaScript(runJS);
+    },
+    updateMarkers: (fromLat: number | null, fromLng: number | null, destLat: number | null, destLng: number | null) => {
+      const runJS = `
+        if (window.fromMarker) { map.removeLayer(window.fromMarker); window.fromMarker = null; }
+        if (window.destMarker) { map.removeLayer(window.destMarker); window.destMarker = null; }
+
+        var fLat = ${fromLat}; var fLng = ${fromLng};
+        var dLat = ${destLat}; var dLng = ${destLng};
+
+        if (fLat && fLng) {
+          var fromIcon = L.divIcon({
+            html: "<div style='width: 44px; height: 44px; border-radius: 22px; border: 3px solid #FFBB1C; background: white; overflow: hidden; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3);'><img src='https://i.pravatar.cc/150?u=user' style='width: 40px; height: 40px; border-radius: 20px;'/></div>",
+            className: '',
+            iconSize: [44, 44],
+            iconAnchor: [22, 22]
+          });
+          window.fromMarker = L.marker([fLat, fLng], {icon: fromIcon}).addTo(map);
+        }
+
+        if (dLat && dLng) {
+          var destIcon = L.divIcon({
+            html: "<div style='width: 24px; height: 24px; background-color: #FF4D4D; border-radius: 12px; border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3);'></div>",
+            className: '',
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+          });
+          window.destMarker = L.marker([dLat, dLng], {icon: destIcon}).addTo(map);
         }
         true;
       `;

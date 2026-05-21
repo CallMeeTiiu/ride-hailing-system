@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Image } from 'react-native'; 
+import { View, StyleSheet, TouchableOpacity } from 'react-native'; 
 
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -13,7 +13,6 @@ import { RootStackParamList } from '../../../App';
 import FloatingMapActions from '../../components/home/FloatingMapActions';
 import { useSharedValue } from 'react-native-reanimated';
 import AppMap from '../../components/home/AppMap';
-import RadarAnimation from '../../components/home/RadarAnimation';
 import theme from '../../constants/theme';
 import { MapBackgroundRef } from '../../components/home/MapBackground';
 import { useLocation } from '../../contexts/LocationContext';
@@ -32,27 +31,36 @@ const HomeScreen = () => {
 
   const { fromLocation, destinationLocation } = useLocation();
   useEffect(() => {
+    const markerFromLat = fromLocation ? fromLocation.latitude : null;
+    const markerFromLng = fromLocation ? fromLocation.longitude : null;
+    
+    const markerDestLat = destinationLocation ? destinationLocation.latitude : null;
+    const markerDestLng = destinationLocation ? destinationLocation.longitude : null;
+
+    mapRef.current?.updateMarkers(markerFromLat, markerFromLng, markerDestLat, markerDestLng);
+
+
     if (destinationLocation) {
-      const startLat = fromLocation ? fromLocation.latitude : 10.8700;
-      const startLng = fromLocation ? fromLocation.longitude : 106.8031;
+      const routeStartLat = fromLocation ? fromLocation.latitude : 10.8700;
+      const routeStartLng = fromLocation ? fromLocation.longitude : 106.8031;
       
-      const endLat = destinationLocation.latitude;
-      const endLng = destinationLocation.longitude;
+      const routeEndLat = destinationLocation.latitude;
+      const routeEndLng = destinationLocation.longitude;
 
       const fetchRoute = async () => {
         try {
-          const url = `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${endLng},${endLat}?geometries=geojson`;
+          const url = `https://router.project-osrm.org/route/v1/driving/${routeStartLng},${routeStartLat};${routeEndLng},${routeEndLat}?geometries=geojson`;
           
           const response = await fetch(url);
           const data = await response.json();
 
           if (data.routes && data.routes.length > 0) {
-            const route = data.routes[0]; 
+            const route = data.routes[0];
             
             mapRef.current?.drawRoute(route.geometry);
             
             const distanceInKm = (route.distance / 1000).toFixed(1);
-            setDistance(`${distanceInKm} km`); 
+            setDistance(`${distanceInKm} km`);
           }
         } catch (error) {
           console.error("Lỗi khi vẽ tuyến đường OSRM:", error);
@@ -68,17 +76,7 @@ const HomeScreen = () => {
   
   return (
     <View style={styles.container}>
-      <AppMap ref={mapRef}>
-        <View style={styles.userCenterAnchor}>
-          <RadarAnimation />
-          <View style={[styles.avatarBorder, { borderColor: colors.primaryLight }]}>
-            <Image 
-              source={{ uri: 'https://i.pravatar.cc/150?u=user' }}
-              style={styles.userAvatar} 
-            />
-          </View>
-        </View>
-      </AppMap>
+      <AppMap ref={mapRef}/>
 
       <View style={[styles.topActionContainer, { top: insets.top + 10 }]}>
         <TouchableOpacity

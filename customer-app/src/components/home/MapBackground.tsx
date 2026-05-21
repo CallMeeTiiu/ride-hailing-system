@@ -7,6 +7,8 @@ export interface MapBackgroundRef {
   drawRoute: (geoJsonData: any) => void;
   clearRoute: () => void;
   updateMarkers: (fromLat: number | null, fromLng: number | null, destLat: number | null, destLng: number | null) => void;
+  drawDrivers: (drivers: Array<{ lat: number, lng: number }>) => void;
+  clearDrivers: () => void;
 }
 
 const MapBackground = forwardRef<MapBackgroundRef>((props, ref) => {
@@ -78,6 +80,42 @@ const MapBackground = forwardRef<MapBackgroundRef>((props, ref) => {
             iconAnchor: [12, 12]
           });
           window.destMarker = L.marker([dLat, dLng], {icon: destIcon}).addTo(map);
+        }
+        true;
+      `;
+      webViewRef.current?.injectJavaScript(runJS);
+    },
+    drawDrivers: (drivers: Array<{ lat: number, lng: number }>) => {
+      const runJS = `
+        try {
+          if (window.driverMarkers) {
+            window.driverMarkers.forEach(m => map.removeLayer(m));
+          }
+          window.driverMarkers = [];
+          
+          var driversData = ${JSON.stringify(drivers)};
+          driversData.forEach(d => {
+            // Tạo icon chiếc xe Taxi xoay ngang
+            var carIcon = L.divIcon({
+              html: "<div style='font-size: 26px; transform: scaleX(-1); filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.4));'>🚖</div>",
+              className: '',
+              iconSize: [30, 30],
+              iconAnchor: [15, 15]
+            });
+            var marker = L.marker([d.lat, d.lng], {icon: carIcon}).addTo(map);
+            window.driverMarkers.push(marker);
+          });
+        } catch(e) {}
+        true;
+      `;
+      webViewRef.current?.injectJavaScript(runJS);
+    },
+
+    clearDrivers: () => {
+      const runJS = `
+        if (window.driverMarkers) {
+          window.driverMarkers.forEach(m => map.removeLayer(m));
+          window.driverMarkers = [];
         }
         true;
       `;

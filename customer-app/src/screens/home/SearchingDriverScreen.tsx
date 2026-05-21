@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { StyleSheet, View, Image, Text } from 'react-native';
 
 import AppMap from '../../components/home/AppMap';
@@ -8,25 +8,48 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faCar } from '@fortawesome/free-solid-svg-icons';
 import RadarAnimation from '../../components/home/RadarAnimation';
 import SwipeButton from '../../components/booking/SwipeButton';
-
-const mockDrivers = [
-  { id: '1', dx: -100, dy: -150, rotation: '-45deg', avatar: 'https://i.pravatar.cc/150?u=d1' },
-  { id: '2', dx: 120, dy: -100, rotation: '45deg', avatar: 'https://i.pravatar.cc/150?u=d2' },
-  { id: '3', dx: -130, dy: 100, rotation: '-120deg', avatar: 'https://i.pravatar.cc/150?u=d3' },
-  { id: '4', dx: 100, dy: 180, rotation: '160deg', avatar: 'https://i.pravatar.cc/150?u=d4' },
-];
+import { useLocation } from '../../contexts/LocationContext';
+import { MapBackgroundRef } from '../../components/home/MapBackground';
 
 const SearchingDriverScreen = ({ navigation }: any) => {
   const { colors } = useTheme();
 
-  // LOGIC ĐIỀU HƯỚNG TỰ ĐỘNG SAU 5 GIÂY
+  const mapRef = useRef<MapBackgroundRef>(null);
+  const { fromLocation } = useLocation();
+
+  const generateMockDrivers = (centerLat: number, centerLng: number, count: number = 6) => {
+    const drivers = [];
+    for (let i = 0; i < count; i++) {
+      const latOffset = (Math.random() - 0.5) * 0.01; 
+      const lngOffset = (Math.random() - 0.5) * 0.01;
+      drivers.push({
+        lat: centerLat + latOffset,
+        lng: centerLng + lngOffset
+      });
+    }
+    return drivers;
+  };
+
+  useEffect(() => {
+    const lat = fromLocation ? fromLocation.latitude : 10.8700;
+    const lng = fromLocation ? fromLocation.longitude : 106.8031;
+
+    mapRef.current?.flyToLocation(lat, lng);
+    
+    const nearbyDrivers = generateMockDrivers(lat, lng, 6);
+    mapRef.current?.drawDrivers(nearbyDrivers);
+
+    return () => {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      mapRef.current?.clearDrivers();
+    };
+  }, [fromLocation]);
+
   useEffect(() => {
     const timer = setTimeout(() => {
-      // Tự động chuyển qua TravellingScreen nếu component vẫn còn mount
-      navigation.navigate('Travelling');
+      navigation.navigate('Traveling');
     }, 5000);
 
-    // Cleanup function: Nếu user bấm Cancel (goBack) hoặc unmount, xóa timer ngay lập tức
     return () => clearTimeout(timer);
   }, [navigation]);
 
@@ -34,33 +57,7 @@ const SearchingDriverScreen = ({ navigation }: any) => {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       
       {/* 2. SỬ DỤNG BẢNG VẼ APPMAP */}
-      <AppMap>
-        
-        {/* RENDER MOCK DRIVERS */}
-        {mockDrivers.map((driver) => (
-          <View 
-            key={driver.id} 
-            style={[
-              styles.driverMarkerWrapper, 
-              { transform: [{ translateX: driver.dx }, { translateY: driver.dy }] }
-            ]}
-          >
-            {/* Ảnh Avatar của Driver trong cái "Ghim" */}
-            <View style={[styles.driverPin, { backgroundColor: colors.primary }]}>
-              <Image source={{ uri: driver.avatar }} style={styles.driverAvatar} />
-            </View>
-            {/* Tam giác nhỏ tạo hình cái ghim */}
-            <View style={[styles.pinTriangle, { borderTopColor: colors.primary }]} />
-            
-            {/* Icon xe taxi xoay theo hướng */}
-            <View style={[styles.carWrapper, { transform: [{ rotate: driver.rotation }] }]}>
-              <View style={[styles.carBody, { backgroundColor: colors.primary }]}>
-                 <FontAwesomeIcon icon={faCar} size={14} color={colors.textBtn} />
-              </View>
-            </View>
-          </View>
-        ))}
-
+      <AppMap ref={mapRef}>
         {/* TÂM BẢN ĐỒ: USER + RADAR */}
         {/* Đặt ở cuối để nó nằm đè lên (layer cao hơn) nếu lỡ đụng các driver khác */}
         <View style={styles.userCenterAnchor}>

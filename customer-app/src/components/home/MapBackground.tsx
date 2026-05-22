@@ -4,6 +4,7 @@ import { WebView, WebViewMessageEvent } from 'react-native-webview';
 
 export interface MapBackgroundRef {
   flyToLocation: (lat: number, lng: number) => void;
+  jumpToLocation: (lat: number, lng: number) => void;
   drawRoute: (geoJsonData: any) => void;
   clearRoute: () => void;
   updateMarkers: (fromLat: number | null, fromLng: number | null, destLat: number | null, destLng: number | null) => void;
@@ -27,6 +28,10 @@ const MapBackground = forwardRef<MapBackgroundRef>((props, ref) => {
         });
         true; 
       `;
+      webViewRef.current?.injectJavaScript(runJS);
+    },
+    jumpToLocation: (newLat: number, newLng: number) => {
+      const runJS = `map.setView([${newLat}, ${newLng}], 17); true;`;
       webViewRef.current?.injectJavaScript(runJS);
     },
     drawRoute: (geoJsonData: any) => {

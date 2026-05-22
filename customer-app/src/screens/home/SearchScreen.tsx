@@ -174,10 +174,20 @@ const SearchScreen = () => {
     if (fromLocation && item.latitude && item.longitude) {
       return {
         ...item,
-        distance: calculateDistance(fromLocation.latitude, fromLocation.longitude, item.latitude, item.longitude)
+        distance: calculateDistance(
+          fromLocation.latitude, 
+          fromLocation.longitude, 
+          item.latitude, 
+          item.longitude
+        )
       };
     }
     return { ...item, distance: '' }; 
+  }).filter(item => {
+    if (searchType === 'destination' && item.distance === '0.0 km') {
+      return false;
+    }
+    return true;
   });
 
   return (

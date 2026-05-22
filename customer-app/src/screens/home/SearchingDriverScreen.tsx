@@ -34,8 +34,8 @@ const SearchingDriverScreen = ({ navigation }: any) => {
     const lat = fromLocation ? fromLocation.latitude : 10.8700;
     const lng = fromLocation ? fromLocation.longitude : 106.8031;
 
-    mapRef.current?.flyToLocation(lat, lng);
-    
+    mapRef.current?.jumpToLocation(lat, lng);
+
     const nearbyDrivers = generateMockDrivers(lat, lng, 6);
     mapRef.current?.drawDrivers(nearbyDrivers);
 

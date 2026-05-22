@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useState, useEffect } from 'react';
+import React, { useRef, useMemo, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -12,7 +12,8 @@ import {
   faLocationDot, 
   faCrosshairs, 
   faPenToSquare,
-  faSearch
+  faSearch,
+  faTimes
 } from '@fortawesome/free-solid-svg-icons';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -24,7 +25,8 @@ import { RootStackParamList } from '../../../App';
 import PrimaryButton from '../common/PrimaryButton';
 
 const SheetAnimatedContent = ({ 
-  colors, fromLocation, destinationLocation, distance, isOrderReady, handleNavigateToSearch, sheetRef 
+  colors, fromLocation, destinationLocation, distance, isOrderReady, handleNavigateToSearch, sheetRef,
+  setFromLocation, setDestinationLocation, 
 }: any) => {
   const { animatedIndex } = useBottomSheet();
 
@@ -41,7 +43,7 @@ const SheetAnimatedContent = ({
   return (
     <View style={styles.contentContainer}>
       
-      {/* --- GIAO DIỆN 1: THU GỌN (Dùng absolute để nằm đè lên nhau) --- */}
+      {/* --- GIAO DIỆN 1: THU GỌN --- */}
       <Animated.View style={[styles.absoluteView, collapsedStyle]}>
         <TouchableOpacity 
           style={[styles.searchBar, { backgroundColor: colors.inputBackground }]}
@@ -55,13 +57,14 @@ const SheetAnimatedContent = ({
         </TouchableOpacity>
       </Animated.View>
 
+      {/* --- GIAO DIỆN 2: MỞ RỘNG --- */}
       {/* eslint-disable-next-line react-native/no-inline-styles */} 
       <Animated.View style={[expandedStyle, { paddingTop: 10 }]}>
         <Text style={[styles.title, { color: colors.textTitle }]}>Select Address</Text>
         
         <View style={styles.distanceRow}>
           <Text style={[styles.distanceLabel, { color: colors.textTitle }]}>Distance</Text>
-          <Text style={[styles.distanceValue, { color: colors.textTitle }]}>{distance} km</Text>
+          <Text style={[styles.distanceValue, { color: colors.textTitle }]}>{distance}</Text>
         </View>
 
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
@@ -96,41 +99,65 @@ const SheetAnimatedContent = ({
           </View>
 
           <View style={styles.contentColumn}>
-            <TouchableOpacity 
-              style={styles.locationItem} 
-              activeOpacity={0.7}
-              onPress={() => handleNavigateToSearch('from')}
-            >
-              <View style={styles.textContainer}>
-                <Text style={[styles.locName, { color: colors.textTitle }]}>
-                  {fromLocation ? fromLocation.name : 'My Current Location'}
-                </Text>
-                {fromLocation ? (
-                  <Text style={[styles.locAddress, { color: colors.textBody }]} numberOfLines={1}>
+            
+            {/* Ô ĐIỂM ĐÓN (FROM) */}
+            <View style={styles.locationItem}>
+              <TouchableOpacity 
+                style={styles.textContainerWrapper} 
+                activeOpacity={0.7} 
+                onPress={() => handleNavigateToSearch('from')}
+              >
+                <View style={styles.textContainer}>
+                  <Text style={[styles.locName, { color: colors.textTitle }]} numberOfLines={1}>
+                    {fromLocation ? fromLocation.name : 'My Current Location'}
+                  </Text>
+                  {fromLocation ? (
+                    <Text style={[styles.locAddress, { color: colors.textBody }]} numberOfLines={1}>
                       {fromLocation.address}
-                  </Text>
-                ) : null}
-              </View>
-              <FontAwesomeIcon icon={faPenToSquare} size={16} color={theme.COLORS.primary} />
-            </TouchableOpacity>
+                    </Text>
+                  ) : null}
+                </View>
+              </TouchableOpacity>
+              
+              {fromLocation ? (
+                <TouchableOpacity onPress={() => setFromLocation(null)} style={styles.actionIconCell}>
+                  <FontAwesomeIcon icon={faTimes} size={16} color={colors.textBody} />
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity onPress={() => handleNavigateToSearch('from')} style={styles.actionIconCell}>
+                  <FontAwesomeIcon icon={faPenToSquare} size={16} color={theme.COLORS.primary} />
+                </TouchableOpacity>
+              )}
+            </View>
 
-            <TouchableOpacity 
-              style={styles.locationItem} 
-              activeOpacity={0.7}
-              onPress={() => handleNavigateToSearch('destination')}
-            >
-              <View style={styles.textContainer}>
-                <Text style={[styles.locName, { color: colors.textTitle }]}>
-                  {destinationLocation ? destinationLocation.name : 'Select Destination'}
-                </Text>
-                {destinationLocation ? (
-                  <Text style={[styles.locAddress, { color: colors.textBody }]} numberOfLines={1}>
-                      {destinationLocation.address}
+            <View style={styles.locationItem}>
+              <TouchableOpacity 
+                style={styles.textContainerWrapper} 
+                activeOpacity={0.7} 
+                onPress={() => handleNavigateToSearch('destination')}
+              >
+                <View style={styles.textContainer}>
+                  <Text style={[styles.locName, { color: colors.textTitle }]} numberOfLines={1}>
+                    {destinationLocation ? destinationLocation.name : 'Select Destination'}
                   </Text>
-                ) : null}
-              </View>
-              <FontAwesomeIcon icon={faPenToSquare} size={16} color={theme.COLORS.primary} />
-            </TouchableOpacity>
+                  {destinationLocation ? (
+                    <Text style={[styles.locAddress, { color: colors.textBody }]} numberOfLines={1}>
+                      {destinationLocation.address}
+                    </Text>
+                  ) : null}
+                </View>
+              </TouchableOpacity>
+              
+              {destinationLocation ? (
+                <TouchableOpacity onPress={() => setDestinationLocation(null)} style={styles.actionIconCell}>
+                  <FontAwesomeIcon icon={faTimes} size={16} color={colors.textBody} />
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity onPress={() => handleNavigateToSearch('destination')} style={styles.actionIconCell}>
+                  <FontAwesomeIcon icon={faPenToSquare} size={16} color={theme.COLORS.primary} />
+                </TouchableOpacity>
+              )}
+            </View>
 
           </View>
         </View>
@@ -155,17 +182,16 @@ const SheetAnimatedContent = ({
 
 interface BottomSearchBoardProps {
   animatedIndex: any; 
+  distance: string;
 }
 
-const BottomSearchBoard: React.FC<BottomSearchBoardProps> = ({ animatedIndex }) => {
+const BottomSearchBoard: React.FC<BottomSearchBoardProps> = ({ animatedIndex, distance }) => {
   const { colors } = useTheme();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   
-  const { fromLocation, destinationLocation } = useLocation();
+  const { fromLocation, setFromLocation, destinationLocation, setDestinationLocation } = useLocation();
   const sheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ['15%', '85%'], []);
-
-  const [distance] = useState(4.5);
 
   const isOrderReady = 
     fromLocation !== null && 
@@ -180,7 +206,7 @@ const BottomSearchBoard: React.FC<BottomSearchBoardProps> = ({ animatedIndex }) 
 
   const handleNavigateToSearch = (type: 'from' | 'destination' | 'checkout') => {
     if (type === 'checkout') {
-      navigation.navigate('SelectCar', { distance });
+      navigation.navigate('SelectCar', { distance: parseFloat(distance) });
     } else {
       navigation.navigate('Search', { type });
     }
@@ -205,6 +231,8 @@ const BottomSearchBoard: React.FC<BottomSearchBoardProps> = ({ animatedIndex }) 
           isOrderReady={isOrderReady}
           handleNavigateToSearch={handleNavigateToSearch}
           sheetRef={sheetRef}
+          setFromLocation={setFromLocation}                  
+          setDestinationLocation={setDestinationLocation}
         />
       </BottomSheetView>
     </BottomSheet>
@@ -232,6 +260,7 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     position: 'relative',
+    paddingVertical: theme.SIZES.padding,
   },
   absoluteView: {
     position: 'absolute',
@@ -324,7 +353,7 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     flex: 1,
-    paddingRight: 10,
+    paddingRight: 10
   },
   locName: {
     fontFamily: theme.FONTS.semiBold,
@@ -338,7 +367,17 @@ const styles = StyleSheet.create({
   buttonContainer: {
     paddingHorizontal: 20,
     marginTop: 10,
-  }
+  },
+  textContainerWrapper: {
+    flex: 1,
+    height: '100%',
+    justifyContent: 'center',
+  },
+  actionIconCell: {
+    padding: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });
 
 export default BottomSearchBoard;

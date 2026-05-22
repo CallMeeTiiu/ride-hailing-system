@@ -38,7 +38,7 @@ export type RootStackParamList = {
   Search: { type?: 'from' | 'destination' } | undefined;
   SelectCar: { distance: number };
   SearchingDriver: undefined;
-  Travelling: undefined;
+  Traveling: undefined;
   Rating: {tripId: string };
   RatingList: undefined;
   EditProfile: undefined;
@@ -70,7 +70,7 @@ const App = () => {
                   <Stack.Screen name="Search" component={SearchScreen} />
                   <Stack.Screen name="SelectCar" component={SelectCarScreen}/>
                   <Stack.Screen name="SearchingDriver" component={SearchingDriverScreen}  />
-                  <Stack.Screen name="Travelling" component={TravelingScreen} />
+                  <Stack.Screen name="Traveling" component={TravelingScreen} />
                   <Stack.Screen name="Rating" component={RatingScreen} />
                   <Stack.Screen name="RatingList" component={RatingListScreen} />
                   <Stack.Screen name="EditProfile" component={EditProfileScreen} />

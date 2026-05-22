@@ -31,9 +31,10 @@ const suggestionChips = [
 
 interface FloatingMapActionsProps {
   animatedIndex: any;
+  onLocationPress?: () => void;
 }
 
-const FloatingMapActions: React.FC<FloatingMapActionsProps> = ({ animatedIndex }) => {
+const FloatingMapActions: React.FC<FloatingMapActionsProps> = ({ animatedIndex, onLocationPress }) => {
   const { colors } = useTheme();
 
   const floatingAnimatedStyle = useAnimatedStyle(() => {
@@ -47,7 +48,7 @@ const FloatingMapActions: React.FC<FloatingMapActionsProps> = ({ animatedIndex }
     <Animated.View style={[styles.floatingWrapper, floatingAnimatedStyle]} pointerEvents="box-none">
       
       <View style={styles.locationButtonContainer}>
-        <TouchableOpacity style={styles.locationButton} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.locationButton} activeOpacity={0.8} onPress={onLocationPress}>
           <FontAwesomeIcon icon={faCrosshairs} size={24} color={colors.textTitle} />
         </TouchableOpacity>
       </View>
@@ -102,9 +103,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 24,
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderColor: theme.COLORS.primary,
-    backgroundColor: 'transparent',
+    backgroundColor: theme.COLORS.white,
+    ...theme.SHADOWS.light,
   },
   chipText: {
     fontFamily: theme.FONTS.semiBold,

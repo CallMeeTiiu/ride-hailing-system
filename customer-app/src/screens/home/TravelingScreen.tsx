@@ -1,16 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 
 import AppMap from '../../components/home/AppMap';
-import UserMarker from '../../components/booking/UserMarker';
 import DriverBottomCard, { DriverData } from '../../components/booking/DriverBottomCard';
 import MessagePopup from '../../components/common/MessagePopup';
 
 import { useBookingHistory } from '../../contexts/BookingHistoryContext';
 import { useLocation } from '../../contexts/LocationContext';
 
-import theme from '../../constants/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MapBackgroundRef } from '../../components/home/MapBackground';
 
 const mockDriverData: DriverData = {
   name: "Daniel Austin",
@@ -21,17 +20,59 @@ const mockDriverData: DriverData = {
 };
 
 const TravelingScreen = ({ navigation }: any) => {
+  const mapRef = useRef<MapBackgroundRef>(null);
   const insets = useSafeAreaInsets();
 
   const { addTrip } = useBookingHistory();
   const { fromLocation, destinationLocation, setFromLocation, setDestinationLocation } = useLocation();
   
-  // Quản lý trạng thái chuyến đi
   const [tripStatus, setTripStatus] = useState<'waiting' | 'traveling'>('waiting');
+  const [driverLocation, setDriverLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [distance, setDistance] = useState<string>('...'); // Để truyền xuống Bottom Card
+  
   const [showArrivalPopup, setShowArrivalPopup] = useState(false);
   const [showDestinationPopup, setShowDestinationPopup] = useState(false);
 
-  // Giả lập sự kiện tài xế đến nơi sau 5 giây
+  useEffect(() => {
+    if (fromLocation && !driverLocation) {
+      const latOffset = (Math.random() - 0.5) * 0.02; 
+      const lngOffset = (Math.random() - 0.5) * 0.02;
+      setDriverLocation({
+        lat: fromLocation.latitude + latOffset,
+        lng: fromLocation.longitude + lngOffset
+      });
+    }
+  }, [driverLocation, fromLocation]);
+
+  useEffect(() => {
+    if (!fromLocation || !destinationLocation || !driverLocation) return;
+
+    const fetchRoute = async (startLng: number, startLat: number, endLng: number, endLat: number) => {
+      try {
+        const url = `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${endLng},${endLat}?geometries=geojson`;
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data.routes && data.routes.length > 0) {
+          mapRef.current?.drawRoute(data.routes[0].geometry);
+          const distInKm = (data.routes[0].distance / 1000).toFixed(1);
+          setDistance(distInKm);
+        }
+      } catch (error) {
+        console.error("Lỗi API OSRM tại TravelingScreen:", error);
+      }
+    };
+
+    if (tripStatus === 'waiting') {
+      mapRef.current?.updateMarkers(fromLocation.latitude, fromLocation.longitude, null, null); // Cắm Avatar, Ẩn Đích
+      mapRef.current?.drawDrivers([{ lat: driverLocation.lat, lng: driverLocation.lng }]); // Cắm Taxi
+      fetchRoute(driverLocation.lng, driverLocation.lat, fromLocation.longitude, fromLocation.latitude); // Vẽ đường: Xe -> User
+    } else {
+      mapRef.current?.updateMarkers(null, null, destinationLocation.latitude, destinationLocation.longitude); // Ẩn Avatar, Cắm Đích
+      mapRef.current?.drawDrivers([{ lat: driverLocation.lat, lng: driverLocation.lng }]); // Cắm Taxi
+      fetchRoute(driverLocation.lng, driverLocation.lat, destinationLocation.longitude, destinationLocation.latitude); // Vẽ đường: Xe -> Đích
+    }
+  }, [tripStatus, driverLocation, fromLocation, destinationLocation]);
+
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
 
@@ -40,7 +81,6 @@ const TravelingScreen = ({ navigation }: any) => {
         setShowArrivalPopup(true);
       }, 5000);
     } else if (tripStatus === 'traveling') {
-      // Giai đoạn 2: Đang di chuyển, 5s sau báo tới nơi
       timer = setTimeout(() => {
         setShowDestinationPopup(true);
       }, 5000);
@@ -52,11 +92,14 @@ const TravelingScreen = ({ navigation }: any) => {
   const handleAcknowledgeArrival = () => {
     setShowArrivalPopup(false);
     setTripStatus('traveling'); 
+    if (fromLocation) {
+      setDriverLocation({ lat: fromLocation.latitude, lng: fromLocation.longitude });
+    }
   };
 
   const handleAcknowledgeDestination = () => {
     setShowDestinationPopup(false);
-
+    
     const newTrip = {
       id: Date.now().toString(),
       driver: mockDriverData,
@@ -65,7 +108,6 @@ const TravelingScreen = ({ navigation }: any) => {
       completionTime: new Date().toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true, month: 'short', day: 'numeric' }),
       rating: null, 
     };
-
     addTrip(newTrip);
 
     setFromLocation(null);
@@ -76,31 +118,23 @@ const TravelingScreen = ({ navigation }: any) => {
 
   return (
     <View style={styles.container}>
-      <AppMap>
-        {/* Marker Tài xế (Sau này sẽ truyền tọa độ động vào đây) */}
-        <UserMarker 
-          avatar={mockDriverData.avatar} 
-          rotation="135deg" 
-          style={{ transform: [{ translateX: 0 }, { translateY: -60 }] }} 
-        />
-        
-        {/* Marker Điểm đến/Điểm đi giả lập (Chờ ghép API Route) */}
-        <View style={[styles.locationPin, { transform: [{ translateX: 80 }, { translateY: 40 }] }]} /> 
-      </AppMap>
+      {/* MAP */}
+      <AppMap ref={mapRef} />
 
-      {/* Card thông tin ở dưới cùng tự động thay đổi theo tripStatus */}
+      {/* BOTTOM CARD */}
       <View style={[ styles.bottomContainer, { paddingBottom: Math.max(insets.bottom, 20) } ]}>
         <DriverBottomCard 
           tripStatus={tripStatus}
           driverData={mockDriverData}
-          distance="4.5"
-          arrivalTime="2 mins"          onCancel={() => navigation.goBack().goBack()}
+          distance={distance} 
+          arrivalTime={tripStatus === 'waiting' ? "Arriving in 5 mins" : ""}          
+          onCancel={() => navigation.navigate('MainTabs')}
           onChat={() => console.log("Chat with driver")}
           onCall={() => console.log("Call driver")}
         />
       </View>
 
-      {/* Popup thông báo tài xế đã đến đón */}
+      {/* POPUPS */}
       <MessagePopup 
         visible={showArrivalPopup}
         title="Driver is Arriving!"
@@ -124,26 +158,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     width: '100%',
-  },
-  floatingBackButton: {
-    position: 'absolute',
-    left: theme.SIZES.padding,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10,
-    ...theme.SHADOWS.light,
-  },
-  locationPin: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: theme.COLORS.primary, 
-    borderWidth: 3,
-    borderColor: 'white',
-    ...theme.SHADOWS.light,
   }
 });
 

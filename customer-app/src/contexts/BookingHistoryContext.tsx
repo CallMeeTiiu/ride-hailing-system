@@ -23,8 +23,8 @@ const BookingHistoryContext = createContext<BookingHistoryContextType | undefine
 
 export const BookingHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [trips, setTrips] = useState<Trip[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  // Tải dữ liệu khi mở app
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -34,13 +34,16 @@ export const BookingHistoryProvider: React.FC<{ children: React.ReactNode }> = (
         }
       } catch (error) {
         console.log('Error while loading trip history:', error);
+      } finally {
+        setIsLoaded(true);
       }
     };
     loadData();
   }, []);
 
-  // Tự động lưu dữ liệu khi mảng trips có thay đổi
   useEffect(() => {
+    if (!isLoaded) return; 
+
     const saveData = async () => {
       try {
         await AsyncStorage.setItem('@trip_history', JSON.stringify(trips));
@@ -49,7 +52,7 @@ export const BookingHistoryProvider: React.FC<{ children: React.ReactNode }> = (
       }
     };
     saveData();
-  }, [trips]);
+  }, [trips, isLoaded]);
 
   const addTrip = (trip: Trip) => {
     setTrips((prev) => [trip, ...prev]);

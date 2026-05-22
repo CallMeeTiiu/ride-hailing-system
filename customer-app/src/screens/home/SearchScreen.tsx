@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { 
   View, 
@@ -10,7 +10,8 @@ import {
   Image,
   Animated,         
   PanResponder,    
-  Dimensions
+  Dimensions,
+  ActivityIndicator
 } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faArrowLeft, faClock, faMagnifyingGlass, faMapMarkerAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -78,39 +79,119 @@ const SearchScreen = () => {
 
   const [searchText, setSearchText] = useState('');
   const [isFocused, setIsFocused] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { allLocations, recentLocations, addRecentLocation, removeRecentLocation, setFromLocation, setDestinationLocation } = useLocation();
+  const { allLocations, recentLocations, addRecentLocation, removeRecentLocation, setFromLocation, setDestinationLocation, fromLocation } = useLocation();
+
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
+    return distance.toFixed(1) + ' km'; 
+  };
 
   const handleDeleteRecent = (id: string) => {
     removeRecentLocation(id);
   };
 
   const handleSelectLocation = (selectedItem: any) => {
-    addRecentLocation(selectedItem);  
+    const cleanItem = { ...selectedItem, distance: '' };
+    addRecentLocation(cleanItem);  
     
     if (searchType === 'from') {
-      setFromLocation(selectedItem);
+      setFromLocation(cleanItem);
       navigation.goBack();
     } else if (searchType === 'destination') {
-      setDestinationLocation(selectedItem);
+      setDestinationLocation(cleanItem);
       navigation.goBack();
     } else {
-      setSearchText(selectedItem.name); 
+      setSearchText(cleanItem.name); 
     }
   };
+
+  // call API Photon when searchText changes
+  useEffect(() => {
+    if (searchText.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
+      setIsLoading(true);
+      try {
+        const UIT_LAT = 10.8700;
+        const UIT_LNG = 106.8031;
+        
+        const response = await fetch(
+          `https://photon.komoot.io/api/?q=${encodeURIComponent(searchText)}&limit=5&lat=${UIT_LAT}&lon=${UIT_LNG}`
+        );
+        const data = await response.json();
+
+        const formattedResults = data.features.map((feature: any, index: number) => {
+          const props = feature.properties;
+          const coords = feature.geometry.coordinates; 
+
+          const fullAddress = [props.housenumber, props.street, props.city, props.state, props.country]
+                              .filter(Boolean)
+                              .join(', ');
+
+          return {
+            id: `photon_${index}_${Date.now()}`,
+            name: props.name || props.street || "Unknown Place",
+            address: fullAddress,
+            distance: '', 
+            latitude: coords[1], 
+            longitude: coords[0] 
+          };
+        });
+
+        setSearchResults(formattedResults);
+      } catch (error) {
+        console.error("Lỗi khi gọi API Photon:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchText]);
 
   const isSearching = searchText.length > 0;
   const isSuggesting = recentLocations.length === 0;
   
-  const displayData = isSearching 
-    ? allLocations.filter(loc => 
-        loc.name.toLowerCase().includes(searchText.toLowerCase()) || 
-        loc.address.toLowerCase().includes(searchText.toLowerCase())
-      )
+  const baseData = isSearching 
+    ? searchResults 
     : (recentLocations.length > 0 ? recentLocations : allLocations);
 
+  const displayData = baseData.map(item => {
+    if (fromLocation && item.latitude && item.longitude) {
+      return {
+        ...item,
+        distance: calculateDistance(
+          fromLocation.latitude, 
+          fromLocation.longitude, 
+          item.latitude, 
+          item.longitude
+        )
+      };
+    }
+    return { ...item, distance: '' }; 
+  }).filter(item => {
+    if (searchType === 'destination' && item.distance === '0.0 km') {
+      return false;
+    }
+    return true;
+  });
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, top: insets.top + 10 }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top + 10, paddingBottom: insets.bottom + 10 }]}>
           <View style={[styles.header]}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
               <FontAwesomeIcon icon={faArrowLeft} size={20} color={colors.textTitle} />
@@ -142,25 +223,33 @@ const SearchScreen = () => {
             </View>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContainer}>
-            <View style={styles.sectionHeaderRow}>
-              {searchText.length > 0 ? (
-                <Text style={[styles.sectionTitle, { color: colors.textTitle }]}>
-                  {/*eslint-disable-next-line react-native/no-inline-styles*/}
-                  Result for <Text style={{ color: theme.COLORS.primary, fontWeight: 'bold' }}>"{searchText}"</Text>
-                </Text>
-              ) : (
-                <Text style={[styles.sectionTitle, { color: colors.textBody }]}>
-                  {recentLocations.length > 0 ? "Recent Places" : "Suggested Places"}
-                </Text>
-              )}
+          <View style={styles.sectionHeaderRow}>
+            {searchText.length > 0 ? (
+              <Text style={[styles.sectionTitle, { color: colors.textTitle }]}>
+                {/*eslint-disable-next-line react-native/no-inline-styles*/}
+                Result for <Text style={{ color: theme.COLORS.primary, fontWeight: 'bold' }}>"{searchText}"</Text>
+              </Text>
+            ) : (
+              <Text style={[styles.sectionTitle, { color: colors.textBody }]}>
+                {recentLocations.length > 0 ? "Recent Places" : "Suggested Places"}
+              </Text>
+            )}
 
-              {searchText.length > 0 ? (
+            {searchText.length > 0 ? (
+              isLoading ? (
+                <ActivityIndicator size="small" color={theme.COLORS.primary} />
+              ) : (
                 <Text style={[styles.resultCount, { color: theme.COLORS.primary }]}>
-                    {displayData.length} {displayData.length > 1 ? "founds" : "found"}
+                  {displayData.length} {displayData.length > 1 ? "founds" : "found"}
                 </Text>
-              ) : ("")}
-            </View>
+              )
+            ) : ("")}
+          </View>
+
+          <ScrollView 
+            showsVerticalScrollIndicator={false} 
+            contentContainerStyle={styles.listContainer}
+            style={styles.container}>
 
             {displayData.map((item) => (
               <SwipeableItem 
@@ -294,6 +383,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   sectionHeaderRow: {
+    paddingHorizontal: theme.SIZES.padding,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

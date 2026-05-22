@@ -1,22 +1,19 @@
-import React, { memo } from 'react';
+import React, { forwardRef, memo } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
-import { useTheme } from '../../contexts/ThemeContext';
-
+import MapBackground, { MapBackgroundRef } from './MapBackground';
 interface AppMapProps {
   children?: React.ReactNode;
   style?: ViewStyle;
 }
 
-const AppMap = ({ children, style }: AppMapProps) => {
-  const { colors } = useTheme();
+const AppMap = forwardRef<MapBackgroundRef, AppMapProps>(({ children, style }, ref) => {
   return (
-    <View style={[styles.container, style, { backgroundColor: colors.inputBg }]}>
-      {/*  Markers (User, Driver, Radar)*/}
+    <View style={[styles.container, style]}>
+      <MapBackground ref={ref} />
       {children}
     </View>
   );
-};
-
+});
 const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,

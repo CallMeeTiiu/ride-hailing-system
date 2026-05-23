@@ -6,6 +6,7 @@ import { ThemeProvider } from './src/contexts/ThemeContext';
 import { LocationProvider } from './src/contexts/LocationContext';
 import { BookingHistoryProvider } from './src/contexts/BookingHistoryContext';
 import { UserProvider } from './src/contexts/UserContext';
+import { AddressProvider } from './src/contexts/AddressContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import WelcomeScreen from './src/screens/auth/WelcomeScreen';
@@ -24,6 +25,8 @@ import TravelingScreen from './src/screens/home/TravelingScreen';
 import RatingScreen from './src/screens/rating/RatingScreen'; 
 import RatingListScreen from './src/screens/rating/RatingListScreen';
 import EditProfileScreen from './src/screens/profile/EditProfileScreen';
+import EditAddressScreen from './src/screens/profile/EditAddressScreen';
+import AddressListScreen from './src/screens/profile/AddressListScreen';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -42,6 +45,8 @@ export type RootStackParamList = {
   Rating: {tripId: string };
   RatingList: undefined;
   EditProfile: undefined;
+  AddressList: undefined;
+  EditAddress: { addressId?: string } | undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -52,32 +57,36 @@ const App = () => {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <UserProvider>
         <BookingHistoryProvider>
-          <LocationProvider>
-            <ThemeProvider>
-              <NavigationContainer>
-                <Stack.Navigator 
-                  initialRouteName="Welcome"
-                  screenOptions={{ headerShown: false }} 
-                >
-                  <Stack.Screen name="Welcome" component={WelcomeScreen} />
-                  <Stack.Screen name="Login" component={LoginScreen} />
-                  <Stack.Screen name="SignUp" component={SignUpScreen} />
-                  <Stack.Screen name="InfoInput" component={InfoInputScreen} />
-                  <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-                  <Stack.Screen name="FillOTP" component={FillOTPScreen} />
-                  <Stack.Screen name="NewPassword" component={NewPasswordScreen} />
-                  <Stack.Screen name="MainTabs" component={MainTabNavigator} />
-                  <Stack.Screen name="Search" component={SearchScreen} />
-                  <Stack.Screen name="SelectCar" component={SelectCarScreen}/>
-                  <Stack.Screen name="SearchingDriver" component={SearchingDriverScreen}  />
-                  <Stack.Screen name="Traveling" component={TravelingScreen} />
-                  <Stack.Screen name="Rating" component={RatingScreen} />
-                  <Stack.Screen name="RatingList" component={RatingListScreen} />
-                  <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-                </Stack.Navigator>
-              </NavigationContainer>
-            </ThemeProvider>
-          </LocationProvider>
+          <AddressProvider>
+            <LocationProvider>
+              <ThemeProvider>
+                <NavigationContainer>
+                  <Stack.Navigator 
+                    initialRouteName="Welcome"
+                    screenOptions={{ headerShown: false }} 
+                  >
+                    <Stack.Screen name="Welcome" component={WelcomeScreen} />
+                    <Stack.Screen name="Login" component={LoginScreen} />
+                    <Stack.Screen name="SignUp" component={SignUpScreen} />
+                    <Stack.Screen name="InfoInput" component={InfoInputScreen} />
+                    <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+                    <Stack.Screen name="FillOTP" component={FillOTPScreen} />
+                    <Stack.Screen name="NewPassword" component={NewPasswordScreen} />
+                    <Stack.Screen name="MainTabs" component={MainTabNavigator} />
+                    <Stack.Screen name="Search" component={SearchScreen} />
+                    <Stack.Screen name="SelectCar" component={SelectCarScreen}/>
+                    <Stack.Screen name="SearchingDriver" component={SearchingDriverScreen}  />
+                    <Stack.Screen name="Traveling" component={TravelingScreen} />
+                    <Stack.Screen name="Rating" component={RatingScreen} />
+                    <Stack.Screen name="RatingList" component={RatingListScreen} />
+                    <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+                    <Stack.Screen name="AddressList" component={AddressListScreen} />
+                    <Stack.Screen name="EditAddress" component={EditAddressScreen} />
+                  </Stack.Navigator>
+                </NavigationContainer>
+              </ThemeProvider>
+            </LocationProvider>
+          </AddressProvider>
         </BookingHistoryProvider>
       </UserProvider>
     </GestureHandlerRootView>

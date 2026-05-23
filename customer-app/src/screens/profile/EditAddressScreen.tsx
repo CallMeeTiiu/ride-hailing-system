@@ -43,6 +43,17 @@ const EditAddressScreen = ({ navigation, route }: any) => {
     }, 500);
   }, [existingAddress]);
 
+  useEffect(() => {
+    if (route.params?.selectedPlace) {
+      const { name, latitude, longitude } = route.params.selectedPlace;
+      setDetails(name);
+      setLat(latitude);
+      setLng(longitude);
+      
+      mapRef.current?.jumpToLocation(latitude, longitude);
+    }
+  }, [route.params?.selectedPlace]);
+
   const handleMapMove = async (newLat: number, newLng: number) => {
     setLat(newLat);
     setLng(newLng);
@@ -145,19 +156,24 @@ const EditAddressScreen = ({ navigation, route }: any) => {
             onChangeText={setName}
           />
 
-          {/* INPUT DETAILS */}
+          {/* INPUT DETAILS - ĐÃ CHUYỂN THÀNH TẤM BẤM ĐỂ MỞ SEARCHSCREEN */}
           <Text style={[styles.label, { color: colors.textTitle }]}>Address Details</Text>
-          <View style={[styles.inputContainer, { backgroundColor: colors.inputBg }]}>
-            <TextInput
-              style={[styles.inputFlex, { color: isFetching ? colors.primary : colors.textTitle }]}
-              placeholder="Drag map to locate..."
-              placeholderTextColor={colors.textBody}
-              value={isFetching ? "Locating..." : details}
-              onChangeText={setDetails}
-              multiline
-            />
+          <TouchableOpacity 
+            style={[styles.inputContainer, { backgroundColor: colors.inputBg }]}
+            onPress={() => navigation.navigate('SearchScreen', { mode: 'address_search' })}
+            activeOpacity={0.8}
+          >
+            <Text 
+              style={[
+                styles.inputFlex, 
+                { color: isFetching ? colors.primary : (details ? colors.textTitle : colors.textBody) }
+              ]} 
+              numberOfLines={2}
+            >
+              {isFetching ? "Locating..." : (details || "Tap to search address...")}
+            </Text>
             <FontAwesomeIcon icon={faMapMarkerAlt} size={18} color={theme.COLORS.primary} />
-          </View>
+          </TouchableOpacity>
 
           <PrimaryButton 
             title={isEditMode ? "Save Changes" : "Add Address"} 

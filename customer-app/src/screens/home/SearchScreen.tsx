@@ -81,6 +81,7 @@ const SearchScreen = () => {
   const [isFocused, setIsFocused] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [standaloneLocation, setStandaloneLocation] = useState<any>(null);
 
   const { allLocations, recentLocations, addRecentLocation, removeRecentLocation, setFromLocation, setDestinationLocation, fromLocation } = useLocation();
 
@@ -103,7 +104,7 @@ const SearchScreen = () => {
 
   const handleSelectLocation = (selectedItem: any) => {
     const cleanItem = { ...selectedItem, distance: '' };
-    addRecentLocation(cleanItem);  
+    addRecentLocation(cleanItem); 
     
     if (searchType === 'from') {
       setFromLocation(cleanItem);
@@ -112,11 +113,11 @@ const SearchScreen = () => {
       setDestinationLocation(cleanItem);
       navigation.goBack();
     } else {
-      setSearchText(cleanItem.name); 
+      setSearchText(cleanItem.name);
+      setStandaloneLocation(cleanItem);
     }
   };
 
-  // call API Photon when searchText changes
   useEffect(() => {
     if (searchText.trim().length < 2) {
       setSearchResults([]);
@@ -303,6 +304,30 @@ const SearchScreen = () => {
             )}
           </ScrollView>
 
+          {/* KHỐI NÚT BẤM DÀNH RIÊNG CHO SEARCH ĐỘC LẬP */}
+          {(!searchType && standaloneLocation) && (
+            <View style={styles.actionButtonsWrapper}>
+              <TouchableOpacity 
+                style={[styles.actionButton, { backgroundColor: theme.COLORS.primary }]}
+                onPress={() => {
+                  setFromLocation(standaloneLocation);
+                  navigation.goBack();
+                }}
+              >
+                <Text style={styles.actionButtonText}>Set as Pick Up</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.actionButton, { backgroundColor: theme.COLORS.iconDisable }]}
+                onPress={() => {
+                  setDestinationLocation(standaloneLocation);
+                  navigation.goBack();
+                }}
+              >
+                <Text style={styles.actionButtonText}>Set as Destination</Text>
+              </TouchableOpacity>
+            </View>
+          )}
     </View>
   );
 };
@@ -375,7 +400,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingHorizontal: theme.SIZES.padding,
-    paddingBottom: 20,
+    paddingBottom: 80,
   },
   sectionTitle: {
     fontFamily: theme.FONTS.medium,
@@ -484,6 +509,36 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: 'white',
     lineHeight: 24,
+  },
+
+  actionButtonsWrapper: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 10,
+    paddingTop: 15,
+    paddingBottom: 60, 
+    
+    backgroundColor: theme.COLORS.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    ...theme.SHADOWS.light, 
+    shadowOffset: { width: 0, height: -4 }, 
+  },
+  actionButton: {
+    flex: 1, 
+    height: 52,
+    borderRadius: 16, 
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 8, 
+  },
+  actionButtonText: {
+    color: theme.COLORS.white,
+    fontSize: 15,
+    fontFamily: theme.FONTS.bold, 
   },
 });
 

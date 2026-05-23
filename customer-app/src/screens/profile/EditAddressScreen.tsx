@@ -11,7 +11,11 @@ import MapBackground, { MapBackgroundRef } from '../../components/home/MapBackgr
 import PrimaryButton from '../../components/common/PrimaryButton';
 import { getIconObject } from './AddressListScreen';
 
-const ICONS_LIST = ['home', 'briefcase', 'coffee', 'graduation-cap', 'map-pin'];
+const ICONS_LIST = [
+  'map-pin', 'home', 'briefcase', 'heart', 'coffee', 'utensils', 
+  'shopping-cart', 'store', 'graduation-cap', 'dumbbell', 
+  'hospital', 'plane', 'train', 'tree', 'music', 'gamepad'
+];
 
 const EditAddressScreen = ({ navigation, route }: any) => {
   const { colors } = useTheme();
@@ -31,8 +35,9 @@ const EditAddressScreen = ({ navigation, route }: any) => {
   const [isFetching, setIsFetching] = useState(false);
 
   useEffect(() => {
-    const initLat = existingAddress?.lat || 10.8231;
-    const initLng = existingAddress?.lng || 106.6297;
+    const initLat = existingAddress?.lat || 10.8700;
+    const initLng = existingAddress?.lng || 106.8031;
+    
     setTimeout(() => {
       mapRef.current?.jumpToLocation(initLat, initLng);
     }, 500);

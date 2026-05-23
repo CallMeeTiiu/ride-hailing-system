@@ -2,7 +2,13 @@ import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faPen, faHome, faBriefcase, faCoffee, faGraduationCap, faMapMarkerAlt, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { 
+  faPen, faHome, faBriefcase, faCoffee, faGraduationCap, faMapMarkerAlt,
+  faShoppingCart, faUtensils, faHospital, faDumbbell, faPlane, 
+  faTrain, faHeart, faGamepad, faMusic, faTree, faStore,
+  faArrowLeft,
+  faTrash
+} from '@fortawesome/free-solid-svg-icons';
 
 import theme from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -15,6 +21,17 @@ export const getIconObject = (iconName: string) => {
     case 'briefcase': return faBriefcase;
     case 'coffee': return faCoffee;
     case 'graduation-cap': return faGraduationCap;
+    case 'shopping-cart': return faShoppingCart; 
+    case 'utensils': return faUtensils;         
+    case 'hospital': return faHospital;         
+    case 'dumbbell': return faDumbbell;        
+    case 'plane': return faPlane;             
+    case 'train': return faTrain;             
+    case 'heart': return faHeart;               
+    case 'gamepad': return faGamepad;           
+    case 'music': return faMusic;               
+    case 'tree': return faTree;              
+    case 'store': return faStore;             
     default: return faMapMarkerAlt;
   }
 };
@@ -22,7 +39,7 @@ export const getIconObject = (iconName: string) => {
 const AddressListScreen = ({ navigation }: any) => {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { addresses } = useAddress();
+  const { addresses, removeAddress } = useAddress();
 
   const renderItem = ({ item }: any) => (
     <View style={[styles.itemContainer, { borderBottomColor: colors.border }]}>
@@ -35,12 +52,21 @@ const AddressListScreen = ({ navigation }: any) => {
           {item.details}
         </Text>
       </View>
-      <TouchableOpacity 
-        style={styles.editButton}
-        onPress={() => navigation.navigate('EditAddress', { addressId: item.id })}
-      >
-        <FontAwesomeIcon icon={faPen} size={18} color={theme.COLORS.primary} />
-      </TouchableOpacity>
+      <View style={styles.actionRow}>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={() => navigation.navigate('EditAddress', { addressId: item.id })}
+        >
+          <FontAwesomeIcon icon={faPen} size={16} color={theme.COLORS.primary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={() => removeAddress(item.id)}
+        >
+          <FontAwesomeIcon icon={faTrash} size={16} color={theme.COLORS.red} /> 
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
@@ -120,7 +146,14 @@ const styles = StyleSheet.create({
   itemDetails: { 
     fontSize: 14, 
     fontFamily: theme.FONTS.regular 
-
+  },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  actionButton: {
+    padding: 8, 
   },
   editButton: { 
     padding: 10 

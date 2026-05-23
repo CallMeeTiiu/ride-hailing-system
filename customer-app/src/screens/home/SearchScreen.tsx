@@ -109,7 +109,6 @@ const SearchScreen = () => {
     const currentParams = route.params as any;
 
     if (currentParams?.mode === 'address_search') {
-      // 2. Ép kiểu navigation thành any để cho phép dùng object syntax (merge: true)
       (navigation as any).navigate({
         name: 'EditAddressScreen',
         params: { selectedPlace: cleanItem },

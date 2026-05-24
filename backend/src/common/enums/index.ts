@@ -1,0 +1,27 @@
+export enum UserRole {
+  CUSTOMER = 'CUSTOMER',
+  DRIVER = 'DRIVER',
+  ADMIN = 'ADMIN',
+}
+
+export enum TripStatus {
+  PENDING = 'PENDING',
+  ACCEPTED = 'ACCEPTED',
+  ARRIVED = 'ARRIVED',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+  CANCELLED_BY_CUSTOMER = 'CANCELLED_BY_CUSTOMER',
+  CANCELLED_BY_DRIVER = 'CANCELLED_BY_DRIVER',
+}
+
+export enum VehicleType {
+  MOTORCYCLE = 'MOTORCYCLE',
+  CAR_4_SEATS = 'CAR_4_SEATS',
+  CAR_7_SEATS = 'CAR_7_SEATS',
+}
+
+export enum PaymentMethod {
+  CASH = 'CASH',
+  WALLET = 'WALLET',
+  CARD = 'CARD',
+}

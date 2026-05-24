@@ -75,7 +75,7 @@ const ProfileScreen = ({ navigation }: any) => {
           <MenuItem 
             icon={faLocationDot} 
             title="Address" 
-            onPress={() => console.log('Go to Address')} 
+            onPress={() => navigation.navigate('AddressList')} 
           />
           <MenuItem 
             icon={faBell} 

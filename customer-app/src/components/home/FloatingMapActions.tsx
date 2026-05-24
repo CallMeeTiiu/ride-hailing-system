@@ -9,25 +9,17 @@ import {
 } from 'react-native';
 import Animated, { useAnimatedStyle, interpolate, Extrapolation } from 'react-native-reanimated';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { 
-  faCrosshairs, 
-  faHome, 
-  faBriefcase, 
-  faMugHot, 
-  faSchool
-} from '@fortawesome/free-solid-svg-icons';
+import { faCrosshairs } from '@fortawesome/free-solid-svg-icons';
+import { useNavigation } from '@react-navigation/native';
 
 import theme from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+import { useAddress } from '../../contexts/AddressContext';
+import { useLocation } from '../../contexts/LocationContext';
+import { getIconObject } from '../../screens/profile/AddressListScreen'; // Import hàm map icon ta đã viết
 
-const suggestionChips = [
-  { id: '1', label: 'Home', icon: faHome },
-  { id: '2', label: 'Work', icon: faBriefcase },
-  { id: '3', label: 'Cafe', icon: faMugHot },
-  { id: '4', label: 'School', icon: faSchool },
-];
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface FloatingMapActionsProps {
   animatedIndex: any;
@@ -36,6 +28,15 @@ interface FloatingMapActionsProps {
 
 const FloatingMapActions: React.FC<FloatingMapActionsProps> = ({ animatedIndex, onLocationPress }) => {
   const { colors } = useTheme();
+  const navigation = useNavigation<any>();
+  
+  const { addresses } = useAddress();
+  const { 
+    fromLocation, 
+    setFromLocation, 
+    destinationLocation, 
+    setDestinationLocation 
+  } = useLocation();
 
   const floatingAnimatedStyle = useAnimatedStyle(() => {
     return {
@@ -43,6 +44,30 @@ const FloatingMapActions: React.FC<FloatingMapActionsProps> = ({ animatedIndex, 
       zIndex: animatedIndex.value > 0.1 ? -1 : 1,
     };
   });
+
+  const handleChipPress = (chip: any) => {
+    if (chip.lat && chip.lng) {
+      const locationPayload = {
+        id: chip.id,                  
+        name: chip.name,             
+        address: chip.details,       
+        latitude: chip.lat,
+        longitude: chip.lng,
+        distance: '',                 
+      };
+
+      if (fromLocation && destinationLocation) {
+        return;
+      } else if (fromLocation && !destinationLocation) {
+        setDestinationLocation(locationPayload);
+      } else {
+        setFromLocation(locationPayload);
+      }
+
+    } else {
+      navigation.navigate('EditAddressScreen', { addressId: chip.id });
+    }
+  };
 
   return (
     <Animated.View style={[styles.floatingWrapper, floatingAnimatedStyle]} pointerEvents="box-none">
@@ -55,12 +80,19 @@ const FloatingMapActions: React.FC<FloatingMapActionsProps> = ({ animatedIndex, 
 
       <View style={styles.chipsContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-          {suggestionChips.map((chip) => (
-            <TouchableOpacity key={chip.id} style={styles.chip} activeOpacity={0.7}>
-              <FontAwesomeIcon icon={chip.icon} size={14} color={theme.COLORS.primary} />
-              <Text style={styles.chipText}>{chip.label}</Text>
+          
+          {addresses.map((chip) => (
+            <TouchableOpacity 
+              key={chip.id} 
+              style={styles.chip} 
+              activeOpacity={0.7}
+              onPress={() => handleChipPress(chip)}
+            >
+              <FontAwesomeIcon icon={getIconObject(chip.icon)} size={14} color={theme.COLORS.primary} />
+              <Text style={styles.chipText}>{chip.name}</Text>
             </TouchableOpacity>
           ))}
+
         </ScrollView>
       </View>
 

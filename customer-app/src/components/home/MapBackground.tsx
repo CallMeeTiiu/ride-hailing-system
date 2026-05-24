@@ -2,6 +2,10 @@ import React, { forwardRef, useImperativeHandle, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 
+export interface MapBackgroundProps {
+  onMapMove?: (lat: number, lng: number) => void;
+}
+
 export interface MapBackgroundRef {
   flyToLocation: (lat: number, lng: number) => void;
   jumpToLocation: (lat: number, lng: number) => void;
@@ -12,7 +16,7 @@ export interface MapBackgroundRef {
   clearDrivers: () => void;
 }
 
-const MapBackground = forwardRef<MapBackgroundRef>((props, ref) => {
+const MapBackground = forwardRef<MapBackgroundRef, MapBackgroundProps>(({ onMapMove }, ref) => {
   const webViewRef = useRef<WebView>(null);
 
   // UIT location
@@ -100,7 +104,6 @@ const MapBackground = forwardRef<MapBackgroundRef>((props, ref) => {
           
           var driversData = ${JSON.stringify(drivers)};
           driversData.forEach(d => {
-            // Tạo icon chiếc xe Taxi xoay ngang
             var carIcon = L.divIcon({
               html: "<div style='font-size: 26px; transform: scaleX(-1); filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.4));'>🚖</div>",
               className: '',
@@ -154,17 +157,12 @@ const MapBackground = forwardRef<MapBackgroundRef>((props, ref) => {
         }).addTo(map);
 
         map.on('moveend', function () {
-          var center = map.getCenter(); // Lấy tọa độ tâm màn hình
-          
-          // Đóng gói dữ liệu thành chuỗi JSON
-          var dataToRN = JSON.stringify({
-            type: 'onMapMove',
+          var center = map.getCenter(); 
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'MAP_MOVED',
             lat: center.lat,
             lng: center.lng
-          });
-          
-          // Dùng hàm đặc biệt này để ném dữ liệu ra ngoài cho React Native chụp lấy
-          window.ReactNativeWebView.postMessage(dataToRN);
+          }));
         });
       </script>
     </body>
@@ -174,13 +172,11 @@ const MapBackground = forwardRef<MapBackgroundRef>((props, ref) => {
   const handleOnMessage = (event: WebViewMessageEvent) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
-      
-      if (data.type === 'onMapMove') {
-        console.log("📍 Tọa độ trung tâm Map hiện tại là:", data.lat, data.lng);
+      if (data.type === 'MAP_MOVED' && onMapMove) {
+        onMapMove(data.lat, data.lng); 
       }
-    } catch (error) {
-      console.error("Lỗi khi đọc dữ liệu từ Map:", error);
-    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {}
   };
 
   return (

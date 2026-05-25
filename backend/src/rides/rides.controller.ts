@@ -7,6 +7,7 @@ import {
   BadRequestException,
   UseGuards,
   Request,
+  NotFoundException,
 } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import {
@@ -196,6 +197,71 @@ export class RidesController {
       estimated_fare: updatedTrip!.estimated_fare,
       driver_user_id: updatedTrip!.driver_id,
     }
+  }
+
+  @Post(':id/cancel')
+  @ApiOperation({ summary: 'Khách hàng: Hủy chuyến (customer cancel)' })
+  @ApiResponse({ status: 200, description: 'Hủy chuyến thành công' })
+  async cancelRide(@Param('id') id: string, @Request() req) {
+    const trip = await this.ridesService.findTripById(id)
+    if (!trip) throw new NotFoundException('Trip not found')
+
+    // Only allow customer who created the trip to cancel
+    if (trip.customer_id !== req.user.userId) {
+      throw new BadRequestException('Bạn không có quyền hủy chuyến này')
+    }
+
+    const updated = await this.ridesService.updateTripStatus(
+      id,
+      TripStatus.CANCELLED_BY_CUSTOMER,
+    )
+
+    // Notify involved parties via socket
+    this.tripGateway.server.to(`trip_${id}`).emit('server:trip_cancelled', {
+      trip_id: id,
+      cancelled_by: 'CUSTOMER',
+      reason: 'Cancelled by customer',
+      timestamp: new Date().toISOString(),
+    })
+
+    return {
+      message: 'Trip cancelled',
+      trip_id: updated!.id,
+      status: updated!.status,
+    }
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Lấy chi tiết chuyến đi' })
+  @ApiResponse({
+    status: 200,
+    description: 'Trip detail',
+    type: TripResponseDto,
+  })
+  async getTripDetail(@Param('id') id: string) {
+    const trip = await this.ridesService.findTripById(id)
+    if (!trip) throw new NotFoundException('Trip not found')
+    return trip
+  }
+
+  @Post(':id/rate')
+  @ApiOperation({ summary: 'Khách hàng: Đánh giá chuyến/ tài xế' })
+  @ApiResponse({ status: 200, description: 'Rating submitted' })
+  async rateTrip(
+    @Param('id') id: string,
+    @Request() req,
+    @Body() body: { rating: number; comment?: string },
+  ) {
+    const trip = await this.ridesService.findTripById(id)
+    if (!trip) throw new NotFoundException('Trip not found')
+    const saved = await this.ridesService.saveRating({
+      trip_id: id,
+      customer_id: req.user.userId,
+      driver_id: trip.driver_id,
+      rating: body.rating,
+      comment: body.comment,
+    } as any)
+    return { message: 'Rating submitted', rating: saved }
   }
 
   @Get('current')

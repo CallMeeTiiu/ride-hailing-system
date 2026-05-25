@@ -38,4 +38,10 @@ export class User {
 
   @Column({ type: 'timestamptz', nullable: true })
   last_login_at: Date
+
+  @Column({ type: 'float', nullable: true, default: 0 })
+  average_rating: number
+
+  @Column({ type: 'int', default: 0 })
+  rating_count: number
 }

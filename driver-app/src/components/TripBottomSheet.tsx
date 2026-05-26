@@ -1,5 +1,5 @@
-import React, { useMemo, useRef } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
+import { StyleSheet, Text, View, Image } from 'react-native';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { TripStatus, TripData } from '../types';
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../theme';
@@ -8,6 +8,9 @@ import StepIndicator from './StepIndicator';
 import PrimaryButton from './PrimaryButton';
 import LocationRow from './LocationRow';
 import Icon from 'react-native-vector-icons/Feather';
+import EmojiGrid from './EmojiGrid';
+import StarRating from './StarRating';
+import { useTripStore } from '../store/tripStore';
 
 interface TripBottomSheetProps {
     tripStatus: TripStatus;
@@ -36,10 +39,34 @@ export default function TripBottomSheet({
 }: TripBottomSheetProps) {
     const bottomSheetRef = useRef<BottomSheet>(null);
 
+    // Zustand rating store integration
+    const {
+        ratingStep,
+        submitMood,
+        submitRating,
+    } = useTripStore();
+
+    // Local UI selection states
+    const [selectedMood, setSelectedMood] = useState<string | null>(null);
+    const [hasSelectedMood, setHasSelectedMood] = useState(false);
+    const [selectedRating, setSelectedRating] = useState<number>(0);
+
+    // Reset local selection states when trip finished starts
+    useEffect(() => {
+        if (tripStatus === TripStatus.FINISHED) {
+            setSelectedMood(null);
+            setHasSelectedMood(false);
+            setSelectedRating(0);
+        }
+    }, [tripStatus, ratingStep]);
+
     // Define persistent snaps
     const snapPoints = useMemo(() => {
         if (tripStatus === TripStatus.OFFLINE || tripStatus === TripStatus.ONLINE) {
             return ['24%']; // smaller snap when idle
+        }
+        if (tripStatus === TripStatus.FINISHED) {
+            return ['76%']; // larger height for rating & emoji elements
         }
         return ['42%']; // expanded for active cuốc
     }, [tripStatus]);
@@ -152,6 +179,92 @@ export default function TripBottomSheet({
                 );
 
             case TripStatus.FINISHED:
+                if (ratingStep === 'mood') {
+                    return (
+                        <View style={styles.ratingOuterContainer}>
+                            <Text style={styles.sheetHeaderTitle}>Your Mood</Text>
+                            <View style={styles.hr} />
+
+                            <View style={styles.customerCard}>
+                                <Image source={{ uri: trip?.customer.avatarUrl }} style={styles.customerAvatar} />
+                                <View style={styles.customerCardDetails}>
+                                    <Text style={[styles.customerCardName, TYPOGRAPHY.h3]}>{trip?.customer.name}</Text>
+                                    <Text style={[styles.customerCardPhone, TYPOGRAPHY.caption]}>{trip?.customer.phone}</Text>
+                                </View>
+                            </View>
+
+                            <Text style={styles.ratingPrimaryText}>What's Your Mood about this customer?</Text>
+                            <Text style={styles.ratingSecondaryText}>about this trip?</Text>
+
+                            <EmojiGrid
+                                selectedId={selectedMood}
+                                hasSelected={hasSelectedMood}
+                                onSelect={(moodId) => {
+                                    setSelectedMood(moodId);
+                                    setHasSelectedMood(true);
+                                }}
+                            />
+
+                            <View style={styles.ratingActionsRow}>
+                                <PrimaryButton
+                                    title="Cancel"
+                                    variant="outline"
+                                    onPress={onCompleteFinish}
+                                    style={styles.ratingCancelBtn}
+                                />
+                                <PrimaryButton
+                                    title="Submit"
+                                    onPress={() => submitMood(selectedMood)}
+                                    style={styles.ratingSubmitBtn}
+                                    disabled={!hasSelectedMood}
+                                />
+                            </View>
+                        </View>
+                    );
+                }
+
+                if (ratingStep === 'star') {
+                    return (
+                        <View style={styles.ratingOuterContainer}>
+                            <Text style={styles.sheetHeaderTitle}>Rate Customer</Text>
+                            <View style={styles.hr} />
+
+                            <View style={styles.customerCard}>
+                                <Image source={{ uri: trip?.customer.avatarUrl }} style={styles.customerAvatar} />
+                                <View style={styles.customerCardDetails}>
+                                    <Text style={[styles.customerCardName, TYPOGRAPHY.h3]}>{trip?.customer.name}</Text>
+                                    <Text style={[styles.customerCardPhone, TYPOGRAPHY.caption]}>{trip?.customer.phone}</Text>
+                                </View>
+                            </View>
+
+                            <Text style={styles.ratingPrimaryText}>How is your Customer?</Text>
+                            <Text style={styles.ratingSecondaryText}>Please rate your customer...</Text>
+
+                            <StarRating
+                                rating={selectedRating}
+                                onRatingChange={(stars) => setSelectedRating(stars)}
+                            />
+
+                            <View style={styles.ratingActionsRow}>
+                                <PrimaryButton
+                                    title="Cancel"
+                                    variant="outline"
+                                    onPress={onCompleteFinish}
+                                    style={styles.ratingCancelBtn}
+                                />
+                                <PrimaryButton
+                                    title="Submit"
+                                    variant="primary"
+                                    onPress={() => submitRating(selectedRating)}
+                                    style={styles.ratingSubmitBtn}
+                                    disabled={selectedRating === 0}
+                                />
+                            </View>
+                        </View>
+                    );
+                }
+
+                // Default fallback if ratings completed but tripStatus not updated yet
                 return (
                     <View style={styles.finishedContainer}>
                         <View style={styles.checkCircle}>
@@ -299,5 +412,74 @@ const styles = StyleSheet.create({
         color: COLORS.success,
         fontWeight: '900',
         marginVertical: 4,
+    },
+
+    // Rating & step designs
+    ratingOuterContainer: {
+        flex: 1,
+        alignItems: 'center',
+        paddingTop: SPACING.xs,
+    },
+    sheetHeaderTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: COLORS.textPrimary,
+        textAlign: 'center',
+        paddingBottom: SPACING.sm,
+    },
+    hr: {
+        height: 1,
+        backgroundColor: '#EEEEEE',
+        width: '120%', // bleed past sheet padding
+        marginBottom: SPACING.md,
+    },
+    customerCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        width: '100%',
+        paddingHorizontal: SPACING.md,
+        marginBottom: SPACING.md,
+    },
+    customerAvatar: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+    },
+    customerCardDetails: {
+        marginLeft: SPACING.md,
+        flex: 1,
+    },
+    customerCardName: {
+        color: COLORS.textPrimary,
+        fontWeight: '700',
+    },
+    customerCardPhone: {
+        color: COLORS.textSecondary,
+        marginTop: 2,
+    },
+    ratingPrimaryText: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: COLORS.textPrimary,
+        textAlign: 'center',
+        marginBottom: 4,
+    },
+    ratingSecondaryText: {
+        fontSize: 14,
+        color: COLORS.textSecondary,
+        textAlign: 'center',
+        marginBottom: SPACING.md,
+    },
+    ratingActionsRow: {
+        flexDirection: 'row',
+        width: '100%',
+        gap: SPACING.md,
+        marginTop: SPACING.md,
+    },
+    ratingCancelBtn: {
+        flex: 1,
+    },
+    ratingSubmitBtn: {
+        flex: 1,
     },
 });

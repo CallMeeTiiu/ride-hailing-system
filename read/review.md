@@ -1,23 +1,49 @@
-1. Bổ sung Quản lý Quyền (Permissions)
-Với app tài xế, cốt lõi là vị trí. Dù đang dùng mock data, nhưng ở màn Home cần hiển thị bản đồ và vị trí hiện tại.
+Yêu cầu luồng giao diện (The Flow):
+Khi chuyến đi kết thúc (State FINISHED), app sẽ tự động hiển thị luồng đánh giá gồm 2 bước nằm trong Bottom Sheet:
 
-Action: Trong Phase 1 (Foundation), cần thêm phần cấu hình xin quyền vị trí (ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION cho Android; NSLocationWhenInUseUsageDescription cho iOS).
+Bước 1: Màn hình Your Mood (Đánh giá cảm xúc)
 
-Gợi ý thư viện: Nên bổ sung react-native-permissions vào danh sách package bắt buộc để xử lý luồng xin quyền cho mượt, tránh bị crash khi vừa mở Home Screen.
+Dựa trên ảnh 1, hiển thị câu hỏi "What's Your Mood about this customer?".
 
-2. Cấu hình các thư viện "Khó tính"
-Bản đồ (react-native-maps): Dù chưa gọi API thật, bản đồ vẫn cần Google Maps API Key (Android) để render ra được grid đường đi thay vì một màn hình trống trơn. Nhớ bổ sung bước tạo và add API Key vào AndroidManifest.xml.
+Render một Grid chứa các Emoji để tài xế chọn.
 
-Bottom Sheet (@gorhom/bottom-sheet): Thư viện này bắt buộc đi kèm react-native-reanimated và react-native-gesture-handler. Bổ sung note vào Phase 1: Phải config plugin trong babel.config.js và bọc <GestureHandlerRootView> ở root app, nếu không app sẽ văng ngay khi render cái bottom sheet.
+Yêu cầu đặc biệt: Thay vì chỉ có 9 emoji, hãy thiết kế 10 tùy chọn. Tùy chọn thứ 10 là một "Ô rỗng" (hoặc icon No-Emoji/Skip) để tài xế chọn nếu họ không muốn để lại cảm xúc.
 
-3. Edge Cases cho Trip State Machine
-Luồng state bạn vẽ đang rất mượt cho "happy path" (mọi thứ thành công). Mình nên dự trù thêm các trường hợp ngoại lệ để UI không bị "treo":
+Khi ấn "Submit" -> Chuyển sang Bước 2.
 
-Khách huỷ cuốc (Customer Canceled): Thêm state CANCELED. Ví dụ đang ở ARRIVING hoặc WAITING mà khách huỷ, màn hình phải bật ra một Modal báo "Chuyến đi đã bị huỷ" và nút bấm để quay lại ONLINE.
+Bước 2: Màn hình Rate Customer (Đánh giá Sao)
 
-Timeout nhận cuốc: Ở trạng thái BOOKING_INCOMING, thông thường các app gọi xe chỉ cho tài xế 10-15 giây để ấn Accept/Reject. Nếu hết thời gian, cuốc xe tự trôi đi. Bạn có thể thêm 1 thanh progress bar chạy lùi trên cái Booking Modal.
+Dựa trên ảnh 2, đổi tiêu đề thành "Rate Customer".
 
-4. Nâng cấp UX nhỏ lẻ
-Format số điện thoại: Ở màn LoginScreen, input số điện thoại nên dùng thư viện hoặc tự viết helper để auto-format thành dạng +84 123 456 789 khi gõ, nhìn giao diện sẽ xịn xò và chuyên nghiệp hơn hẳn.
+Thay đổi Data: Thay thông tin xe (Mercedes-Benz...) thành thông tin Khách hàng (Avatar, Tên khách, Số điện thoại).
 
-Màn hình Call/Chat: Để tạo cảm giác thật khi chạy demo giả lập, với nút "End call", bạn có thể set một cái setTimeout khoảng 2 giây sau khi bấm để giả lập độ trễ ngắt kết nối mạng trước khi quay về Home.
+Render component 5 ngôi sao để chấm điểm (1 đến 5).
+
+Khi ấn "Submit" -> Hoàn tất luồng, cập nhật State về lại trạng thái chờ cuốc mới (ONLINE).
+
+Yêu cầu Output (Deliverables):
+Hãy xuất ra một bản kế hoạch bằng Markdown rõ ràng, bao gồm:
+
+1. Cập nhật Zustand Store (tripStore)
+
+Các state mới cần thêm: customerMood (có thể null/empty), customerRating (number).
+
+Các action xử lý chuyển bước: submitMood(), submitRating().
+
+2. Bóc tách Component chi tiết
+
+EmojiGrid: Logic render 10 item (9 emoji + 1 empty/skip option), xử lý trạng thái selected (viền vàng).
+
+StarRating: Logic chọn 1-5 sao.
+
+CustomerRatingBottomSheet: Component cha bọc 2 bước trên, xử lý animation chuyển từ view Mood sang view Rating mượt mà bên trong cùng một Bottom Sheet (không đóng mở lại sheet).
+
+3. Gợi ý cấu trúc Mock Data
+
+Viết TypeScript interface cho mảng data Emoji có chứa phần tử "Empty" đặc biệt này.
+
+Ràng buộc:
+
+Đảm bảo thiết kế component dễ tái sử dụng.
+
+Code TypeScript chuẩn strict mode, tối ưu re-render.

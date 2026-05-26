@@ -1,0 +1,422 @@
+# 📋 Plan Chi Tiết — 2 Màn Hình Emoji Mood & Rating (Customer App)
+
+> **Phân hệ:** `customer-app` (React Native 0.84.1 — Bare Workflow)
+> **Platform:** Android (ưu tiên) + iOS
+> **Trạng thái:** 📝 PLANNING ONLY — KHÔNG THỰC HIỆN
+
+---
+
+## Tổng Quan
+
+Khi chuyến đi kết thúc (`TripStatus.FINISHED`), app customer tự động hiển thị luồng đánh giá gồm **2 bước** nằm trong **cùng một Bottom Sheet** (không đóng mở lại):
+
+| Bước | Màn hình | Mô tả |
+|------|----------|-------|
+| **1** | Your Mood | Grid 9 emoji + 1 ô skip → chọn cảm xúc về tài xế |
+| **2** | Rate Driver | 5 ngôi sao → chấm điểm tài xế |
+
+Cả 2 bước animate mượt mà bên trong **1 Bottom Sheet duy nhất**.
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Customer-app chưa có `src/` folder, navigation, state management.** Plan này giả định sẽ tạo cấu trúc mới. Nếu muốn tích hợp vào cấu trúc driver-app đã plan (cùng design system), hãy xác nhận.
+
+> [!WARNING]
+> **Dependencies nặng**: `@gorhom/bottom-sheet` yêu cầu `react-native-reanimated` + `react-native-gesture-handler`. Cần config [babel.config.js](file:///d:/ride-hailing-system/customer-app/babel.config.js) và wrap root app trong `<GestureHandlerRootView>`.
+
+---
+
+## 1. Cập Nhật Zustand Store (`tripStore`)
+
+### Thêm State mới
+
+```typescript
+// src/store/tripStore.ts
+
+interface TripStoreState {
+  // ... existing states (tripStatus, currentTrip, etc.)
+
+  // === NEW: Rating Flow ===
+  ratingStep: 'mood' | 'star' | 'completed';  // Bước hiện tại
+  selectedMoodId: string | null;               // ID emoji đã chọn (null = chưa chọn)
+  driverRating: number;                        // Số sao (0 = chưa chọn, 1-5 = đã chọn)
+  isRatingSheetVisible: boolean;               // Bottom Sheet visible?
+}
+```
+
+### Thêm Actions
+
+```typescript
+interface TripStoreActions {
+  // === NEW: Rating Flow Actions ===
+  openRatingSheet: () => void;    // Gọi khi trip FINISHED → show sheet, step = 'mood'
+  selectMood: (moodId: string | null) => void;  // Chọn/bỏ chọn emoji
+  submitMood: () => void;         // Xác nhận mood → chuyển step sang 'star'
+  selectRating: (stars: number) => void;        // Chọn 1-5 sao
+  submitRating: () => void;       // Xác nhận rating → đóng sheet, reset, chuyển ONLINE
+  cancelRating: () => void;       // Ấn Cancel → reset + đóng sheet
+}
+```
+
+### Logic xử lý
+
+```
+openRatingSheet():
+  → ratingStep = 'mood'
+  → selectedMoodId = null
+  → driverRating = 0
+  → isRatingSheetVisible = true
+
+submitMood():
+  → ratingStep = 'star'  // Animate chuyển view
+
+submitRating():
+  → ratingStep = 'completed'
+  → isRatingSheetVisible = false
+  → tripStatus = 'ONLINE'
+  → Log/Send { moodId, rating } (mock)
+  → Reset selectedMoodId, driverRating
+
+cancelRating():
+  → isRatingSheetVisible = false
+  → Reset tất cả rating states
+  → tripStatus = 'ONLINE'  // Bỏ qua đánh giá
+```
+
+---
+
+## 2. TypeScript Interfaces & Mock Data
+
+### 2.1. Emoji Interface (`src/types/index.ts`)
+
+```typescript
+export type EmojiType = 'emoji' | 'skip';
+
+export interface EmojiItem {
+  id: string;
+  type: EmojiType;
+  label: string;          // Tên hiển thị (accessibility)
+  emoji: string;          // Unicode emoji character (nếu type='emoji')
+  backgroundColor?: string; // Màu nền tùy chọn
+}
+```
+
+### 2.2. Mock Emoji Data (`src/data/emojiData.ts`)
+
+```typescript
+export const MOOD_EMOJIS: EmojiItem[] = [
+  { id: 'cool',      type: 'emoji', label: 'Cool',       emoji: '😎' },
+  { id: 'love',      type: 'emoji', label: 'Love it',    emoji: '😍' },
+  { id: 'happy',     type: 'emoji', label: 'Happy',      emoji: '😄' },
+  { id: 'laughing',  type: 'emoji', label: 'Laughing',   emoji: '🤣' },
+  { id: 'annoyed',   type: 'emoji', label: 'Annoyed',    emoji: '😣' },
+  { id: 'neutral',   type: 'emoji', label: 'Neutral',    emoji: '😐' },
+  { id: 'worried',   type: 'emoji', label: 'Worried',    emoji: '😟' },
+  { id: 'dizzy',     type: 'emoji', label: 'Dizzy',      emoji: '😵' },
+  { id: 'crying',    type: 'emoji', label: 'Crying',     emoji: '😢' },
+  // ⬇️ Tùy chọn thứ 10: Ô SKIP (không chọn cảm xúc)
+  { id: 'skip',      type: 'skip',  label: 'No Emoji',   emoji: '' },
+];
+```
+
+> **10 items**: 9 emoji thật + 1 ô "Skip" (icon `🚫` hoặc dấu gạch chéo).
+
+---
+
+## 3. Bóc Tách Component Chi Tiết
+
+### 3.1. Component Tree
+
+```
+CustomerRatingBottomSheet          ← Component cha, quản lý Bottom Sheet
+├── Animated.View (step transition)
+│   ├── [ratingStep === 'mood']
+│   │   └── MoodStepView
+│   │       ├── DriverInfoCard     ← Avatar + Tên + Sao + Biển số
+│   │       ├── Title "What's Your Mood!"
+│   │       ├── Subtitle "about this trip?"
+│   │       ├── EmojiGrid          ← Grid 10 items (3 cột × 4 hàng, hàng cuối 1 item)
+│   │       │   └── EmojiGridItem × 10
+│   │       └── ActionButtons      ← Cancel + Submit
+│   │
+│   └── [ratingStep === 'star']
+│       └── StarStepView
+│           ├── DriverInfoCard     ← Tái sử dụng (cùng component)
+│           ├── Title "How is your Driver?"
+│           ├── Subtitle "Please rate your driver..."
+│           ├── StarRating         ← 5 ngôi sao interactive
+│           └── ActionButtons      ← Cancel + Submit
+```
+
+---
+
+### 3.2. Chi tiết từng Component
+
+#### `CustomerRatingBottomSheet`
+
+| Thuộc tính | Chi tiết |
+|------------|----------|
+| **File** | `src/components/rating/CustomerRatingBottomSheet.tsx` |
+| **Thư viện** | `@gorhom/bottom-sheet` |
+| **Props** | `visible: boolean`, `onClose: () => void` |
+| **State nội bộ** | Không — dùng Zustand (`ratingStep`, actions) |
+| **Snap points** | `['65%', '80%']` — tuỳ nội dung |
+| **Animation** | Dùng `Animated.View` + `useAnimatedStyle` (reanimated) để slide ngang khi chuyển step |
+| **Backdrop** | `BottomSheetBackdrop` với `opacity={0.5}`, `pressBehavior="none"` (không cho đóng khi tap ngoài) |
+
+**Logic chuyển step (animation):**
+```
+Step 'mood' → 'star':
+  → Fade out MoodStepView (opacity 1 → 0, translateX 0 → -width, 300ms)
+  → Fade in StarStepView (opacity 0 → 1, translateX width → 0, 300ms)
+  → Hoặc dùng layout animation: LayoutAnimationConfig + FadeIn/SlideInRight
+```
+
+---
+
+#### `DriverInfoCard`
+
+| Thuộc tính | Chi tiết |
+|------------|----------|
+| **File** | `src/components/rating/DriverInfoCard.tsx` |
+| **Props** | `driver: DriverProfile` |
+| **Layout** | Row: `[Avatar 56px]` + `[Column: Name, Vehicle]` + `[Star icon + rating number]` |
+| **Avatar** | Hình tròn, border 2px `#E0E0E0`, positioned nhô lên trên header |
+| **Tái sử dụng** | Dùng ở cả Bước 1 và Bước 2 |
+
+```typescript
+interface DriverInfoCardProps {
+  avatarUrl: string;
+  name: string;
+  vehicleModel: string;  // "Mercedes-Benz E-Class"
+  licensePlate: string;  // "HSW 4736 XK"
+  rating: number;        // 4.8
+}
+```
+
+---
+
+#### `EmojiGrid`
+
+| Thuộc tính | Chi tiết |
+|------------|----------|
+| **File** | `src/components/rating/EmojiGrid.tsx` |
+| **Props** | `emojis: EmojiItem[]`, `selectedId: string \| null`, `onSelect: (id: string) => void` |
+| **Layout** | `FlatList` với `numColumns={3}` — 4 hàng (3+3+3+1) |
+| **Item size** | ~80×80px, padding 12px giữa các item |
+| **Selected state** | Border `2px solid #F5A623` (primary amber) + nhẹ scale up 1.05 |
+| **Skip item** | Render icon `🚫` hoặc dashed border, text "Skip" nhỏ bên dưới |
+| **Memoization** | `React.memo` trên `EmojiGridItem`, `useCallback` trên `renderItem` + `keyExtractor` |
+
+```typescript
+// EmojiGridItem
+interface EmojiGridItemProps {
+  item: EmojiItem;
+  isSelected: boolean;
+  onPress: () => void;
+}
+```
+
+**Logic render `EmojiGridItem`:**
+```
+if (item.type === 'skip'):
+  → Render icon dashed circle + text "Skip"
+  → Khi chọn: selectedMoodId = null (explicitly skip)
+else:
+  → Render emoji lớn (fontSize 48)
+  → Khi chọn: selectedMoodId = item.id
+```
+
+---
+
+#### `StarRating`
+
+| Thuộc tính | Chi tiết |
+|------------|----------|
+| **File** | `src/components/rating/StarRating.tsx` |
+| **Props** | `rating: number` (0-5), `onRatingChange: (stars: number) => void`, `size?: number` |
+| **Layout** | Row 5 ngôi sao, spacing 12px |
+| **Star size** | 44×44px (đảm bảo touch target ≥ 48dp với padding) |
+| **Filled** | Icon `★` màu `#F5A623` (primary amber) |
+| **Empty** | Icon `☆` màu `#E0E0E0` (light gray) |
+| **Animation** | Scale bounce nhẹ khi tap (0.8 → 1.1 → 1.0, spring animation) |
+| **Haptic** | `ReactNativeHapticFeedback.trigger('impactLight')` khi chọn sao (optional) |
+
+```typescript
+interface StarRatingProps {
+  rating: number;           // 0 = chưa chọn, 1-5 = đã chọn
+  onRatingChange: (stars: number) => void;
+  maxStars?: number;        // Default 5
+  starSize?: number;        // Default 44
+  activeColor?: string;     // Default '#F5A623'
+  inactiveColor?: string;   // Default '#E0E0E0'
+}
+```
+
+---
+
+#### `ActionButtons`
+
+| Thuộc tính | Chi tiết |
+|------------|----------|
+| **File** | `src/components/rating/ActionButtons.tsx` |
+| **Props** | `onCancel: () => void`, `onSubmit: () => void`, `submitDisabled?: boolean` |
+| **Layout** | Row: `[Cancel button 50%]` + `[Submit button 50%]` |
+| **Cancel** | Border `1px solid #E0E0E0`, text "#1A1A1A", backgroundColor transparent |
+| **Submit** | backgroundColor `#F5A623`, text "#FFFFFF", borderRadius 25px |
+| **Submit disabled** | `opacity: 0.5`, không cho ấn khi chưa chọn gì |
+
+---
+
+## 4. File Structure (Mới tạo)
+
+```
+customer-app/src/
+├── components/
+│   └── rating/
+│       ├── CustomerRatingBottomSheet.tsx   ← Component cha
+│       ├── MoodStepView.tsx               ← View bước 1 (emoji)
+│       ├── StarStepView.tsx               ← View bước 2 (sao)
+│       ├── DriverInfoCard.tsx             ← Card info tài xế
+│       ├── EmojiGrid.tsx                  ← Grid emoji (FlatList)
+│       ├── EmojiGridItem.tsx              ← Từng ô emoji (React.memo)
+│       ├── StarRating.tsx                 ← 5 ngôi sao
+│       └── ActionButtons.tsx              ← Cancel + Submit
+│
+├── store/
+│   └── tripStore.ts                       ← Zustand store (rating states + actions)
+│
+├── types/
+│   └── index.ts                           ← EmojiItem, EmojiType, DriverProfile, etc.
+│
+├── data/
+│   └── emojiData.ts                       ← MOOD_EMOJIS array (10 items)
+│
+└── theme/
+    └── index.ts                           ← Design tokens (colors, typography, spacing)
+```
+
+**Tổng: 12 files mới**
+
+---
+
+## 5. Dependencies Cần Cài
+
+```bash
+npm install zustand @gorhom/bottom-sheet react-native-reanimated react-native-gesture-handler react-native-vector-icons
+```
+
+| Package | Version | Lý do |
+|---------|---------|-------|
+| `zustand` | ^5.x | State management cho rating flow |
+| `@gorhom/bottom-sheet` | ^5.x | Bottom Sheet component |
+| `react-native-reanimated` | ^3.x | Animation engine (bắt buộc cho bottom-sheet) |
+| `react-native-gesture-handler` | ^2.x | Gesture support (bắt buộc cho bottom-sheet) |
+| `react-native-vector-icons` | ^10.x | Star icons, skip icon |
+
+### Config bắt buộc sau khi cài
+1. **[babel.config.js](file:///d:/ride-hailing-system/customer-app/babel.config.js)** → thêm `'react-native-reanimated/plugin'` cuối plugins
+2. **[App.tsx](file:///d:/ride-hailing-system/customer-app/App.tsx)** → wrap root trong `<GestureHandlerRootView style={{flex: 1}}>`
+
+---
+
+## 6. Luồng UX Chi Tiết
+
+```mermaid
+flowchart TD
+    A["Trip FINISHED"] --> B["Auto-show Bottom Sheet"]
+    B --> C["Bước 1: Your Mood"]
+    C --> D{"User chọn emoji?"}
+    D -->|Chọn 1 emoji| E["selectedMoodId = id"]
+    D -->|Chọn Skip| F["selectedMoodId = null"]
+    D -->|Không chọn| G["Submit disabled"]
+    E --> H["Submit enabled"]
+    F --> H
+    H --> I["Ấn Submit"]
+    I --> J["Animate slide → Bước 2"]
+    J --> K["Bước 2: Rate Driver"]
+    K --> L{"User chọn sao?"}
+    L -->|1-5 sao| M["driverRating = N"]
+    L -->|Chưa chọn| N["Submit disabled"]
+    M --> O["Ấn Submit"]
+    O --> P["Đóng Bottom Sheet"]
+    P --> Q["tripStatus = ONLINE"]
+
+    C --> R["Ấn Cancel (bất kỳ bước nào)"]
+    K --> R
+    R --> S["Đóng Sheet, skip đánh giá"]
+    S --> Q
+```
+
+### Quy tắc Submit:
+- **Bước 1**: Submit chỉ enable khi đã chọn 1 emoji HOẶC chọn Skip
+- **Bước 2**: Submit chỉ enable khi đã chọn ít nhất 1 sao (rating ≥ 1)
+- **Cancel**: Có thể ấn ở cả 2 bước → skip toàn bộ → quay về ONLINE
+
+---
+
+## 7. Design Tokens Sử Dụng
+
+| Token | Giá trị | Dùng cho |
+|-------|---------|----------|
+| `colors.primary` | `#F5A623` | Submit button, selected emoji border, filled star |
+| `colors.background` | `#FFFFFF` | Bottom Sheet background |
+| `colors.textPrimary` | `#1A1A1A` | Heading, tên tài xế |
+| `colors.textSecondary` | `#8E8E93` | Subtitle, caption |
+| `colors.border` | `#E0E0E0` | Cancel button border, empty star, card border |
+| `colors.overlay` | `rgba(0,0,0,0.5)` | Backdrop |
+| `spacing.md` | `16px` | Padding chung |
+| `spacing.lg` | `24px` | Khoảng cách giữa sections |
+| `radius.md` | `12px` | Card radius |
+| `radius.full` | `999px` | Button pill shape |
+| `fontSize.emoji` | `48px` | Emoji size trong grid |
+| `fontSize.h2` | `22px` | "What's Your Mood!" title |
+| `fontSize.body` | `16px` | Subtitle |
+
+---
+
+## 8. Ràng Buộc Kỹ Thuật
+
+- ✅ TypeScript strict mode
+- ✅ `React.memo` trên `EmojiGridItem` — tránh re-render toàn grid khi chọn
+- ✅ `useCallback` trên `renderItem`, `keyExtractor`, `onSelect`
+- ✅ `FlatList` cho emoji grid (không `ScrollView`)
+- ✅ Touch targets ≥ 48dp cho emoji items, star items, buttons
+- ✅ Animation dùng `react-native-reanimated` (chạy trên UI thread, 60fps)
+- ✅ Bottom Sheet không đóng mở lại khi chuyển step — animate nội bộ
+- ✅ Backdrop `pressBehavior="none"` — không cho tap ngoài để đóng
+- ✅ Không hardcode strings — sẵn sàng cho i18n
+
+---
+
+## 9. Verification Plan
+
+> [!NOTE]
+> Vì đây là plan-only (không thực hiện), verification sẽ dùng khi triển khai thực tế.
+
+### Automated Tests
+```bash
+# Unit test cho Zustand store logic
+npx jest --testPathPattern="tripStore.test.ts"
+
+# Component snapshot tests
+npx jest --testPathPattern="rating/"
+```
+
+### Manual Verification (Android Emulator)
+| # | Test Case | Steps | Expected |
+|---|-----------|-------|----------|
+| 1 | Sheet hiển thị khi FINISHED | Mock trip → set FINISHED | Bottom Sheet tự mở, hiện bước "Your Mood" |
+| 2 | Grid 10 items | Nhìn grid | 9 emoji + 1 ô Skip, layout 3 cột |
+| 3 | Chọn emoji | Tap emoji | Viền vàng highlight, các emoji khác bỏ viền |
+| 4 | Chọn Skip | Tap ô Skip | selectedMoodId = null, Submit enabled |
+| 5 | Submit disabled khi chưa chọn | Không chọn gì | Nút Submit mờ (opacity 0.5), không tap được |
+| 6 | Submit Mood → slide sang Rate | Tap Submit | Animate mượt mà sang "Rate Driver" |
+| 7 | 5 sao interactive | Tap sao thứ 3 | 3 sao sáng vàng, 2 sao xám |
+| 8 | Submit Rating | Chọn sao → Submit | Sheet đóng, app quay về trạng thái chờ |
+| 9 | Cancel ở bước 1 | Tap Cancel | Sheet đóng, skip đánh giá |
+| 10 | Cancel ở bước 2 | Tap Cancel | Sheet đóng, skip đánh giá |
+| 11 | Animation mượt | Chuyển qua lại | Không flicker, 60fps |

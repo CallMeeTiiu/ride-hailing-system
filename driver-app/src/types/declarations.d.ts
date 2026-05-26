@@ -4,6 +4,12 @@ declare module 'react-native-vector-icons/Feather' {
     export default class Icon extends Component<IconProps> { }
 }
 
+declare module 'react-native-vector-icons/MaterialIcons' {
+    import { Component } from 'react';
+    import { IconProps } from 'react-native-vector-icons/Icon';
+    export default class Icon extends Component<IconProps> { }
+}
+
 declare module 'react-native-vector-icons/Icon' {
     import { Component } from 'react';
     import { TextProps, TextStyle } from 'react-native';

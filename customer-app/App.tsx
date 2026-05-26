@@ -33,7 +33,11 @@ export type RootStackParamList = {
   Welcome: undefined;
   Login: undefined;
   SignUp: undefined;
-  InfoInput: { userName: string }; 
+  InfoInput: { 
+    userName?: string; 
+    phoneNumber?: string; 
+    password?: string; 
+  }; 
   Home: undefined;
   ForgotPassword: undefined;
   FillOTP: { contactMethod: string; contactValue: string };

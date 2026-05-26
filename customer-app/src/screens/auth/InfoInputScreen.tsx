@@ -20,20 +20,25 @@ import { useRoute, RouteProp } from '@react-navigation/native';
 import CustomInput from '../../components/common/CustomInput';
 import PrimaryButton from '../../components/common/PrimaryButton';
 
-import { faUser, faEnvelope, faPhone, faLocationDot } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faPhone, faLocationDot, faEnvelope } from '@fortawesome/free-solid-svg-icons';
 
 const InfoInputScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'InfoInput'>>();
   const receivedName = route.params?.userName || "Friend";
 
+  const receivedPhone = route.params?.phoneNumber || "";
+
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   const [formData, setFormData] = useState({
-    userName: receivedName, 
-    email: 'andrew_ainsley@yourdomain.com',
-    phoneNumber: '',
+    userName: receivedName,
+    email: '', 
+    phoneNumber: receivedPhone, 
     address: ''
   });
+
+  const [emailError, setEmailError] = useState('');
+  const [addressError, setAddressError] = useState('');
 
   const handleInputChange = (key: string, value: string) => {
     setFormData({
@@ -43,8 +48,26 @@ const InfoInputScreen = () => {
   };
 
   const handleConfirm = () => {
-    console.log("Data is ready to send to BackEnd:", formData);
-    navigation.replace('MainTabs')
+    setEmailError('');
+    setAddressError('');
+    let isValid = true;
+
+    if (!formData.email) {
+      setEmailError('Please enter your email');
+      isValid = false;
+    } else if (!formData.email.includes('@')) {
+      setEmailError('Invalid email format (missing @)');
+      isValid = false;
+    }
+
+    if (!formData.address) {
+      setAddressError('Please enter your address');
+      isValid = false;
+    }
+
+    if (!isValid) return;
+    
+    navigation.replace('MainTabs');
   };
 
   const { colors }= useTheme();
@@ -69,6 +92,16 @@ const InfoInputScreen = () => {
           </Text>
 
           <CustomInput 
+            label="Phone Number"
+            iconName={faPhone}
+            value={formData.phoneNumber}
+            editable={false}
+            placeholder="+123456789"
+            keyboardType="phone-pad"
+            onChangeText={(text) => handleInputChange('phoneNumber', text)}
+          />
+
+          <CustomInput 
             label="User Name"
             iconName={faUser}
             value={formData.userName}
@@ -76,28 +109,29 @@ const InfoInputScreen = () => {
             onChangeText={(text) => handleInputChange('userName', text)}
           />
 
-          <CustomInput 
+          <CustomInput
             label="Email"
             iconName={faEnvelope}
             value={formData.email}
             placeholder="Enter your email"
             keyboardType="email-address"
-            onChangeText={(text) => handleInputChange('email', text)}
+            onChangeText={(text) => {
+              handleInputChange('email', text);
+              if (emailError) setEmailError('');
+            }}
+            errorText={emailError} 
           />
 
-          <CustomInput 
-            label="Phone Number"
-            iconName={faPhone}
-            placeholder="+123456789"
-            keyboardType="phone-pad"
-            onChangeText={(text) => handleInputChange('phoneNumber', text)}
-          />
-
-          <CustomInput 
+          <CustomInput
             label="Address"
             iconName={faLocationDot}
             placeholder="1A Queen, New York, USA"
-            onChangeText={(text) => handleInputChange('address', text)}
+            value={formData.address}
+            onChangeText={(text) => {
+              handleInputChange('address', text);
+              if (addressError) setAddressError('');
+            }}
+            errorText={addressError} 
           />
 
           <PrimaryButton 

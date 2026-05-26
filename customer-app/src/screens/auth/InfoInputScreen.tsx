@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -35,7 +35,9 @@ const InfoInputScreen = () => {
     userName: receivedName,
     email: '', 
     phoneNumber: receivedPhone, 
-    address: ''
+    address: '',
+    lat: null as number | null, 
+    lng: null as number | null
   });
 
   const { colors }= useTheme();
@@ -43,6 +45,23 @@ const InfoInputScreen = () => {
 
   const [emailError, setEmailError] = useState('');
   const [addressError, setAddressError] = useState('');
+
+  useEffect(() => {
+    if (route.params?.selectedPlace) {
+      const { name, latitude, longitude } = route.params.selectedPlace;
+      
+      setFormData(prev => ({
+        ...prev,
+        address: name,
+        lat: latitude,
+        lng: longitude
+      }));
+      
+      if (addressError) setAddressError('');
+
+      navigation.setParams({ selectedPlace: undefined });
+    }
+  }, [route.params.selectedPlace, navigation, addressError]);
   
   const handleInputChange = (key: string, value: string) => {
     setFormData({
@@ -76,8 +95,8 @@ const InfoInputScreen = () => {
         id: Date.now().toString(), 
         name: 'Default Address', 
         details: formData.address,
-        lat: null, 
-        lng: null, 
+        lat: formData.lat, 
+        lng: formData.lng, 
         icon: 'home' 
       });
       console.log("Added default address to AddressContext:", formData.address);
@@ -140,17 +159,31 @@ const InfoInputScreen = () => {
             errorText={emailError} 
           />
 
-          <CustomInput
-            label="Address"
-            iconName={faLocationDot}
-            placeholder="1A Queen, New York, USA"
-            value={formData.address}
-            onChangeText={(text) => {
-              handleInputChange('address', text);
+          <TouchableOpacity 
+          activeOpacity={0.8} 
+          onPress={() => navigation.navigate('Search', { 
+            onSelect: (place: any) => {
+              setFormData(prev => ({
+                ...prev,
+                address: place.name,
+                lat: place.latitude,
+                lng: place.longitude
+              }));
               if (addressError) setAddressError('');
-            }}
-            errorText={addressError} 
-          />
+            } 
+          })}
+        >
+          <View pointerEvents="none">
+            <CustomInput
+              label="Address"
+              iconName={faLocationDot}
+              placeholder="Tap to search your default address..."
+              value={formData.address}
+              onChangeText={() => {}}
+              errorText={addressError}
+            />
+          </View>
+        </TouchableOpacity>
 
           <PrimaryButton 
             title="Confirm" 

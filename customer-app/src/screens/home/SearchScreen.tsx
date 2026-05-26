@@ -106,8 +106,13 @@ const SearchScreen = () => {
     const cleanItem = { ...selectedItem, distance: '' };
     addRecentLocation(cleanItem); 
 
-    const currentParams = route.params as any;
+    if (route.params?.onSelect) {
+      route.params.onSelect(cleanItem); 
+      navigation.goBack();              
+      return;
+    }
 
+    const currentParams = route.params as any;
     if (currentParams?.mode === 'address_search') {
       (navigation as any).navigate({
         name: 'EditAddress',

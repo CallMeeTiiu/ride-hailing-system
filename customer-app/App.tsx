@@ -37,13 +37,18 @@ export type RootStackParamList = {
     userName?: string; 
     phoneNumber?: string; 
     password?: string; 
+    selectedPlace?: any;
   }; 
   Home: undefined;
   ForgotPassword: undefined;
   FillOTP: { contactMethod: string; contactValue: string };
   NewPassword: undefined;
   MainTabs: undefined;
-  Search: { type?: 'from' | 'destination' } | undefined;
+  Search: { 
+    type?: 'from' | 'destination';
+    mode?: string;
+    onSelect?: (place: any) => void; 
+  };
   SelectCar: { distance: number };
   SearchingDriver: undefined;
   Traveling: undefined;

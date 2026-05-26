@@ -9,7 +9,8 @@ import {
   Platform 
 } from 'react-native';
 import theme from '../../constants/theme';
-import { useTheme } from '../../contexts/ThemeContext' 
+import { useTheme } from '../../contexts/ThemeContext';
+import { useAddress } from '../../contexts/AddressContext';
 
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -37,9 +38,12 @@ const InfoInputScreen = () => {
     address: ''
   });
 
+  const { colors }= useTheme();
+  const { addAddress } = useAddress();
+
   const [emailError, setEmailError] = useState('');
   const [addressError, setAddressError] = useState('');
-
+  
   const handleInputChange = (key: string, value: string) => {
     setFormData({
       ...formData,
@@ -66,11 +70,25 @@ const InfoInputScreen = () => {
     }
 
     if (!isValid) return;
+
+    try {
+      addAddress({
+        id: Date.now().toString(), 
+        name: 'Default Address', 
+        details: formData.address,
+        lat: null, 
+        lng: null, 
+        icon: 'home' 
+      });
+      console.log("Added default address to AddressContext:", formData.address);
+    } catch (error) {
+      console.log("Error saving default address:", error);
+    }
+
+    console.log("Mockup data prepared for Backend sync:", formData);
     
     navigation.replace('MainTabs');
   };
-
-  const { colors }= useTheme();
 
   return (
     <SafeAreaView style={[ styles.safeArea, {backgroundColor: colors.background} ]}>

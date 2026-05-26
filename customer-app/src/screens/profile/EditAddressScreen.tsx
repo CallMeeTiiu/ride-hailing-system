@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
@@ -34,35 +34,55 @@ const EditAddressScreen = ({ navigation, route }: any) => {
   const [selectedIcon, setSelectedIcon] = useState(existingAddress?.icon || 'map-pin');
   const [isFetching, setIsFetching] = useState(false);
 
+  const isProgrammaticMove = useRef(false);
+  const hasInitializedMap = useRef(false);
+  
+  const initLat = existingAddress?.lat || 10.8700;
+  const initLng = existingAddress?.lng || 106.8031;
+
   useEffect(() => {
-    const initLat = existingAddress?.lat || 10.8700;
-    const initLng = existingAddress?.lng || 106.8031;
-    
-    setTimeout(() => {
+    if (hasInitializedMap.current) return;
+    if (route.params?.selectedPlace) return;
+
+    const timer = setTimeout(() => {
+      isProgrammaticMove.current = true; 
       mapRef.current?.jumpToLocation(initLat, initLng);
+      hasInitializedMap.current = true; 
     }, 500);
-  }, [existingAddress]);
+
+    return () => clearTimeout(timer); 
+  }, [initLat, initLng, route.params?.selectedPlace]);
 
   useEffect(() => {
     if (route.params?.selectedPlace) {
       const { name, latitude, longitude } = route.params.selectedPlace;
+      
       setDetails(name);
       setLat(latitude);
       setLng(longitude);
       
+      isProgrammaticMove.current = true; 
       mapRef.current?.jumpToLocation(latitude, longitude);
-    }
-  }, [route.params?.selectedPlace]);
+      
+      hasInitializedMap.current = true;
 
-  const handleMapMove = async (newLat: number, newLng: number) => {
+      navigation.setParams({ selectedPlace: undefined });
+    }
+  }, [route.params?.selectedPlace, navigation]);
+
+  const handleMapMove = useCallback(async (newLat: number, newLng: number) => {
     setLat(newLat);
     setLng(newLng);
+
+    if (isProgrammaticMove.current) {
+      isProgrammaticMove.current = false;
+      return;
+    }
+
     setIsFetching(true);
-    
     try {
       const response = await fetch(`https://photon.komoot.io/reverse?lon=${newLng}&lat=${newLat}`);
       const data = await response.json();
-      
       if (data.features && data.features.length > 0) {
         const props = data.features[0].properties;
         const addressParts = [props.housenumber, props.street, props.district, props.city, props.state].filter(Boolean);
@@ -78,7 +98,11 @@ const EditAddressScreen = ({ navigation, route }: any) => {
     } finally {
       setIsFetching(false);
     }
-  };
+  }, []);
+
+  const memoizedMap = useMemo(() => {
+    return <MapBackground ref={mapRef} onMapMove={handleMapMove} />;
+  }, [handleMapMove]);
 
   const handleSave = () => {
     const payload = {
@@ -109,7 +133,7 @@ const EditAddressScreen = ({ navigation, route }: any) => {
           <FontAwesomeIcon icon={faArrowLeft} size={20} color={colors.textTitle} />
         </TouchableOpacity>
 
-        <MapBackground ref={mapRef} onMapMove={handleMapMove} />
+        {memoizedMap}
         
         {/* CÁI GHIM CỐ ĐỊNH Ở TÂM MÀN HÌNH (Giao diện UI) */}
         <View style={styles.centerPinWrapper} pointerEvents="none">
@@ -160,7 +184,7 @@ const EditAddressScreen = ({ navigation, route }: any) => {
           <Text style={[styles.label, { color: colors.textTitle }]}>Address Details</Text>
           <TouchableOpacity 
             style={[styles.inputContainer, { backgroundColor: colors.inputBg }]}
-            onPress={() => navigation.navigate('SearchScreen', { mode: 'address_search' })}
+            onPress={() => navigation.navigate('Search', { mode: 'address_search' })}
             activeOpacity={0.8}
           >
             <Text 

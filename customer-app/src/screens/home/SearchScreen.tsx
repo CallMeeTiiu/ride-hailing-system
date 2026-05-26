@@ -110,7 +110,7 @@ const SearchScreen = () => {
 
     if (currentParams?.mode === 'address_search') {
       (navigation as any).navigate({
-        name: 'EditAddressScreen',
+        name: 'EditAddress',
         params: { selectedPlace: cleanItem },
         merge: true, 
       });

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -11,11 +11,14 @@ import {
 } from 'react-native';
 import theme from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext'
-import { faEnvelope, faLock } from '@fortawesome/free-solid-svg-icons';
+import { useAuth } from '../../contexts/AuthContext';
+import { faPhone, faLock } from '@fortawesome/free-solid-svg-icons';
 
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../../App';
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import CustomInput from '../../components/common/CustomInput';
 import PrimaryButton from '../../components/common/PrimaryButton';
@@ -24,9 +27,70 @@ import Hyperlink from '../../components/common/Hyperlink';
 const LoginScreen = () => {
   const [rememberMe, setRememberMe] = useState(false);
 
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [password, setPassword] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
+  const { login } = useAuth();
+
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   const { colors } = useTheme();
+
+  useEffect(() => {
+    const loadRememberedCredentials = async () => {
+      try {
+        const savedPhone = await AsyncStorage.getItem('@remembered_phone');
+        const savedPassword = await AsyncStorage.getItem('@remembered_password');
+        
+        if (savedPhone && savedPassword) {
+          setPhoneNumber(savedPhone);
+          setPassword(savedPassword);
+          setRememberMe(true);
+        }
+      } catch (error) {
+        console.log('Error while loading remembered credentials:', error);
+      }
+    };
+    loadRememberedCredentials();
+  }, []);
+
+  const handleLogin = async () => {
+    setPhoneError('');
+    setPasswordError('');
+    let isValid = true;
+
+    if (!phoneNumber) {
+      setPhoneError('Please enter your phone number');
+      isValid = false;
+    }
+    if (!password) {
+      setPasswordError('Please enter your password');
+      isValid = false;
+    }
+
+    if (!isValid) return;
+
+    const isSuccess = await login(phoneNumber, password);
+    if (isSuccess) {
+      try {
+        if (rememberMe) {
+          await AsyncStorage.setItem('@remembered_phone', phoneNumber);
+          await AsyncStorage.setItem('@remembered_password', password);
+        } else {
+          await AsyncStorage.removeItem('@remembered_phone');
+          await AsyncStorage.removeItem('@remembered_password');
+        }
+      } catch (error) {
+        console.log('Error while saving credentials:', error);
+      }
+
+      navigation.replace('MainTabs');
+    } else {
+      setPhoneError('Invalid phone number or password');
+    }
+  };
 
   return (
     <SafeAreaView style={[ styles.safeArea, {backgroundColor: colors.background} ]}>
@@ -44,19 +108,31 @@ const LoginScreen = () => {
           <Text style={styles.title}>Login to your{"\n"}Account</Text>
 
           {/* Form nhập liệu */}
-          <CustomInput 
-            label="Email"
-            iconName={faEnvelope}
-            placeholder="andrew_ainsley@yourdomain.com"
-            keyboardType="email-address"
+          <CustomInput
+            label="Phone Number"
+            iconName={faPhone}
+            placeholder="090xxxx123"
+            keyboardType="phone-pad"
+            value={phoneNumber}
+            onChangeText={(text) => {
+              setPhoneNumber(text);
+              if (phoneError) setPhoneError(''); 
+            }}
             autoCapitalize="none"
+            errorText={phoneError}
           />
 
-          <CustomInput 
+          <CustomInput
             label="Password"
             iconName={faLock}
             placeholder="••••••••••••"
             isPassword={true}
+            value={password}
+            onChangeText={(text) => {
+              setPassword(text);
+              if (passwordError) setPasswordError('');
+            }}
+            errorText={passwordError}
           />
 
           {/* Remember me & Forgot Password Row */}
@@ -74,10 +150,10 @@ const LoginScreen = () => {
           </View>
 
           {/* Nút Sign In */}
-          <PrimaryButton 
-            title="Sign in" 
-            onPress={() => navigation.replace('MainTabs')} 
-          />
+          <PrimaryButton
+          title="Sign in"
+          onPress={handleLogin}
+        />
 
           {/* Quên mật khẩu */}
           <Hyperlink 

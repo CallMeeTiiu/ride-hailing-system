@@ -59,6 +59,9 @@ export class Trip {
   @Column({ type: 'int' })
   estimated_fare: number
 
+  @Column({ type: 'int', nullable: true })
+  actual_fare: number
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date
 

@@ -7,13 +7,15 @@ import { LocationModule } from '../location/location.module'
 import { GoogleModule } from '../google/google.module'
 import { Trip } from './entities/trip.entity'
 import { TripLocation } from './entities/trip-location.entity'
+import { Rating } from './entities/rating.entity'
 import { RidesService } from './rides.service'
 import { UsersModule } from '../users/users.module'
 import { FirebaseModule } from '../firebase/firebase.module'
+import { Payment } from '../payments/entities/payment.entity'
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Trip, TripLocation]),
+    TypeOrmModule.forFeature([Trip, TripLocation, Rating, Payment]),
     JwtModule.register({}),
     LocationModule,
     GoogleModule,

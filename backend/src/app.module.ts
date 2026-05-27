@@ -11,6 +11,8 @@ import { RedisModule } from './redis/redis.module'
 import { LocationModule } from './location/location.module'
 import { GoogleModule } from './google/google.module'
 import { FirebaseModule } from './firebase/firebase.module'
+import { UploadsController } from './uploads/uploads.controller'
+import { PaymentsModule } from './payments/payments.module'
 
 @Module({
   imports: [
@@ -36,12 +38,13 @@ import { FirebaseModule } from './firebase/firebase.module'
     AuthModule,
     RidesModule,
     DriversModule,
+    PaymentsModule,
     RedisModule,
     LocationModule,
     GoogleModule,
     FirebaseModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, UploadsController],
   providers: [AppService],
 })
 export class AppModule {}

@@ -44,9 +44,8 @@ export const AddressProvider: React.FC<{ children: React.ReactNode }> = ({ child
     loadData();
   }, []);
 
-  // 3. Tự động lưu dữ liệu khi mảng addresses thay đổi
   useEffect(() => {
-    if (!isLoaded) return; // Không lưu nếu chưa load xong data cũ
+    if (!isLoaded) return; 
 
     const saveData = async () => {
       try {
@@ -58,7 +57,6 @@ export const AddressProvider: React.FC<{ children: React.ReactNode }> = ({ child
     saveData();
   }, [addresses, isLoaded]);
 
-  // 4. Các hàm thao tác dữ liệu (CRUD)
   const addAddress = (address: SavedAddress) => {
     setAddresses((prev) => [...prev, address]);
   };

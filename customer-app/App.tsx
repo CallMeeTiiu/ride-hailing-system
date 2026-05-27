@@ -7,6 +7,7 @@ import { LocationProvider } from './src/contexts/LocationContext';
 import { BookingHistoryProvider } from './src/contexts/BookingHistoryContext';
 import { UserProvider } from './src/contexts/UserContext';
 import { AddressProvider } from './src/contexts/AddressContext';
+import { AuthProvider } from './src/contexts/AuthContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import WelcomeScreen from './src/screens/auth/WelcomeScreen';
@@ -32,13 +33,22 @@ export type RootStackParamList = {
   Welcome: undefined;
   Login: undefined;
   SignUp: undefined;
-  InfoInput: { userName: string }; 
+  InfoInput: { 
+    userName?: string; 
+    phoneNumber?: string; 
+    password?: string; 
+    selectedPlace?: any;
+  }; 
   Home: undefined;
   ForgotPassword: undefined;
   FillOTP: { contactMethod: string; contactValue: string };
   NewPassword: undefined;
   MainTabs: undefined;
-  Search: { type?: 'from' | 'destination' } | undefined;
+  Search: { 
+    type?: 'from' | 'destination';
+    mode?: string;
+    onSelect?: (place: any) => void; 
+  };
   SelectCar: { distance: number };
   SearchingDriver: undefined;
   Traveling: undefined;
@@ -55,40 +65,42 @@ const App = () => {
   return (
     // eslint-disable-next-line react-native/no-inline-styles
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <UserProvider>
-        <BookingHistoryProvider>
-          <AddressProvider>
-            <LocationProvider>
-              <ThemeProvider>
-                <NavigationContainer>
-                  <Stack.Navigator 
-                    initialRouteName="Welcome"
-                    screenOptions={{ headerShown: false }} 
-                  >
-                    <Stack.Screen name="Welcome" component={WelcomeScreen} />
-                    <Stack.Screen name="Login" component={LoginScreen} />
-                    <Stack.Screen name="SignUp" component={SignUpScreen} />
-                    <Stack.Screen name="InfoInput" component={InfoInputScreen} />
-                    <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-                    <Stack.Screen name="FillOTP" component={FillOTPScreen} />
-                    <Stack.Screen name="NewPassword" component={NewPasswordScreen} />
-                    <Stack.Screen name="MainTabs" component={MainTabNavigator} />
-                    <Stack.Screen name="Search" component={SearchScreen} />
-                    <Stack.Screen name="SelectCar" component={SelectCarScreen}/>
-                    <Stack.Screen name="SearchingDriver" component={SearchingDriverScreen}  />
-                    <Stack.Screen name="Traveling" component={TravelingScreen} />
-                    <Stack.Screen name="Rating" component={RatingScreen} />
-                    <Stack.Screen name="RatingList" component={RatingListScreen} />
-                    <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-                    <Stack.Screen name="AddressList" component={AddressListScreen} />
-                    <Stack.Screen name="EditAddress" component={EditAddressScreen} />
-                  </Stack.Navigator>
-                </NavigationContainer>
-              </ThemeProvider>
-            </LocationProvider>
-          </AddressProvider>
-        </BookingHistoryProvider>
-      </UserProvider>
+      <AuthProvider>
+        <UserProvider>
+          <BookingHistoryProvider>
+            <AddressProvider>
+              <LocationProvider>
+                <ThemeProvider>
+                  <NavigationContainer>
+                    <Stack.Navigator 
+                      initialRouteName="Welcome"
+                      screenOptions={{ headerShown: false }} 
+                    >
+                      <Stack.Screen name="Welcome" component={WelcomeScreen} />
+                      <Stack.Screen name="Login" component={LoginScreen} />
+                      <Stack.Screen name="SignUp" component={SignUpScreen} />
+                      <Stack.Screen name="InfoInput" component={InfoInputScreen} />
+                      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+                      <Stack.Screen name="FillOTP" component={FillOTPScreen} />
+                      <Stack.Screen name="NewPassword" component={NewPasswordScreen} />
+                      <Stack.Screen name="MainTabs" component={MainTabNavigator} />
+                      <Stack.Screen name="Search" component={SearchScreen} />
+                      <Stack.Screen name="SelectCar" component={SelectCarScreen}/>
+                      <Stack.Screen name="SearchingDriver" component={SearchingDriverScreen}  />
+                      <Stack.Screen name="Traveling" component={TravelingScreen} />
+                      <Stack.Screen name="Rating" component={RatingScreen} />
+                      <Stack.Screen name="RatingList" component={RatingListScreen} />
+                      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+                      <Stack.Screen name="AddressList" component={AddressListScreen} />
+                      <Stack.Screen name="EditAddress" component={EditAddressScreen} />
+                    </Stack.Navigator>
+                  </NavigationContainer>
+                </ThemeProvider>
+              </LocationProvider>
+            </AddressProvider>
+          </BookingHistoryProvider>
+        </UserProvider>
+      </AuthProvider>
     </GestureHandlerRootView>
   );
 };

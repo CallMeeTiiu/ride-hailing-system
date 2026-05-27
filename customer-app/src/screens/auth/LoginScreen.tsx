@@ -151,9 +151,9 @@ const LoginScreen = () => {
 
           {/* Nút Sign In */}
           <PrimaryButton
-          title="Sign in"
-          onPress={handleLogin}
-        />
+            title="Sign in"
+            onPress={handleLogin}
+          />
 
           {/* Quên mật khẩu */}
           <Hyperlink 
@@ -168,7 +168,7 @@ const LoginScreen = () => {
             <View style={styles.dividerLine} />
           </View>
 
-          {/* Social Login (Đã bỏ Apple theo yêu cầu) */}
+          {/* Social Login */}
           <View style={styles.socialContainer}>
             <TouchableOpacity style={[ styles.socialSquareButton, {backgroundColor: colors.background} ]}>
               <Image 

@@ -23,17 +23,20 @@ import theme from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 
 import MenuItem from '../../components/profile/MenuItem';
+import { useAuth } from '../../contexts/AuthContext';
 import { useUser } from '../../contexts/UserContext';
 import ConfirmBottomSheet from '../../components/profile/ConfirmBottomSheet';
+import { useNavigation } from '@react-navigation/native';
 
-const ProfileScreen = ({ navigation }: any) => {
+const ProfileScreen = () => {
   const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
 
   const { colors, isDarkMode, toggleTheme } = useTheme();
   const insets = useSafeAreaInsets();
 
-  const { user } = useUser();
-  if (!user) return null;
+  const { user } = useAuth();
+  const { profile } = useUser();
+  const navigation = useNavigation<any>();
 
   const handleLogoutAction = () => {
     setIsLogoutModalVisible(false);
@@ -51,7 +54,7 @@ const ProfileScreen = ({ navigation }: any) => {
         <View style={styles.userInfoSection}>
           <View style={styles.avatarContainer}>
             <Image 
-              source={{ uri: user.avatar }} 
+              source={{ uri: profile?.avatar || 'https://cdn-icons-png.flaticon.com/512/219/219988.png' }} 
               style={styles.avatar} 
             />
             <TouchableOpacity style={[styles.editAvatarButton, { backgroundColor: theme.COLORS.primary }]} activeOpacity={0.8}>
@@ -59,8 +62,9 @@ const ProfileScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
           
-          <Text style={[styles.userName, { color: colors.textTitle }]}>{user.name}</Text>
-          <Text style={[styles.userPhone, { color: colors.textBody }]}>{user.phoneNumber}</Text>
+          <Text style={[styles.userName, { color: colors.textTitle }]}>{profile?.name || "New User"}</Text>
+          <Text style={[styles.userPhone, { color: colors.textBody }]}>{user?.phone_number || ""}</Text>
+          <Text style={[styles.userPhone, { color: colors.textBody }]}>{profile?.email || ""}</Text>
         </View>
 
         <View style={[styles.divider, { backgroundColor: colors.border }]} />

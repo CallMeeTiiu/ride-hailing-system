@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -9,7 +9,8 @@ import {
   Platform 
 } from 'react-native';
 import theme from '../../constants/theme';
-import { useTheme } from '../../contexts/ThemeContext' 
+import { useTheme } from '../../contexts/ThemeContext';
+import { useAddress } from '../../contexts/AddressContext';
 
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -20,21 +21,48 @@ import { useRoute, RouteProp } from '@react-navigation/native';
 import CustomInput from '../../components/common/CustomInput';
 import PrimaryButton from '../../components/common/PrimaryButton';
 
-import { faUser, faEnvelope, faPhone, faLocationDot } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faPhone, faLocationDot, faEnvelope } from '@fortawesome/free-solid-svg-icons';
 
 const InfoInputScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'InfoInput'>>();
   const receivedName = route.params?.userName || "Friend";
 
+  const receivedPhone = route.params?.phoneNumber || "";
+
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   const [formData, setFormData] = useState({
-    userName: receivedName, 
-    email: 'andrew_ainsley@yourdomain.com',
-    phoneNumber: '',
-    address: ''
+    userName: receivedName,
+    email: '', 
+    phoneNumber: receivedPhone, 
+    address: '',
+    lat: null as number | null, 
+    lng: null as number | null
   });
 
+  const { colors }= useTheme();
+  const { addAddress } = useAddress();
+
+  const [emailError, setEmailError] = useState('');
+  const [addressError, setAddressError] = useState('');
+
+  useEffect(() => {
+    if (route.params?.selectedPlace) {
+      const { name, latitude, longitude } = route.params.selectedPlace;
+      
+      setFormData(prev => ({
+        ...prev,
+        address: name,
+        lat: latitude,
+        lng: longitude
+      }));
+      
+      if (addressError) setAddressError('');
+
+      navigation.setParams({ selectedPlace: undefined });
+    }
+  }, [route.params.selectedPlace, navigation, addressError]);
+  
   const handleInputChange = (key: string, value: string) => {
     setFormData({
       ...formData,
@@ -43,11 +71,43 @@ const InfoInputScreen = () => {
   };
 
   const handleConfirm = () => {
-    console.log("Data is ready to send to BackEnd:", formData);
-    navigation.replace('MainTabs')
-  };
+    setEmailError('');
+    setAddressError('');
+    let isValid = true;
 
-  const { colors }= useTheme();
+    if (!formData.email) {
+      setEmailError('Please enter your email');
+      isValid = false;
+    } else if (!formData.email.includes('@')) {
+      setEmailError('Invalid email format (missing @)');
+      isValid = false;
+    }
+
+    if (!formData.address) {
+      setAddressError('Please enter your address');
+      isValid = false;
+    }
+
+    if (!isValid) return;
+
+    try {
+      addAddress({
+        id: Date.now().toString(), 
+        name: 'Default Address', 
+        details: formData.address,
+        lat: formData.lat, 
+        lng: formData.lng, 
+        icon: 'home' 
+      });
+      console.log("Added default address to AddressContext:", formData.address);
+    } catch (error) {
+      console.log("Error saving default address:", error);
+    }
+
+    console.log("Mockup data prepared for Backend sync:", formData);
+    
+    navigation.replace('MainTabs');
+  };
 
   return (
     <SafeAreaView style={[ styles.safeArea, {backgroundColor: colors.background} ]}>
@@ -69,6 +129,16 @@ const InfoInputScreen = () => {
           </Text>
 
           <CustomInput 
+            label="Phone Number"
+            iconName={faPhone}
+            value={formData.phoneNumber}
+            editable={false}
+            placeholder="+123456789"
+            keyboardType="phone-pad"
+            onChangeText={(text) => handleInputChange('phoneNumber', text)}
+          />
+
+          <CustomInput 
             label="User Name"
             iconName={faUser}
             value={formData.userName}
@@ -76,29 +146,44 @@ const InfoInputScreen = () => {
             onChangeText={(text) => handleInputChange('userName', text)}
           />
 
-          <CustomInput 
+          <CustomInput
             label="Email"
             iconName={faEnvelope}
             value={formData.email}
             placeholder="Enter your email"
             keyboardType="email-address"
-            onChangeText={(text) => handleInputChange('email', text)}
+            onChangeText={(text) => {
+              handleInputChange('email', text);
+              if (emailError) setEmailError('');
+            }}
+            errorText={emailError} 
           />
 
-          <CustomInput 
-            label="Phone Number"
-            iconName={faPhone}
-            placeholder="+123456789"
-            keyboardType="phone-pad"
-            onChangeText={(text) => handleInputChange('phoneNumber', text)}
-          />
-
-          <CustomInput 
-            label="Address"
-            iconName={faLocationDot}
-            placeholder="1A Queen, New York, USA"
-            onChangeText={(text) => handleInputChange('address', text)}
-          />
+          <TouchableOpacity 
+          activeOpacity={0.8} 
+          onPress={() => navigation.navigate('Search', { 
+            onSelect: (place: any) => {
+              setFormData(prev => ({
+                ...prev,
+                address: place.name,
+                lat: place.latitude,
+                lng: place.longitude
+              }));
+              if (addressError) setAddressError('');
+            } 
+          })}
+        >
+          <View pointerEvents="none">
+            <CustomInput
+              label="Address"
+              iconName={faLocationDot}
+              placeholder="Tap to search your default address..."
+              value={formData.address}
+              onChangeText={() => {}}
+              errorText={addressError}
+            />
+          </View>
+        </TouchableOpacity>
 
           <PrimaryButton 
             title="Confirm" 

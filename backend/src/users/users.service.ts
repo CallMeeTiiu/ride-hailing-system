@@ -26,4 +26,20 @@ export class UsersService {
   async updateLastLogin(id: string): Promise<void> {
     await this.usersRepository.update(id, { last_login_at: new Date() })
   }
+
+  async findAll(): Promise<User[]> {
+    return this.usersRepository.find()
+  }
+
+  async updateByPhoneNumber(phone_number: string, patch: Partial<User>) {
+    const user = await this.findByPhoneNumber(phone_number)
+    if (!user) return null
+    await this.usersRepository.update(user.id, patch)
+    return this.findById(user.id)
+  }
+
+  async updateById(id: string, patch: Partial<User>) {
+    await this.usersRepository.update(id, patch)
+    return this.findById(id)
+  }
 }

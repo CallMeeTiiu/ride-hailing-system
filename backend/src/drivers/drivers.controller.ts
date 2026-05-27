@@ -27,7 +27,6 @@ import { WalletResponseDto } from './dto/wallet-response.dto'
 import { LocationService } from '../location/location.service'
 import { RidesService } from '../rides/rides.service'
 import { TripGateway } from '../rides/trip.gateway'
-import { TripStatus } from '../common/enums'
 import { DriversService } from './drivers.service'
 import { UseInterceptors, UploadedFile, Put, Get, Delete } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
@@ -73,28 +72,6 @@ export class DriversController {
     type: String,
   })
   @ApiResponse({ status: 200, description: 'Chấp nhận cuốc thành công' })
-  async acceptOffer(@Param('id') id: string, @Request() req) {
-    const driverId = req.user.userId
-    const updatedTrip = await this.ridesService.updateTripStatus(
-      id,
-      TripStatus.ACCEPTED,
-      driverId,
-    )
-
-    this.tripGateway.notifyTripAccepted(id, {
-      trip_id: id,
-      driver_id: driverId,
-      status: TripStatus.ACCEPTED,
-      timestamp: new Date().toISOString(),
-    })
-
-    return {
-      message: 'Đã nhận cuốc thành công',
-      trip_id: updatedTrip!.id,
-      status: updatedTrip!.status,
-    }
-  }
-
   @Get('drivers/offers')
   @ApiResponse({
     status: 200,

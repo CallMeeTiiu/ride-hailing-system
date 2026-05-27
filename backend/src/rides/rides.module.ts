@@ -12,10 +12,11 @@ import { RidesService } from './rides.service'
 import { UsersModule } from '../users/users.module'
 import { FirebaseModule } from '../firebase/firebase.module'
 import { Payment } from '../payments/entities/payment.entity'
+import { User } from '../users/entities/user.entity'
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Trip, TripLocation, Rating, Payment]),
+    TypeOrmModule.forFeature([Trip, TripLocation, Rating, Payment, User]),
     JwtModule.register({}),
     LocationModule,
     GoogleModule,

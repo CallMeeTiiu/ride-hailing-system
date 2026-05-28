@@ -13,7 +13,6 @@ import theme from '../../constants/theme';
 import apiClient from '../../utils/apiClient';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useAddress } from '../../contexts/AddressContext';
 
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -25,6 +24,7 @@ import CustomInput from '../../components/common/CustomInput';
 import PrimaryButton from '../../components/common/PrimaryButton';
 
 import { faUser, faPhone, faLocationDot, faEnvelope } from '@fortawesome/free-solid-svg-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const InfoInputScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'InfoInput'>>();
@@ -44,7 +44,6 @@ const InfoInputScreen = () => {
   });
 
   const { colors }= useTheme();
-  const { addAddress } = useAddress();
   const { login } = useAuth();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -100,21 +99,26 @@ const InfoInputScreen = () => {
       const response = await apiClient.post('/auth/customer/register', {
         username: formData.userName,       
         phone_number: formData.phoneNumber, 
-        password: receivedPassword,    
+        password: receivedPassword,        
         email: formData.email,        
       });
 
       const { access_token, user } = response.data;
+      await AsyncStorage.setItem('access_token', access_token);
 
-      addAddress({
-        id: Date.now().toString(), 
-        name: 'Default Address', 
-        details: formData.address,
-        lat: formData.lat, 
-        lng: formData.lng, 
-        icon: 'home' 
-      });
-      console.log("Added default address to AddressContext:", formData.address);
+      try {
+        await apiClient.post('/users/addresses', {
+          customer_user_id: user.id, 
+          label: 'Default Address',
+          address_text: formData.address,
+          latitude: formData.lat,
+          longitude: formData.lng,
+          icon: 'home'
+        });
+        console.log("Đã lưu địa chỉ mặc định lúc đăng ký!");
+      } catch (err) {
+        console.log("Lỗi lưu địa chỉ mặc định:", err);
+      }
 
       await login(access_token, user);
 

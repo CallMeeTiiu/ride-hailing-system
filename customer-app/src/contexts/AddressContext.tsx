@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from './AuthContext';
+import apiClient from '../utils/apiClient';
 
 export interface SavedAddress {
   id: string;
@@ -21,56 +22,92 @@ const AddressContext = createContext<AddressContextType | undefined>(undefined);
 
 export const AddressProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false); 
+  const { isAuthenticated, user } = useAuth();
+
+  const mapToFrontend = (item: any): SavedAddress => ({
+    id: item.id?.toString(),
+    name: item.label,
+    details: item.address_text,
+    lat: item.latitude,
+    lng: item.longitude,
+    icon: item.icon,
+  });
+
+  const mapToBackend = (address: Partial<SavedAddress>) => ({
+    customer_user_id: user?.id, 
+    label: address.name,
+    address_text: address.details,
+    latitude: address.lat,
+    longitude: address.lng,
+    icon: address.icon,
+  });
 
   useEffect(() => {
-    const loadData = async () => {
+    const fetchAddresses = async () => {
       try {
-        const storedData = await AsyncStorage.getItem('@saved_addresses');
-        if (storedData) {
-          setAddresses(JSON.parse(storedData));
-        } else {
-          setAddresses([
-            { id: 'home', name: 'Home', details: 'Tap to add your home address', lat: null, lng: null, icon: 'home' },
-            { id: 'work', name: 'Office', details: 'Tap to add your work address', lat: null, lng: null, icon: 'briefcase' }
-          ]);
+        const response = await apiClient.get('/users/addresses');
+        
+        // MẮT THẦN: In toàn bộ dữ liệu Backend trả về ra console để xem mặt mũi nó ra sao
+        console.log("=== DỮ LIỆU GET TỪ BACKEND ===", JSON.stringify(response.data, null, 2));
+        
+        // KIỂM TRA AN TOÀN: Nếu Backend bọc mảng trong biến 'data', ta sẽ tự động gỡ mảng ra
+        const dataArray = Array.isArray(response.data) ? response.data : response.data?.data || [];
+        
+        if (dataArray.length === 0) {
+           console.log("Cảnh báo: Danh sách rỗng, Backend không trả về địa chỉ nào!");
         }
-      } catch (error) {
-        console.log('Error while loading addresses:', error);
-      } finally {
-        setIsLoaded(true); 
+
+        // Đưa qua bộ chuyển đổi và render lên UI
+        setAddresses(dataArray.map(mapToFrontend)); 
+        
+      } catch (error: any) {
+        console.log('=== LỖI FETCH ADDRESS ===', error.response?.data || error);
       }
     };
-    loadData();
-  }, []);
 
-  useEffect(() => {
-    if (!isLoaded) return; 
+    if (isAuthenticated) {
+      fetchAddresses();
+    } else {
+      setAddresses([]); 
+    }
+  }, [isAuthenticated]);
 
-    const saveData = async () => {
-      try {
-        await AsyncStorage.setItem('@saved_addresses', JSON.stringify(addresses));
-      } catch (error) {
-        console.log('Error while saving addresses:', error);
-      }
-    };
-    saveData();
-  }, [addresses, isLoaded]);
-
-  const addAddress = (address: SavedAddress) => {
-    setAddresses((prev) => [...prev, address]);
+  const addAddress = async (address: SavedAddress) => {
+    try {
+      const payload = mapToBackend(address); 
+      const response = await apiClient.post('/users/addresses', payload);
+      
+      setAddresses((prev) => [...prev, mapToFrontend(response.data)]);
+    } catch (error) {
+      console.log('Error adding address:', error);
+    }
   };
 
-  const updateAddress = (id: string, updatedData: Partial<SavedAddress>) => {
-    setAddresses((prev) =>
-      prev.map((addr) =>
-        addr.id === id ? { ...addr, ...updatedData } : addr
-      )
-    );
+  const updateAddress = async (id: string, updatedData: Partial<SavedAddress>) => {
+    try {
+      const payload: any = {};
+      if (updatedData.name !== undefined) payload.label = updatedData.name;
+      if (updatedData.details !== undefined) payload.address_text = updatedData.details;
+      if (updatedData.lat !== undefined) payload.latitude = updatedData.lat;
+      if (updatedData.lng !== undefined) payload.longitude = updatedData.lng;
+      if (updatedData.icon !== undefined) payload.icon = updatedData.icon;
+
+      const response = await apiClient.put(`/users/addresses/${id}`, payload);
+      setAddresses((prev) =>
+        prev.map((addr) => (addr.id === id ? mapToFrontend(response.data) : addr))
+      );
+    } catch (error) {
+      console.log('Error updating address:', error);
+    }
   };
 
-  const removeAddress = (id: string) => {
-    setAddresses((prev) => prev.filter((addr) => addr.id !== id));
+  const removeAddress = async (id: string) => {
+    try {
+      setAddresses((prev) => prev.filter((addr) => addr.id !== id));
+      await apiClient.delete(`/users/addresses/${id}`);
+    } catch (error) {
+      console.log('Error removing address:', error);
+    }
   };
 
   return (

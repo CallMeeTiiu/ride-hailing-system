@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
     StyleSheet,
     View,
@@ -9,8 +9,9 @@ import {
     StatusBar,
     Platform,
 } from 'react-native';
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
-import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
+import { useLocationPermission } from '../hooks/useLocationPermission';
+import MapBackground, { MapBackgroundRef } from '../components/MapBackground';
+import { fetchRoute } from '../utils/fetchRoute';
 import { useTripStore } from '../store/tripStore';
 import { useAuthStore } from '../store/authStore';
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../theme';
@@ -52,38 +53,15 @@ export default function HomeScreen() {
         dismissCancel,
     } = useTripStore();
 
-    const [hasLocationPermission, setHasLocationPermission] = useState(false);
-    const [mapRegion, setMapRegion] = useState(MAP_INITIAL_REGION);
+    const { granted: hasLocationPermission, location: userLocation } = useLocationPermission();
+    const mapRef = useRef<MapBackgroundRef>(null);
 
-    // Phase 1: Request fine maps location permissions automatically
+    // Recenter/fly to driver position when GPS is available
     useEffect(() => {
-        const handlePermissions = async () => {
-            const permissionType =
-                Platform.OS === 'ios'
-                    ? PERMISSIONS.IOS.LOCATION_WHEN_IN_USE
-                    : PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION;
-
-            try {
-                const checkStatus = await check(permissionType);
-                if (checkStatus === RESULTS.GRANTED) {
-                    setHasLocationPermission(true);
-                } else {
-                    const requestStatus = await request(permissionType);
-                    if (requestStatus === RESULTS.GRANTED) {
-                        setHasLocationPermission(true);
-                    } else {
-                        Alert.alert(
-                            'Quyền Vị Trí Bị Từ Chối',
-                            'Để hiển thị bản đồ và di chuyển, vui lòng cấp quyền truy cập vị trí trong cài đặt hệ thống.'
-                        );
-                    }
-                }
-            } catch (err) {
-                console.warn('Cannot request location rights: ', err);
-            }
-        };
-        handlePermissions();
-    }, []);
+        if (hasLocationPermission && userLocation && mapRef.current) {
+            mapRef.current.flyToLocation(userLocation.latitude, userLocation.longitude);
+        }
+    }, [hasLocationPermission, userLocation]);
 
     // Phase 3: Simulated 5-second incoming cuốc xe after switching Online
     useEffect(() => {
@@ -99,31 +77,56 @@ export default function HomeScreen() {
         };
     }, [tripStatus]);
 
-    // Recaps maps area region when trip status updates for premium user experience
+    // Manage markers and routes based on trip status updates
     useEffect(() => {
-        if (!currentTrip) {
-            setMapRegion(MAP_INITIAL_REGION);
-            return;
-        }
+        if (!mapRef.current) return;
 
-        if (tripStatus === TripStatus.ARRIVING) {
-            // Focus on active pickup
-            setMapRegion({
-                latitude: (currentTrip.pickup.latitude + 21.026) / 2, // midpoint
-                longitude: (currentTrip.pickup.longitude + 105.802) / 2,
-                latitudeDelta: 0.025,
-                longitudeDelta: 0.025,
+        // Clear previous state elements
+        mapRef.current.clearRoute();
+        mapRef.current.clearDrivers();
+
+        // UIT coordinates fallback if location is unavailable
+        const driverLat = userLocation?.latitude ?? 10.8700;
+        const driverLng = userLocation?.longitude ?? 106.8031;
+
+        if (tripStatus === TripStatus.ONLINE) {
+            // Draw driver itself on map
+            mapRef.current.drawDrivers([{ lat: driverLat, lng: driverLng }]);
+            mapRef.current.flyToLocation(driverLat, driverLng);
+        } else if (tripStatus === TripStatus.ARRIVING && currentTrip) {
+            // Driver is driving to pickup location
+            mapRef.current.updateMarkers(
+                driverLat,
+                driverLng,
+                currentTrip.pickup.latitude,
+                currentTrip.pickup.longitude
+            );
+            fetchRoute(
+                { latitude: driverLat, longitude: driverLng },
+                currentTrip.pickup
+            ).then((geoJson) => {
+                if (geoJson && mapRef.current) {
+                    mapRef.current.drawRoute(geoJson);
+                }
             });
-        } else if (tripStatus === TripStatus.SERVING) {
-            // Focus dropoff route
-            setMapRegion({
-                latitude: (currentTrip.pickup.latitude + currentTrip.dropoff.latitude) / 2,
-                longitude: (currentTrip.pickup.longitude + currentTrip.dropoff.longitude) / 2,
-                latitudeDelta: 0.035,
-                longitudeDelta: 0.035,
+        } else if (tripStatus === TripStatus.SERVING && currentTrip) {
+            // Driving to dropoff location
+            mapRef.current.updateMarkers(
+                currentTrip.pickup.latitude,
+                currentTrip.pickup.longitude,
+                currentTrip.dropoff.latitude,
+                currentTrip.dropoff.longitude
+            );
+            fetchRoute(
+                currentTrip.pickup,
+                currentTrip.dropoff
+            ).then((geoJson) => {
+                if (geoJson && mapRef.current) {
+                    mapRef.current.drawRoute(geoJson);
+                }
             });
         }
-    }, [tripStatus, currentTrip]);
+    }, [tripStatus, currentTrip, userLocation]);
 
     const handleToggleOnline = () => {
         if (tripStatus === TripStatus.OFFLINE) {
@@ -133,79 +136,16 @@ export default function HomeScreen() {
         }
     };
 
-    // Mock points for live visualization on maps
-    const mockDriverLoc = { latitude: 21.0252, longitude: 105.801 }; // Simulated live driver coords
-    const mockPickupLoc = currentTrip?.pickup || { latitude: 0, longitude: 0 };
-    const mockDropoffLoc = currentTrip?.dropoff || { latitude: 0, longitude: 0 };
-
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
 
-            {/* Render Google Maps block */}
-            <MapView
-                provider={PROVIDER_GOOGLE}
-                style={styles.map}
-                region={mapRegion}
-                showsUserLocation={hasLocationPermission}
-                showsMyLocationButton={false}
-            >
-                {/* Render simulated driver pin when online or active */}
-                {tripStatus !== TripStatus.OFFLINE && (
-                    <Marker
-                        coordinate={mockDriverLoc}
-                        title={driver?.name || 'Tài xế'}
-                        description={driver?.vehiclePlate}
-                    >
-                        <View style={styles.driverIndicator}>
-                            <View style={styles.driverCore} />
-                        </View>
-                    </Marker>
-                )}
-
-                {/* Pickup marker */}
-                {currentTrip &&
-                    tripStatus !== TripStatus.OFFLINE &&
-                    tripStatus !== TripStatus.ONLINE &&
-                    tripStatus !== TripStatus.BOOKING_INCOMING &&
-                    tripStatus !== TripStatus.FINISHED && (
-                        <Marker
-                            coordinate={mockPickupLoc}
-                            title="ĐIỂM Đ đón khách"
-                            description={currentTrip.pickup.address}
-                            pinColor="green"
-                        />
-                    )}
-
-                {/* Dropoff marker */}
-                {currentTrip &&
-                    (tripStatus === TripStatus.SERVING) && (
-                        <Marker
-                            coordinate={mockDropoffLoc}
-                            title="ĐIỂM ĐẾN trả khách"
-                            description={currentTrip.dropoff.address}
-                            pinColor="red"
-                        />
-                    )}
-
-                {/* Visual routing curves between positions */}
-                {tripStatus === TripStatus.ARRIVING && (
-                    <Polyline
-                        coordinates={[mockDriverLoc, mockPickupLoc]}
-                        strokeColor={COLORS.primaryDark}
-                        strokeWidth={4}
-                        lineDashPattern={[5, 5]}
-                    />
-                )}
-
-                {tripStatus === TripStatus.SERVING && (
-                    <Polyline
-                        coordinates={[mockPickupLoc, mockDropoffLoc]}
-                        strokeColor={COLORS.success}
-                        strokeWidth={4}
-                    />
-                )}
-            </MapView>
+            {/* Render Leaflet WebView Map block */}
+            <MapBackground
+                ref={mapRef}
+                initialLat={MAP_INITIAL_REGION.latitude}
+                initialLng={MAP_INITIAL_REGION.longitude}
+            />
 
             {/* Top Floating Pill Toggle bar */}
             <View style={styles.topControlFloating}>
@@ -219,7 +159,11 @@ export default function HomeScreen() {
             <TouchableOpacity
                 style={styles.recenterBtn}
                 activeOpacity={0.8}
-                onPress={() => setMapRegion(MAP_INITIAL_REGION)}
+                onPress={() => {
+                    const lat = userLocation?.latitude ?? MAP_INITIAL_REGION.latitude;
+                    const lng = userLocation?.longitude ?? MAP_INITIAL_REGION.longitude;
+                    mapRef.current?.flyToLocation(lat, lng);
+                }}
             >
                 <Icon name="crosshair" size={20} color={COLORS.textPrimary} />
             </TouchableOpacity>

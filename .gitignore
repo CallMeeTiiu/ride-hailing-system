@@ -23,5 +23,5 @@
 # --- BACKEND ---
 **/dist/
 **/build/
-
+.read/
 .agent/

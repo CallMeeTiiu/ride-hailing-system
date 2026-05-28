@@ -81,6 +81,7 @@ const RootNavigator = () => {
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="SignUp" component={SignUpScreen} />
             <Stack.Screen name="InfoInput" component={InfoInputScreen} />
+            <Stack.Screen name="Search" component={SearchScreen} />
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
             <Stack.Screen name="FillOTP" component={FillOTPScreen} />
             <Stack.Screen name="NewPassword" component={NewPasswordScreen} />

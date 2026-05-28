@@ -18,6 +18,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../../App';
 
+import apiClient from '../../utils/apiClient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import CustomInput from '../../components/common/CustomInput';
@@ -26,6 +27,7 @@ import Hyperlink from '../../components/common/Hyperlink';
 
 const LoginScreen = () => {
   const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
@@ -71,24 +73,31 @@ const LoginScreen = () => {
     }
 
     if (!isValid) return;
+    setIsLoading(true);
 
-    const isSuccess = await login(phoneNumber, password);
-    if (isSuccess) {
-      try {
-        if (rememberMe) {
-          await AsyncStorage.setItem('@remembered_phone', phoneNumber);
-          await AsyncStorage.setItem('@remembered_password', password);
-        } else {
-          await AsyncStorage.removeItem('@remembered_phone');
-          await AsyncStorage.removeItem('@remembered_password');
-        }
-      } catch (error) {
-        console.log('Error while saving credentials:', error);
+    try {
+      const response = await apiClient.post('/auth/customer/login', {
+        phone_number: phoneNumber,
+        password: password
+      });
+
+      const { access_token, user } = response.data;
+
+      await login(access_token, user);
+
+      if (rememberMe) {
+        await AsyncStorage.setItem('@remembered_phone', phoneNumber);
+        await AsyncStorage.setItem('@remembered_password', password);
+      } else {
+        await AsyncStorage.removeItem('@remembered_phone');
+        await AsyncStorage.removeItem('@remembered_password');
       }
-
-      navigation.replace('MainTabs');
-    } else {
-      setPhoneError('Invalid phone number or password');
+      
+    } catch (error: any) {
+      console.log('API Login Error:', error);
+      setPhoneError('Phone number or password is incorrect');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -153,6 +162,7 @@ const LoginScreen = () => {
           <PrimaryButton
             title="Sign in"
             onPress={handleLogin}
+            disabled={isLoading}
           />
 
           {/* Quên mật khẩu */}

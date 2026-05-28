@@ -28,8 +28,8 @@ export const AddressProvider: React.FC<{ children: React.ReactNode }> = ({ child
     id: item.id?.toString(),
     name: item.label,
     details: item.address_text,
-    lat: item.latitude,
-    lng: item.longitude,
+    lat: Number(item.latitude),
+    lng: Number(item.longitude),
     icon: item.icon,
   });
 
@@ -42,42 +42,35 @@ export const AddressProvider: React.FC<{ children: React.ReactNode }> = ({ child
     icon: address.icon,
   });
 
+  const fetchAddresses = async () => {
+    if (!user?.id) return;
+    try {
+      const response = await apiClient.get('/users/addresses', {
+        params: { customer_user_id: user.id }
+      });
+      
+      const dataArray = Array.isArray(response.data) ? response.data : response.data?.data || [];
+      setAddresses(dataArray.map(mapToFrontend)); 
+    } catch (error: any) {
+      console.log('Lỗi fetch array: ', error.response?.data || error);
+    }
+  };
+
   useEffect(() => {
-    const fetchAddresses = async () => {
-      try {
-        const response = await apiClient.get('/users/addresses');
-        
-        // MẮT THẦN: In toàn bộ dữ liệu Backend trả về ra console để xem mặt mũi nó ra sao
-        console.log("=== DỮ LIỆU GET TỪ BACKEND ===", JSON.stringify(response.data, null, 2));
-        
-        // KIỂM TRA AN TOÀN: Nếu Backend bọc mảng trong biến 'data', ta sẽ tự động gỡ mảng ra
-        const dataArray = Array.isArray(response.data) ? response.data : response.data?.data || [];
-        
-        if (dataArray.length === 0) {
-           console.log("Cảnh báo: Danh sách rỗng, Backend không trả về địa chỉ nào!");
-        }
-
-        // Đưa qua bộ chuyển đổi và render lên UI
-        setAddresses(dataArray.map(mapToFrontend)); 
-        
-      } catch (error: any) {
-        console.log('=== LỖI FETCH ADDRESS ===', error.response?.data || error);
-      }
-    };
-
-    if (isAuthenticated) {
+    if (isAuthenticated && user?.id) {
       fetchAddresses();
     } else {
       setAddresses([]); 
     }
-  }, [isAuthenticated]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user?.id]);
 
   const addAddress = async (address: SavedAddress) => {
     try {
-      const payload = mapToBackend(address); 
-      const response = await apiClient.post('/users/addresses', payload);
-      
-      setAddresses((prev) => [...prev, mapToFrontend(response.data)]);
+      const payload = mapToBackend(address);
+      await apiClient.post('/users/addresses', payload);
+
+      await fetchAddresses();
     } catch (error) {
       console.log('Error adding address:', error);
     }
@@ -92,10 +85,8 @@ export const AddressProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (updatedData.lng !== undefined) payload.longitude = updatedData.lng;
       if (updatedData.icon !== undefined) payload.icon = updatedData.icon;
 
-      const response = await apiClient.put(`/users/addresses/${id}`, payload);
-      setAddresses((prev) =>
-        prev.map((addr) => (addr.id === id ? mapToFrontend(response.data) : addr))
-      );
+      await apiClient.put(`/users/addresses/${id}`, payload);
+      await fetchAddresses();
     } catch (error) {
       console.log('Error updating address:', error);
     }
@@ -105,6 +96,7 @@ export const AddressProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       setAddresses((prev) => prev.filter((addr) => addr.id !== id));
       await apiClient.delete(`/users/addresses/${id}`);
+      await fetchAddresses();
     } catch (error) {
       console.log('Error removing address:', error);
     }

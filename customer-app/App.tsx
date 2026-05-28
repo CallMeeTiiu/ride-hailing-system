@@ -1,5 +1,6 @@
 import 'react-native-gesture-handler';
 import React from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { ThemeProvider } from './src/contexts/ThemeContext';
@@ -7,7 +8,7 @@ import { LocationProvider } from './src/contexts/LocationContext';
 import { BookingHistoryProvider } from './src/contexts/BookingHistoryContext';
 import { UserProvider } from './src/contexts/UserContext';
 import { AddressProvider } from './src/contexts/AddressContext';
-import { AuthProvider } from './src/contexts/AuthContext';
+import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import WelcomeScreen from './src/screens/auth/WelcomeScreen';
@@ -59,6 +60,50 @@ export type RootStackParamList = {
   EditAddress: { addressId?: string } | undefined;
 };
 
+const RootNavigator = () => {
+  const { isLoading, isAuthenticated } = useAuth();
+
+  if (isLoading) {
+    return (
+      // eslint-disable-next-line react-native/no-inline-styles
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
+  return (
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {!isAuthenticated ? (
+          <>
+            <Stack.Screen name="Welcome" component={WelcomeScreen} />
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="SignUp" component={SignUpScreen} />
+            <Stack.Screen name="InfoInput" component={InfoInputScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+            <Stack.Screen name="FillOTP" component={FillOTPScreen} />
+            <Stack.Screen name="NewPassword" component={NewPasswordScreen} />
+          </>
+        ) : (
+          <>
+            <Stack.Screen name="MainTabs" component={MainTabNavigator} />
+            <Stack.Screen name="Search" component={SearchScreen} />
+            <Stack.Screen name="SelectCar" component={SelectCarScreen}/>
+            <Stack.Screen name="SearchingDriver" component={SearchingDriverScreen}  />
+            <Stack.Screen name="Traveling" component={TravelingScreen} />
+            <Stack.Screen name="Rating" component={RatingScreen} />
+            <Stack.Screen name="RatingList" component={RatingListScreen} />
+            <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+            <Stack.Screen name="AddressList" component={AddressListScreen} />
+            <Stack.Screen name="EditAddress" component={EditAddressScreen} />
+          </>
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+};
+
 const Stack = createStackNavigator<RootStackParamList>();
 
 const App = () => {
@@ -71,30 +116,7 @@ const App = () => {
             <AddressProvider>
               <LocationProvider>
                 <ThemeProvider>
-                  <NavigationContainer>
-                    <Stack.Navigator 
-                      initialRouteName="Welcome"
-                      screenOptions={{ headerShown: false }} 
-                    >
-                      <Stack.Screen name="Welcome" component={WelcomeScreen} />
-                      <Stack.Screen name="Login" component={LoginScreen} />
-                      <Stack.Screen name="SignUp" component={SignUpScreen} />
-                      <Stack.Screen name="InfoInput" component={InfoInputScreen} />
-                      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-                      <Stack.Screen name="FillOTP" component={FillOTPScreen} />
-                      <Stack.Screen name="NewPassword" component={NewPasswordScreen} />
-                      <Stack.Screen name="MainTabs" component={MainTabNavigator} />
-                      <Stack.Screen name="Search" component={SearchScreen} />
-                      <Stack.Screen name="SelectCar" component={SelectCarScreen}/>
-                      <Stack.Screen name="SearchingDriver" component={SearchingDriverScreen}  />
-                      <Stack.Screen name="Traveling" component={TravelingScreen} />
-                      <Stack.Screen name="Rating" component={RatingScreen} />
-                      <Stack.Screen name="RatingList" component={RatingListScreen} />
-                      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-                      <Stack.Screen name="AddressList" component={AddressListScreen} />
-                      <Stack.Screen name="EditAddress" component={EditAddressScreen} />
-                    </Stack.Navigator>
-                  </NavigationContainer>
+                  <RootNavigator />
                 </ThemeProvider>
               </LocationProvider>
             </AddressProvider>

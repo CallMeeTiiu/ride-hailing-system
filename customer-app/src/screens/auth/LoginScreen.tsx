@@ -7,7 +7,8 @@ import {
   TouchableOpacity, 
   Image,
   ScrollView,
-  Platform
+  Platform,
+  Alert
 } from 'react-native';
 import theme from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext'
@@ -94,8 +95,11 @@ const LoginScreen = () => {
       }
       
     } catch (error: any) {
-      console.log('API Login Error:', error);
-      setPhoneError('Phone number or password is incorrect');
+      console.log('API Login Error:', error.response?.data || error);
+      Alert.alert(
+        "Đăng nhập thất bại",
+        error.response?.data?.message || "Số điện thoại hoặc mật khẩu không chính xác."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -162,7 +166,7 @@ const LoginScreen = () => {
           <PrimaryButton
             title="Sign in"
             onPress={handleLogin}
-            disabled={isLoading}
+            isLoading={isLoading}
           />
 
           {/* Quên mật khẩu */}

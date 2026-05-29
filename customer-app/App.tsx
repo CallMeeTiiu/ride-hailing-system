@@ -47,7 +47,7 @@ export type RootStackParamList = {
   NewPassword: undefined;
   MainTabs: undefined;
   Search: { 
-    type?: 'from' | 'destination';
+    type?: 'from' | 'destination' | 'search';
     mode?: string;
     onSelect?: (place: any) => void; 
   };

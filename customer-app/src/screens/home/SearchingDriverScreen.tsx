@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View, Text, Alert, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, Alert, TouchableOpacity, Image } from 'react-native';
 
 import { useTheme } from '../../contexts/ThemeContext';
 import theme from '../../constants/theme';
@@ -17,6 +17,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootStackParamList } from '../../../App';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { useLocation } from '../../contexts/LocationContext';
+import { MapBackgroundRef } from '../../components/home/MapBackground';
 
 const SearchingDriverScreen = () => {
   const { colors } = useTheme();
@@ -28,6 +30,15 @@ const SearchingDriverScreen = () => {
 
   const [tripId, setTripId] = useState<string | null>(null);
   const socketRef = useRef<Socket | null>(null);
+
+  const { fromLocation } = useLocation();
+  const mapRef = useRef<MapBackgroundRef>(null);
+
+  useEffect(() => {
+    if (fromLocation) {
+      mapRef.current?.jumpToLocation(fromLocation.latitude, fromLocation.longitude);
+    }
+  }, [fromLocation]);
 
   useEffect(() => {
     const createRideRequest = async () => {
@@ -107,7 +118,7 @@ const SearchingDriverScreen = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.mapContainer}>
-        <AppMap />
+        <AppMap ref={mapRef}/>
         
         <View style={styles.mapOverlay} />
 
@@ -120,6 +131,12 @@ const SearchingDriverScreen = () => {
 
         <View style={styles.radarContainer}>
           <RadarAnimation />
+          <View style={[styles.avatarBorder, { borderColor: colors.primaryLight }]}>
+            <Image 
+              source={{ uri: 'https://i.pravatar.cc/150?u=user' }} // Bạn có thể thay bằng avatar thật của user
+              style={styles.userAvatar} 
+            />
+          </View>
         </View>
       </View>
 
@@ -176,6 +193,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 5,
+  },
+  avatarBorder: {
+    position: 'absolute',
+    width: 60, 
+    height: 60, 
+    borderRadius: 30, 
+    borderWidth: 4, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    backgroundColor: 'white',
+    zIndex: 10,
+  },
+  userAvatar: {
+    width: 50, 
+    height: 50, 
+    borderRadius: 25 
   },
   bottomSheet: {
     position: 'absolute',

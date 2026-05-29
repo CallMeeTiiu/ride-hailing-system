@@ -29,6 +29,7 @@ import RatingListScreen from './src/screens/rating/RatingListScreen';
 import EditProfileScreen from './src/screens/profile/EditProfileScreen';
 import EditAddressScreen from './src/screens/profile/EditAddressScreen';
 import AddressListScreen from './src/screens/profile/AddressListScreen';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -52,7 +53,10 @@ export type RootStackParamList = {
   };
   SelectCar: { distance: number };
   SearchingDriver: { selectedVehicleId: string, fare_quote_id: string };
-  Traveling: undefined;
+  Traveling: {
+    tripId: string;
+    driverId: string;
+  };
   Rating: {tripId: string };
   RatingList: undefined;
   EditProfile: undefined;
@@ -111,19 +115,21 @@ const App = () => {
   return (
     // eslint-disable-next-line react-native/no-inline-styles
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <AuthProvider>
-        <UserProvider>
-          <BookingHistoryProvider>
-            <AddressProvider>
-              <LocationProvider>
-                <ThemeProvider>
-                  <RootNavigator />
-                </ThemeProvider>
-              </LocationProvider>
-            </AddressProvider>
-          </BookingHistoryProvider>
-        </UserProvider>
-      </AuthProvider>
+      <SafeAreaProvider>
+        <AuthProvider>
+          <UserProvider>
+            <BookingHistoryProvider>
+              <AddressProvider>
+                <LocationProvider>
+                  <ThemeProvider>
+                    <RootNavigator />
+                  </ThemeProvider>
+                </LocationProvider>
+              </AddressProvider>
+            </BookingHistoryProvider>
+          </UserProvider>
+        </AuthProvider>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 };

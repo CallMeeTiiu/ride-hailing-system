@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://192.168.1.3:3000'; // ip của máy tính chạy server
+const BASE_URL = 'http://localhost:3000'; // ip của máy tính chạy server
 
 const apiClient = axios.create({
   baseURL: BASE_URL,

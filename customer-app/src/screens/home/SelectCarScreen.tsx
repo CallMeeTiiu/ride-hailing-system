@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
   TouchableOpacity,
-  ScrollView
+  ScrollView,
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { 
@@ -20,17 +22,30 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 import theme from '../../constants/theme';
-import { useTheme } from '../../contexts/ThemeContext';
-import { RootStackParamList } from '../../../App';
 import PrimaryButton from '../../components/common/PrimaryButton';
 import MethodCard from '../../components/booking/MethodCard'; 
+import apiClient from '../../utils/apiClient';
+
+import { useLocation } from '../../contexts/LocationContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import { RootStackParamList } from '../../../App';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const VEHICLE_METHODS = [
-  { id: 'bike', name: 'Bike', nearbies: 7, price: 10.00, time: '8 mins', icon: faMotorcycle },
-  { id: 'standard', name: 'Standard', nearbies: 9, price: 20.00, time: '4 mins', icon: faCar },
-  { id: 'premium', name: 'Premium', nearbies: 4, price: 30.00, time: '4 mins', icon: faCarOn },
-];
+export interface VehicleQuote {
+  id: string; 
+  name: string; 
+  price: number;
+  estimated_time: string; 
+  nearbies?: number; 
+  vehicle_type: string;
+}
+
+const getVehicleIcon = (type: string) => {
+  const lowerType = type.toLowerCase();
+  if (lowerType.includes('bike') || lowerType.includes('motor')) return faMotorcycle;
+  if (lowerType.includes('premium') || lowerType.includes('lux')) return faCarOn;
+  return faCar; 
+};
 
 const SelectCarScreen = () => {
   const insets = useSafeAreaInsets();
@@ -41,8 +56,50 @@ const SelectCarScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'SelectCar'>>();
   const { distance } = route.params;
 
+  const { fromLocation, destinationLocation } = useLocation();
+
   const [selectedMethodId, setSelectedMethodId] = useState<string | null>(null);
-  const selectedVehicle = VEHICLE_METHODS.find(v => v.id === selectedMethodId);
+  
+  const [vehicles, setVehicles] = useState<VehicleQuote[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const selectedVehicle = vehicles.find(v => v.id === selectedMethodId);
+
+  useEffect(() => {
+    const fetchQuote = async () => {
+      if (!fromLocation || !destinationLocation) {
+        Alert.alert("Lỗi", "Không tìm thấy tọa độ đón hoặc trả!");
+        navigation.goBack();
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const payload = {
+          pickup_latitude: fromLocation.latitude,
+          pickup_longitude: fromLocation.longitude,
+          dropoff_latitude: destinationLocation.latitude,
+          dropoff_longitude: destinationLocation.longitude,
+        };
+
+        const response = await apiClient.post('/rides/quote', payload); 
+        console.log("=== DỮ LIỆU QUOTE TỪ BACKEND ===", JSON.stringify(response.data, null, 2));
+        const quoteData = Array.isArray(response.data) ? response.data : response.data?.data || [];
+        setVehicles(quoteData);
+
+        if (quoteData.length > 0) {
+          setSelectedMethodId(quoteData[0].id);
+        }
+      } catch (error: any) {
+        console.log("Lỗi gọi API Quote:", error.response?.data || error);
+        Alert.alert("Lỗi Báo Giá", "Không thể lấy giá chuyến đi lúc này.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchQuote();
+  }, [fromLocation, destinationLocation, navigation]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, top: insets.top + 10 }]}>
@@ -66,18 +123,26 @@ const SelectCarScreen = () => {
 
         {/* --- DANH SÁCH CARDS --- */}
         <View style={styles.cardsContainer}>
-          {VEHICLE_METHODS.map((vehicle) => (
-            <MethodCard
-              key={vehicle.id}
-              id={vehicle.id}
-              name={vehicle.name}
-              nearbies={vehicle.nearbies}
-              price={vehicle.price}
-              icon={vehicle.icon}
-              isSelected={selectedMethodId === vehicle.id}
-              onSelect={setSelectedMethodId}
-            />
-          ))}
+          {isLoading ? (
+            <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 50 }} />
+          ) : vehicles.length === 0 ? (
+            <Text style={{ textAlign: 'center', color: colors.textBody, marginTop: 20 }}>
+              There are no available vehicles for this route at the moment. Please try again later.
+            </Text>
+          ) : (
+            vehicles.map((vehicle) => (
+              <MethodCard
+                key={vehicle.id}
+                id={vehicle.id}
+                name={vehicle.name}
+                nearbies={vehicle.nearbies || Math.floor(Math.random() * 10) + 1}
+                price={vehicle.price}
+                icon={getVehicleIcon(vehicle.vehicle_type || vehicle.name)}
+                isSelected={selectedMethodId === vehicle.id}
+                onSelect={setSelectedMethodId}
+              />
+            ))
+          )}
         </View>
 
       </ScrollView>
@@ -93,11 +158,11 @@ const SelectCarScreen = () => {
             <Text style={[styles.statText, { color: colors.textTitle }]}>{distance} km</Text>
           </View>
           
-          {/* Time (Cập nhật theo selectedVehicle) */}
+          {/* Time */}
           <View style={styles.statItem}>
             <FontAwesomeIcon icon={faClock} size={16} color={colors.primary} />
             <Text style={[styles.statText, { color: colors.textTitle }]}>
-              {selectedVehicle ? selectedVehicle.time : '--'}
+              {selectedVehicle ? selectedVehicle.estimated_time || '--' : '--'}
             </Text>
           </View>
           
@@ -111,11 +176,15 @@ const SelectCarScreen = () => {
         </View>
 
         {/* Nút Confirm với logic disabled gọn gàng nhờ nâng cấp lần trước */}
-        <PrimaryButton 
+        <PrimaryButton
           title="Confirm"
-          disabled={!selectedMethodId} 
+          disabled={!selectedMethodId || isLoading}
           onPress={() => {
-            navigation.navigate('SearchingDriver');
+            if (selectedMethodId) {
+              navigation.navigate('SearchingDriver', { 
+                selectedVehicleId: selectedMethodId 
+              });
+            }
           }}
         />
       </View>

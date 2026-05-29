@@ -51,7 +51,7 @@ export type RootStackParamList = {
     onSelect?: (place: any) => void; 
   };
   SelectCar: { distance: number };
-  SearchingDriver: undefined;
+  SearchingDriver: { selectedVehicleId: string };
   Traveling: undefined;
   Rating: {tripId: string };
   RatingList: undefined;

@@ -32,6 +32,7 @@ import { RootStackParamList } from '../../../App';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export interface VehicleQuote {
+  fare_quote_id: any;
   id: string; 
   name: string; 
   price: number;
@@ -83,7 +84,7 @@ const SelectCarScreen = () => {
         };
 
         const response = await apiClient.post('/rides/quote', payload); 
-        console.log("=== DỮ LIỆU QUOTE TỪ BACKEND ===", JSON.stringify(response.data, null, 2));
+        
         const quoteData = Array.isArray(response.data) ? response.data : response.data?.data || [];
         setVehicles(quoteData);
 
@@ -180,9 +181,10 @@ const SelectCarScreen = () => {
           title="Confirm"
           disabled={!selectedMethodId || isLoading}
           onPress={() => {
-            if (selectedMethodId) {
+            if (selectedMethodId && selectedVehicle) {
               navigation.navigate('SearchingDriver', { 
-                selectedVehicleId: selectedMethodId 
+                selectedVehicleId: selectedVehicle.vehicle_type,
+                fare_quote_id: selectedVehicle.fare_quote_id 
               });
             }
           }}

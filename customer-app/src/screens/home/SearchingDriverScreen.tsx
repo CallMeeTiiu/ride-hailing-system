@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View, Text, Alert, TouchableOpacity, Image } from 'react-native';
+import { StyleSheet, View, Text, Alert, Image } from 'react-native';
 
 import { useTheme } from '../../contexts/ThemeContext';
 import theme from '../../constants/theme';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faArrowLeft, faCarOn } from '@fortawesome/free-solid-svg-icons';
+import { faCarOn } from '@fortawesome/free-solid-svg-icons';
 
 import AppMap from '../../components/home/AppMap';
 import RadarAnimation from '../../components/home/RadarAnimation';
@@ -121,14 +121,6 @@ const SearchingDriverScreen = () => {
         <AppMap ref={mapRef}/>
         
         <View style={styles.mapOverlay} />
-
-        <TouchableOpacity
-          style={[styles.backButton, { top: insets.top + 10 }]}
-          onPress={handleCancel}
-        >
-          <FontAwesomeIcon icon={faArrowLeft} size={20} color={colors.textTitle} />
-        </TouchableOpacity>
-
         <View style={styles.radarContainer}>
           <RadarAnimation />
           <View style={[styles.avatarBorder, { borderColor: colors.primaryLight }]}>

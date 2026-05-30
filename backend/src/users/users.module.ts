@@ -12,7 +12,7 @@ import { CustomersController } from '../customers/customers.controller'
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, SavedPlace, CustomerProfile])],
-  providers: [UsersService, AddressesService, CustomersService, TypeOrmModule],
+  providers: [UsersService, AddressesService, CustomersService],
   controllers: [AddressesController, CustomersController, DevicesController],
   exports: [UsersService, AddressesService, CustomersService, TypeOrmModule],
 })

@@ -9,6 +9,7 @@ import { DriverProfile } from './entities/driver_profile.entity'
 import { DriverDocument } from './entities/driver_document.entity'
 import { Vehicle } from './entities/vehicle.entity'
 import { Trip } from '../rides/entities/trip.entity'
+import { UsersModule } from '../users/users.module'
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { Trip } from '../rides/entities/trip.entity'
     LocationModule,
     RidesModule,
     JwtModule.register({}),
+    UsersModule,
   ],
   controllers: [DriversController],
   providers: [DriversService],

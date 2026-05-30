@@ -1,6 +1,6 @@
 # 📊 Tiến Độ Dự Án — Ride-Hailing System
 
-> **Cập nhật lần cuối:** 2026-05-28 01:10 (GMT+7)
+> **Cập nhật lần cuối:** 2026-05-30 03:00 (GMT+7)
 > **Phương pháp:** Deep scan toàn bộ source code, UI/UX focus
 
 ---
@@ -9,7 +9,7 @@
 
 | Metric | Value |
 |--------|-------|
-| **Tổng source files** | 43 (customer: 12, driver: 26, backend: 5) |
+| **Tổng source files** | 97 (customer: 12, driver: 26, backend: 59) |
 | **Screens triển khai** | 5 (driver-app), 0 (customer-app — chỉ demo rating) |
 | **Reusable Components** | 18 (driver: 10, customer: 8) |
 | **Trạng thái tổng thể** | � **Driver App UI/UX gần hoàn chỉnh — Customer App hạn chế** |
@@ -25,7 +25,7 @@
 | **Framework** | React Native 0.84.1 + React 19.2.3 |
 | **Navigation** | ✅ React Navigation v7 (4 tầng: Root → Auth/Main → Tab → Stack) |
 | **State Management** | ✅ Zustand v5 (authStore + tripStore) |
-| **Maps/Location** | ✅ react-native-maps (Google Maps, markers, polylines, permissions) |
+| **Maps/Location** | ✅ MapBackground (Leaflet/OpenStreetMap via react-native-webview) |
 | **Authentication UI** | ✅ LoginScreen (phone+password, format tự động +84, loading, error) |
 | **Design System** | ✅ Centralized theme (COLORS, SPACING, RADIUS, TYPOGRAPHY) |
 | **Icons** | ✅ react-native-vector-icons (Feather + MaterialIcons) |
@@ -121,12 +121,63 @@ OFFLINE → ONLINE → BOOKING_INCOMING → ARRIVING → ARRIVED → WAITING →
 | Hạng mục | Trạng thái |
 |----------|-----------|
 | **Framework** | NestJS v11 (TypeScript) |
-| **API endpoints** | ❌ Chỉ có `GET /` → "Hello World!" |
-| **Database** | ❌ Chưa cài |
-| **Authentication** | ❌ Chưa triển khai |
-| **Modules** | ❌ Chưa có module nào ngoài AppModule |
+| **Database** | ✅ TypeORM + PostgreSQL (SSL) + 11 entities |
+| **Authentication** | ✅ JWT + bcrypt + Passport + Refresh Token |
+| **API Docs** | ✅ Swagger (`/api/docs`) |
+| **Modules** | ✅ 12 modules (Auth, Users, Drivers, Rides, Payments, Location, Redis, Firebase, Google, Uploads, Customers, Common) |
+| **Real-time** | ✅ Socket.IO TripGateway (location stream, ride dispatch, trip updates) |
+| **Location** | ✅ Redis GEOSEARCH tìm tài xế gần |
+| **Pricing** | ✅ PricingService tính cước (base + distance + time) |
+| **Notifications** | ✅ Firebase push (NotificationService) |
+| **Validation** | ✅ class-validator + class-transformer GlobalPipe |
+| **API Integration (FE)** | ❌ Driver-app chưa gọi bất kỳ API nào |
 
-> Backend không thay đổi so với lần scan trước. Vẫn ở trạng thái scaffold.
+#### 🔗 API Endpoints (27+)
+
+| Module | Endpoint | Method | Mô tả |
+|--------|----------|--------|-------|
+| Auth | `/auth/driver/login` | POST | Đăng nhập tài xế (JWT) |
+| Auth | `/auth/driver/register` | POST | Đăng ký tài xế |
+| Auth | `/auth/customer/login` | POST | Đăng nhập KH |
+| Auth | `/auth/customer/register` | POST | Đăng ký KH |
+| Auth | `/auth/customer/forgot` | POST | Quên mật khẩu (OTP) |
+| Auth | `/auth/customer/verify` | POST | Xác thực OTP |
+| Auth | `/auth/customer/reset` | POST | Reset mật khẩu |
+| Auth | `/auth/customer/change-password` | POST | Đổi mật khẩu (JWT guard) |
+| Drivers | `PATCH /drivers/availability` | PATCH | Toggle online/offline |
+| Drivers | `GET /drivers/offers` | GET | List cuốc đang chờ |
+| Drivers | `GET /drivers/trips/history` | GET | Lịch sử chuyến |
+| Drivers | `GET /drivers/wallet` | GET | Ví + giao dịch |
+| Drivers | `GET /drivers/me` | GET | Profile tài xế |
+| Drivers | `PUT /drivers/me` | PUT | Cập nhật profile |
+| Drivers | `POST /drivers/me/avatar` | POST | Upload avatar |
+| Drivers | `GET/POST/PUT/DELETE /drivers/vehicles` | CRUD | Quản lý xe |
+| Drivers | `POST /drivers/documents` | POST | Upload giấy tờ |
+| Rides | `POST /rides/quote` | POST | Báo giá chuyến |
+| Rides | `POST /rides` | POST | Đặt xe (tìm tài xế gần) |
+| Rides | `POST /rides/:id/accept` | POST | Nhận cuốc |
+| Rides | `POST /rides/:id/cancel` | POST | Huỷ |
+| Rides | `GET /rides/:id` | GET | Chi tiết chuyến |
+| Rides | `POST /rides/:id/rate` | POST | Đánh giá |
+| Rides | `PATCH /trips/:id/status` | PATCH | Cập nhật trạng thái |
+| Rides | `GET /rides/current` | GET | Chuyến đang chạy |
+| Rides | `GET /rides/history` | GET | Lịch sử |
+
+#### 🔌 Socket.IO Events (7)
+
+| Event | Actor | Mô tả |
+|-------|-------|-------|
+| `driver:update_location` | Driver → Server | Gửi GPS mỗi 3-5s |
+| `customer:subscribe` | Customer → Server | Join trip room |
+| `server:ride_request` | Server → Driver | Nổ cuốc cho tài xế |
+| `server:driver_location` | Server → Customer | Phát lại vị trí tài xế |
+| `server:trip_status_changed` | Server → Customer | Trạng thái đổi |
+| `server:offer_expired` | Server → Driver | Cuốc hết hạn |
+| `server:trip_cancelled` | Server → Both | Huỷ chuyến |
+
+#### 🗄️ Database Entities (11)
+
+`User`, `RefreshToken`, `CustomerProfile`, `SavedPlace`, `DriverProfile`, `Vehicle`, `DriverDocument`, `Trip`, `TripLocation`, `Rating`, `Payment`
 
 ---
 
@@ -190,14 +241,15 @@ OFFLINE → ONLINE → BOOKING_INCOMING → ARRIVING → ARRIVED → WAITING →
 
 ---
 
-## 📈 % Hoàn Thành Ước Tính (UI/UX Focus)
+## 📈 % Hoàn Thành Ước Tính
 
-| Module | Setup | Navigation | Screens | Components | Animations | **UI/UX Tổng** |
-|--------|-------|-----------|---------|------------|-----------|---------------|
-| Driver App | 100% | 100% | 70% | 80% | 30% | **~65%** |
-| Customer App | 80% | 0% | 5% | 40% | 80% | **~20%** |
-| Backend | 60% | — | — | — | — | **~5%** |
-| **Dự án UI/UX** | **80%** | **50%** | **38%** | **60%** | **55%** | **~35%** |
+| Module | Setup | Navigation | Screens | Components | API/Integration | **Tổng** |
+|--------|-------|-----------|---------|------------|-----------------|----------|
+| Driver App UI | 100% | 100% | 70% | 80% | 0% | **~65%** |
+| Customer App | 80% | 0% | 5% | 40% | 0% | **~20%** |
+| Backend API | 100% | — | — | — | 55% | **~55%** |
+| FE↔BE Integration | — | — | — | — | 0% | **0%** |
+| **Tổng dự án** | **90%** | **50%** | **38%** | **60%** | **14%** | **~40%** |
 
 ---
 

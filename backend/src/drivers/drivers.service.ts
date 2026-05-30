@@ -6,6 +6,7 @@ import { Vehicle } from './entities/vehicle.entity'
 import { DriverDocument } from './entities/driver_document.entity'
 import { Trip } from '../rides/entities/trip.entity'
 import { TripStatus } from '../common/enums'
+import { UsersService } from '../users/users.service'
 
 @Injectable()
 export class DriversService {
@@ -18,6 +19,7 @@ export class DriversService {
     private docRepo: Repository<DriverDocument>,
     @InjectRepository(Trip)
     private tripRepo: Repository<Trip>,
+    private usersService: UsersService,
   ) {}
 
   async getProfileByUserId(userId: string) {
@@ -27,6 +29,7 @@ export class DriversService {
   async upsertProfile(userId: string, patch: Partial<DriverProfile>) {
     const p = await this.getProfileByUserId(userId)
     if (!p) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       const created = this.profileRepo.create({
         ...patch,
         user_id: userId,
@@ -42,6 +45,7 @@ export class DriversService {
   }
 
   async createVehicle(userId: string, payload: Partial<Vehicle>) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const v = this.vehicleRepo.create({
       ...payload,
       driver_user_id: userId,
@@ -62,11 +66,13 @@ export class DriversService {
   }
 
   async uploadDocument(userId: string, payload: Partial<DriverDocument>) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const d = this.docRepo.create({ ...payload, driver_user_id: userId } as any)
     return this.docRepo.save(d)
   }
 
   // List available offers (pending trips) - simple mock: return pending trips
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async listOffersForDriver(userId: string) {
     return this.tripRepo.find({
       where: { status: TripStatus.PENDING },
@@ -84,7 +90,8 @@ export class DriversService {
   }
 
   // Mock wallet: return balance and recent transactions
-  async getWallet(userId: string) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  getWallet(userId: string) {
     return {
       balance: 125000,
       currency: 'VND',
@@ -104,6 +111,29 @@ export class DriversService {
           date: new Date().toISOString(),
         },
       ],
+    }
+  }
+
+  async getDriverInfo(driverId: string) {
+    const user = await this.usersService.findById(driverId)
+    if (!user) throw new NotFoundException('Không tìm thấy tài xế')
+
+    const profile = await this.profileRepo.findOneBy({ user_id: driverId })
+
+    const vehicles = await this.vehicleRepo.findBy({ driver_user_id: driverId })
+    const activeVehicle = vehicles.length > 0 ? vehicles[0] : null
+
+    return {
+      id: user.id,
+      phone_number: user.phone_number,
+      rating: user.average_rating || 5.0,
+      rating_count: user.rating_count || 0,
+      name: profile?.name || 'Bác tài xế',
+      avatar: profile?.avatar_url || 'https://i.pravatar.cc/150?img=11',
+      carModel: activeVehicle
+        ? `${activeVehicle.brand} ${activeVehicle.model}`
+        : 'Xe máy/Ô tô',
+      plateNumber: activeVehicle?.plate_number || 'Chưa cập nhật biển số',
     }
   }
 }

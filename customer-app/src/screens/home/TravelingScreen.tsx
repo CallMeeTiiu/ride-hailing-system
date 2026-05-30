@@ -28,7 +28,7 @@ const TravelingScreen = ({ navigation }: any) => {
   
   const [tripStatus, setTripStatus] = useState<'waiting' | 'traveling'>('waiting');
   const [driverLocation, setDriverLocation] = useState<{lat: number, lng: number} | null>(null);
-  const [distance, setDistance] = useState<string>('...'); // Để truyền xuống Bottom Card
+  const [distance, setDistance] = useState<string>('...'); 
   
   const [showArrivalPopup, setShowArrivalPopup] = useState(false);
   const [showDestinationPopup, setShowDestinationPopup] = useState(false);
@@ -63,13 +63,13 @@ const TravelingScreen = ({ navigation }: any) => {
     };
 
     if (tripStatus === 'waiting') {
-      mapRef.current?.updateMarkers(fromLocation.latitude, fromLocation.longitude, null, null); // Cắm Avatar, Ẩn Đích
-      mapRef.current?.drawDrivers([{ lat: driverLocation.lat, lng: driverLocation.lng }]); // Cắm Taxi
-      fetchRoute(driverLocation.lng, driverLocation.lat, fromLocation.longitude, fromLocation.latitude); // Vẽ đường: Xe -> User
+      mapRef.current?.updateMarkers(fromLocation.latitude, fromLocation.longitude, null, null); 
+      mapRef.current?.drawDrivers([{ lat: driverLocation.lat, lng: driverLocation.lng }]); 
+      fetchRoute(driverLocation.lng, driverLocation.lat, fromLocation.longitude, fromLocation.latitude);
     } else {
-      mapRef.current?.updateMarkers(null, null, destinationLocation.latitude, destinationLocation.longitude); // Ẩn Avatar, Cắm Đích
-      mapRef.current?.drawDrivers([{ lat: driverLocation.lat, lng: driverLocation.lng }]); // Cắm Taxi
-      fetchRoute(driverLocation.lng, driverLocation.lat, destinationLocation.longitude, destinationLocation.latitude); // Vẽ đường: Xe -> Đích
+      mapRef.current?.updateMarkers(null, null, destinationLocation.latitude, destinationLocation.longitude); 
+      mapRef.current?.drawDrivers([{ lat: driverLocation.lat, lng: driverLocation.lng }]);
+      fetchRoute(driverLocation.lng, driverLocation.lat, destinationLocation.longitude, destinationLocation.latitude); 
     }
   }, [tripStatus, driverLocation, fromLocation, destinationLocation]);
 

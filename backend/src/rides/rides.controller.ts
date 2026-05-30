@@ -45,7 +45,7 @@ export class RidesController {
 
   @Post('quote')
   @ApiOperation({ summary: 'Khách hàng: Nhận báo giá' })
-  @ApiResponse({ status: 201, description: 'Trả về giá cước và ID báo giá' })
+  @ApiResponse({ status: 201, description: 'Trả về danh sách xe và giá cước' })
   async createQuote(@Body() createQuoteDto: CreateQuoteDto) {
     const calculation = await this.pricingService.calculateFare(
       createQuoteDto.pickup_latitude,
@@ -55,24 +55,55 @@ export class RidesController {
     )
 
     const quoteId = 'quote_' + Date.now().toString()
-    const result = {
-      fare_quote_id: quoteId,
-      estimated_fare: calculation.estimated_fare,
-      estimated_distance_m: calculation.distance_km * 1000,
-      estimated_duration_s: calculation.duration_mins * 60,
-    }
 
-    // Save quote to Redis mapped to ID for 10 minutes
+    // TÍNH TOÁN GIÁ CHO 3 LOẠI XE DỰA VÀO GIÁ GỐC
+    const baseFare = calculation.estimated_fare
+    const vehicleOptions = [
+      {
+        id: 'MOTORCYCLE',
+        name: 'Xe máy',
+        vehicle_type: 'MOTORCYCLE',
+        price: Math.round(baseFare * 0.5), // Rẻ hơn 50%
+        estimated_time: `${Math.round(calculation.duration_mins)} mins`,
+        nearbies: 5,
+        fare_quote_id: quoteId,
+      },
+      {
+        id: 'CAR_4_SEATS',
+        name: 'Ô tô 4 chỗ',
+        vehicle_type: 'CAR_4_SEATS',
+        price: baseFare, // Giá gốc
+        estimated_time: `${Math.round(calculation.duration_mins)} mins`,
+        nearbies: 3,
+        fare_quote_id: quoteId,
+      },
+      {
+        id: 'CAR_7_SEATS',
+        name: 'Ô tô 7 chỗ',
+        vehicle_type: 'CAR_7_SEATS',
+        price: Math.round(baseFare * 1.5),
+        estimated_time: `${Math.round(calculation.duration_mins)} mins`,
+        nearbies: 1,
+        fare_quote_id: quoteId,
+      },
+    ]
+
     await this.redisService.set(
       quoteId,
       {
-        ...result,
-        ...createQuoteDto,
+        fare_quote_id: quoteId,
+        estimated_distance_m: calculation.distance_km * 1000,
+        estimated_duration_s: calculation.duration_mins * 60,
+        pickup_latitude: createQuoteDto.pickup_latitude,
+        pickup_longitude: createQuoteDto.pickup_longitude,
+        dropoff_latitude: createQuoteDto.dropoff_latitude,
+        dropoff_longitude: createQuoteDto.dropoff_longitude,
+        options: vehicleOptions,
       },
       600,
     )
 
-    return result
+    return vehicleOptions
   }
 
   @Post('request')
@@ -89,8 +120,15 @@ export class RidesController {
     const quoteData = await this.redisService.get<any>(
       createRideDto.fare_quote_id,
     )
+
     if (!quoteData) {
       throw new BadRequestException('Báo giá không hợp lệ hoặc đã hết hạn')
+    }
+
+    // TÌM ĐÚNG GIÁ TIỀN CỦA LOẠI XE MÀ KHÁCH HÀNG VỪA CHỌN
+    const selectedVehicle = quoteData.options.find(opt => opt.vehicle_type === createRideDto.vehicle_type);
+    if (!selectedVehicle) {
+       throw new BadRequestException('Loại xe không hợp lệ');
     }
 
     // 1. Create the Trip entity in PostgreSQL via TypeORM
@@ -104,7 +142,7 @@ export class RidesController {
       dropoff_longitude: quoteData.dropoff_longitude,
       estimated_distance_m: quoteData.estimated_distance_m,
       estimated_duration_s: quoteData.estimated_duration_s,
-      estimated_fare: quoteData.estimated_fare,
+      estimated_fare: selectedVehicle.price, // Gắn đúng giá tiền vào Database
     })
 
     // 2. Tìm các tài xế gần đó (bán kính 5km)
@@ -125,24 +163,24 @@ export class RidesController {
         lat: quoteData.dropoff_latitude,
         lng: quoteData.dropoff_longitude,
       },
-      estimated_fare: quoteData.estimated_fare,
+      estimated_fare: selectedVehicle.price, // Gắn đúng giá tiền bắn qua WebSocket
       vehicle_type: createRideDto.vehicle_type,
     }
 
     if (nearbyDrivers.length > 0) {
       this.tripGateway.notifyDrivers(nearbyDrivers, requestPayload)
+    }
 
-      // Gửi Push Notification cho tài xế qua Firebase
-      for (const driverId of nearbyDrivers) {
-        const driver = await this.usersService.findById(driverId)
-        if (driver?.device_token) {
-          await this.notificationService.sendPushNotification(
-            driver.device_token,
-            'Cuốc xe mới!',
-            'Có một yêu cầu đặt xe mới gần bạn.',
-            { trip_id: newTrip.id },
-          )
-        }
+    // Gửi Push Notification cho tài xế qua Firebase
+    for (const driverId of nearbyDrivers) {
+      const driver = await this.usersService.findById(driverId)
+      if (driver?.device_token) {
+        await this.notificationService.sendPushNotification(
+          driver.device_token,
+          'Cuốc xe mới!',
+          'Có một yêu cầu đặt xe mới gần bạn.',
+          { trip_id: newTrip.id },
+        )
       }
     }
 

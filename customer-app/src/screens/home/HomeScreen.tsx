@@ -30,7 +30,12 @@ const HomeScreen = () => {
   const [distance, setDistance] = useState<string>('');
 
   const { fromLocation, destinationLocation } = useLocation();
+
   useEffect(() => {
+    if (fromLocation && !destinationLocation) {
+      mapRef.current?.jumpToLocation(fromLocation.latitude, fromLocation.longitude);
+    }
+
     const markerFromLat = fromLocation ? fromLocation.latitude : null;
     const markerFromLng = fromLocation ? fromLocation.longitude : null;
     
@@ -38,7 +43,6 @@ const HomeScreen = () => {
     const markerDestLng = destinationLocation ? destinationLocation.longitude : null;
 
     mapRef.current?.updateMarkers(markerFromLat, markerFromLng, markerDestLat, markerDestLng);
-
 
     if (destinationLocation) {
       const routeStartLat = fromLocation ? fromLocation.latitude : 10.8700;
@@ -82,7 +86,7 @@ const HomeScreen = () => {
         <TouchableOpacity
           style={[styles.circleButton, { backgroundColor: colors.circleButtonBg }]}
           activeOpacity={0.8}
-          onPress={() => navigation.navigate('Search')}
+          onPress={() => navigation.navigate('Search', { type: 'search' })}
         >
           <FontAwesomeIcon icon={faMagnifyingGlass} size={20} color={colors.textTitle} />
         </TouchableOpacity>

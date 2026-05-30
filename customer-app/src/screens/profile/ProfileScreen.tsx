@@ -22,10 +22,10 @@ import {
 import theme from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 
+import ConfirmBottomSheet from '../../components/profile/ConfirmBottomSheet';
 import MenuItem from '../../components/profile/MenuItem';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUser } from '../../contexts/UserContext';
-import ConfirmBottomSheet from '../../components/profile/ConfirmBottomSheet';
 import { useNavigation } from '@react-navigation/native';
 
 const ProfileScreen = () => {
@@ -34,16 +34,17 @@ const ProfileScreen = () => {
   const { colors, isDarkMode, toggleTheme } = useTheme();
   const insets = useSafeAreaInsets();
 
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { profile } = useUser();
   const navigation = useNavigation<any>();
 
-  const handleLogoutAction = () => {
-    setIsLogoutModalVisible(false);
-    
-    // Handle logic Logout: clear UserContext và AsyncStorageToken
-    
-    navigation.replace('Login');
+  const handleLogoutAction = async () => {
+    try {
+      await logout();
+      
+    } catch (error) {
+      console.log("Logout error:", error);
+    }
   };
 
   return (

@@ -1,116 +1,154 @@
-import React, { useEffect, useRef } from 'react';
-import { StyleSheet, View, Image, Text } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { StyleSheet, View, Text, Alert, Image } from 'react-native';
 
-import AppMap from '../../components/home/AppMap';
 import { useTheme } from '../../contexts/ThemeContext';
 import theme from '../../constants/theme';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faCar } from '@fortawesome/free-solid-svg-icons';
+import { faCarOn } from '@fortawesome/free-solid-svg-icons';
+
+import AppMap from '../../components/home/AppMap';
 import RadarAnimation from '../../components/home/RadarAnimation';
 import SwipeButton from '../../components/booking/SwipeButton';
+
+import apiClient from '../../utils/apiClient';
+import io, { Socket } from 'socket.io-client';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { RootStackParamList } from '../../../App';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { useLocation } from '../../contexts/LocationContext';
 import { MapBackgroundRef } from '../../components/home/MapBackground';
 
-const SearchingDriverScreen = ({ navigation }: any) => {
+const SearchingDriverScreen = () => {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
-  const mapRef = useRef<MapBackgroundRef>(null);
+  const route = useRoute<RouteProp<RootStackParamList, 'SearchingDriver'>>();
+  const { selectedVehicleId, fare_quote_id } = route.params || {};
+
+  const [tripId, setTripId] = useState<string | null>(null);
+  const socketRef = useRef<Socket | null>(null);
+
   const { fromLocation } = useLocation();
-
-  const generateMockDrivers = (centerLat: number, centerLng: number, count: number = 6) => {
-    const drivers = [];
-    for (let i = 0; i < count; i++) {
-      const latOffset = (Math.random() - 0.5) * 0.01; 
-      const lngOffset = (Math.random() - 0.5) * 0.01;
-      drivers.push({
-        lat: centerLat + latOffset,
-        lng: centerLng + lngOffset
-      });
-    }
-    return drivers;
-  };
+  const mapRef = useRef<MapBackgroundRef>(null);
 
   useEffect(() => {
-    const lat = fromLocation ? fromLocation.latitude : 10.8700;
-    const lng = fromLocation ? fromLocation.longitude : 106.8031;
-
-    mapRef.current?.jumpToLocation(lat, lng);
-
-    const nearbyDrivers = generateMockDrivers(lat, lng, 6);
-    mapRef.current?.drawDrivers(nearbyDrivers);
-
-    return () => {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      mapRef.current?.clearDrivers();
-    };
+    if (fromLocation) {
+      mapRef.current?.jumpToLocation(fromLocation.latitude, fromLocation.longitude);
+    }
   }, [fromLocation]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      navigation.navigate('Traveling');
-    }, 5000);
+    const createRideRequest = async () => {
+      try {
+        if (!fare_quote_id || !selectedVehicleId) {
+          Alert.alert('Lỗi', 'Thiếu thông tin báo giá. Vui lòng quay lại chọn xe.');
+          navigation.goBack();
+          return;
+        }
 
-    return () => clearTimeout(timer);
-  }, [navigation]);
+        const response = await apiClient.post('/rides/request', {
+          fare_quote_id: fare_quote_id,
+          vehicle_type: selectedVehicleId,
+          payment_method: 'CASH', // Tạm thời fix cứng tiền mặt
+        });
+
+        setTripId(response.data.id);
+        console.log('Tạo chuyến thành công, Trip ID:', response.data.id);
+      } catch (error: any) {
+        console.log('Lỗi tạo chuyến xe:', error.response?.data || error.message);
+        Alert.alert('Lỗi', 'Không thể tạo chuyến đi lúc này.');
+        navigation.goBack();
+      }
+    };
+
+    createRideRequest();
+  }, [fare_quote_id, navigation, selectedVehicleId]);
+
+  useEffect(() => {
+    if (!tripId) return;
+
+    const setupSocket = async () => {
+      const token = await AsyncStorage.getItem('access_token'); 
+      const SOCKET_URL = 'http://localhost:3000'; // Chú ý: Đổi URL này theo BASE_URL
+
+      const socket = io(SOCKET_URL, {
+        auth: { token: token }, 
+        transports: ['websocket'],
+      });
+
+      socketRef.current = socket;
+
+      socket.on('connect', () => {
+        console.log('Đã kết nối Socket.IO thành công!');
+        socket.emit('customer:subscribe', { trip_id: tripId });
+      });
+
+      socket.on('server:trip_accepted', (payload) => {
+        console.log('Tài xế đã nhận cuốc!', payload);
+        
+        navigation.replace('Traveling', { 
+          tripId: payload.trip_id,
+          driverId: payload.driver_id
+        });
+      });
+
+      socket.on('connect_error', (err) => {
+        console.log('Lỗi kết nối Socket:', err.message);
+      });
+    };
+
+    setupSocket();
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        console.log('Đã ngắt kết nối Socket');
+      }
+    };
+  }, [navigation, tripId]);
+
+  const handleCancel = () => {
+    // Sẽ gọi API Hủy chuyến ở đây sau
+    navigation.goBack();
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      
-      {/* 2. SỬ DỤNG BẢNG VẼ APPMAP */}
-      <AppMap ref={mapRef}>
-        {/* TÂM BẢN ĐỒ: USER + RADAR */}
-        {/* Đặt ở cuối để nó nằm đè lên (layer cao hơn) nếu lỡ đụng các driver khác */}
-        <View style={styles.userCenterAnchor}>
+      <View style={styles.mapContainer}>
+        <AppMap ref={mapRef}/>
+        
+        <View style={styles.mapOverlay} />
+        <View style={styles.radarContainer}>
           <RadarAnimation />
           <View style={[styles.avatarBorder, { borderColor: colors.primaryLight }]}>
             <Image 
-              source={{ uri: 'https://i.pravatar.cc/150?u=user' }}
+              source={{ uri: 'https://i.pravatar.cc/150?u=user' }} // Bạn có thể thay bằng avatar thật của user
               style={styles.userAvatar} 
             />
           </View>
         </View>
-      </AppMap>
+      </View>
 
-      {/* HEADER */}
-      <View style={styles.header}>
-        <View style={styles.headerTextWrapper}>
-          <Text style={[styles.title, { color: colors.textTitle }]}>
-            Searching for Driver
-          </Text>
+      <View style={[styles.bottomSheet, { backgroundColor: colors.background, paddingBottom: insets.bottom + 20 }]}>
+        <View style={styles.searchingStatusWrapper}>
+          <View style={[styles.iconWrapper, { backgroundColor: colors.surface }]}>
+            <FontAwesomeIcon icon={faCarOn} size={24} color={colors.primary} />
+          </View>
+          <View style={styles.statusTextContainer}>
+            <Text style={[styles.statusTitle, { color: colors.textTitle }]}>
+              Searching Ride...
+            </Text>
+            <Text style={[styles.statusSubtitle, { color: colors.textBody }]}>
+              This may take a few seconds
+            </Text>
+          </View>
         </View>
-      </View>
 
-      {/* STATUS BOX */}
-      <View style={styles.searchingStatusWrapper}>
-         <View style={[styles.taxiIconBubble, { backgroundColor: colors.primary }]}>
-           <FontAwesomeIcon icon={faCar} size={18} color={colors.textBtn} />
-         </View>
-         <Text style={[styles.statusTitle, { color: colors.textTitle }]}>
-           Searching Ride...
-         </Text>
-         <Text style={[styles.statusSubTitle, { color: colors.textBody }]}>
-           This may take a few seconds...
-         </Text>
-      </View>
-
-      <View style={styles.searchingStatusWrapper}>
-         <View style={[styles.taxiIconBubble, { backgroundColor: colors.primary }]}>
-           <FontAwesomeIcon icon={faCar} size={18} color={colors.textBtn} />
-         </View>
-         <Text style={[styles.statusTitle, { color: colors.textTitle }]}>
-           Searching Ride...
-         </Text>
-         <Text style={[styles.statusSubTitle, { color: colors.textBody }]}>
-           This may take a few seconds...
-         </Text>
-      </View>
-
-      {/* GẮN SLIDER MỚI VÀO ĐÂY CHỖ NÀY */}
-      <View style={styles.bottomSliderWrapper}>
-        <SwipeButton 
-          onCancel={() => {
-            navigation.goBack();
-          }} 
+        <SwipeButton
+          onCancel={handleCancel}
         />
       </View>
     </View>
@@ -118,115 +156,89 @@ const SearchingDriverScreen = ({ navigation }: any) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: { 
-    position: 'absolute', 
-    top: 50, 
-    left: theme.SIZES.padding, 
-    right: theme.SIZES.padding, 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    zIndex: 10 
+  container: { 
+    flex: 1 
   },
-  backButton: { 
-    padding: theme.SIZES.base 
+  mapContainer: {
+    flex: 1,
+    position: 'relative',
   },
-  headerTextWrapper: { 
-    flex: 1, 
-    marginLeft: 10 
+  mapOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.4)', 
+    zIndex: 1,
   },
-  title: { 
-    fontSize: theme.SIZES.h2, 
-    fontFamily: theme.FONTS.bold 
+  backButton: {
+    position: 'absolute',
+    left: theme.SIZES.padding,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: theme.COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+    ...theme.SHADOWS.light,
   },
-  searchingStatusWrapper: { 
-    position: 'absolute', 
-    top: 120, width: '100%', 
-    alignItems: 'center' 
-  },
-  taxiIconBubble: { 
-    width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', 
-    marginBottom: 12, ...theme.SHADOWS.light 
-  },
-  statusTitle: { 
-    fontSize: theme.SIZES.h3, 
-    fontFamily: theme.FONTS.bold, 
-    marginBottom: 6 
-
-  },
-  statusSubTitle: { 
-    fontSize: theme.SIZES.body2, 
-    fontFamily: theme.FONTS.medium 
-
-  },
-  userCenterAnchor: {
-    position: 'absolute', 
+  radarContainer: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 5,
   },
   avatarBorder: {
+    position: 'absolute',
     width: 60, 
     height: 60, 
     borderRadius: 30, 
     borderWidth: 4, 
     justifyContent: 'center', 
     alignItems: 'center', 
-    backgroundColor: theme.COLORS.white,
+    backgroundColor: 'white',
+    zIndex: 10,
   },
   userAvatar: {
     width: 50, 
     height: 50, 
     borderRadius: 25 
   },
-  driverMarkerWrapper: {
+  bottomSheet: {
     position: 'absolute',
-    alignItems: 'center',
-    zIndex: 2,
-  },
-  driverPin: {
-    width: 46, 
-    height: 46, 
-    borderRadius: 23,
-    justifyContent: 'center', 
-    alignItems: 'center',
-    padding: 3,
-  },
-  driverAvatar: {
-    width: '100%', 
-    height: '100%', 
-    borderRadius: 20,
-  },
-  pinTriangle: {
-    width: 0, 
-    height: 0, 
-    backgroundColor: 'transparent', 
-    borderStyle: 'solid',
-    borderLeftWidth: 6, 
-    borderRightWidth: 6, 
-    borderBottomWidth: 0, 
-    borderTopWidth: 8,
-    borderLeftColor: 'transparent', 
-    borderRightColor: 'transparent',
-    marginTop: -1,
-  },
-  carWrapper: {
-    marginTop: 5, 
-  },
-  carBody: {
-    width: 28, 
-    height: 40, 
-    borderRadius: 10,
-    justifyContent: 'center', 
-    alignItems: 'center',
-  },
-  bottomSliderWrapper: {
-    position: 'absolute',
-    bottom: theme.SIZES.padding * 3.5,
-    left: theme.SIZES.padding,
-    right: theme.SIZES.padding,
-    alignItems: 'center',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    paddingTop: 30,
+    paddingHorizontal: theme.SIZES.padding,
     zIndex: 10,
+    ...theme.SHADOWS.light, 
+  },
+  searchingStatusWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  iconWrapper: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+    ...theme.SHADOWS.light,
+  },
+  statusTextContainer: {
+    flex: 1,
+  },
+  statusTitle: {
+    fontSize: theme.SIZES.h3,
+    fontFamily: theme.FONTS.bold,
+    marginBottom: 4,
+  },
+  statusSubtitle: {
+    fontSize: theme.SIZES.body2,
+    fontFamily: theme.FONTS.medium,
   },
 });
 

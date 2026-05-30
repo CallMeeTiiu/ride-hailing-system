@@ -38,7 +38,7 @@ const RatingListScreen = () => {
       ) : (
         <View style={styles.emptyContainer}>
           <Image 
-            source={require('../../assets/images/no_locations_found.png')} 
+            source={require('../../assets/images/welcome.png')} 
             style={styles.emptyImage}
             resizeMode="contain"
           />

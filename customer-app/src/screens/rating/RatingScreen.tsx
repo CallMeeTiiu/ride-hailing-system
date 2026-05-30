@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import theme from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,6 +9,7 @@ import { useLocation } from '../../contexts/LocationContext';
 import Hyperlink from '../../components/common/Hyperlink';
 import PrimaryButton from '../../components/common/PrimaryButton';
 import CustomSwipeRating from '../../components/rating/CustomSwipeRating';
+import apiClient from '../../utils/apiClient';
 
 const RatingScreen = ({ navigation, route }: any) => {
   const { colors } = useTheme();
@@ -19,6 +20,7 @@ const RatingScreen = ({ navigation, route }: any) => {
   const { tripId } = route.params || {};
   const tripData = trips.find(t => t.id === tripId);
 
+  const [isLoading, setIsLoading] = useState(false);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
 
@@ -34,10 +36,24 @@ const RatingScreen = ({ navigation, route }: any) => {
     );
   }
 
-  const handleSubmit = () => {
-    if (rating > 0) {
+  const handleSubmit = async () => {
+    setIsLoading(true);
+
+    try {
+      console.log(`Đang gửi đánh giá tới: /rides/${tripId}/rate`);
+      await apiClient.post(`/rides/${tripId}/rate`, {
+        rating: rating,
+        comment: comment, 
+      });
       updateTripRating(tripId, rating, comment);
-      finishAndGoHome();
+      Alert.alert('Success', 'Thank you for your feedback!', [
+        { text: 'OK', onPress: finishAndGoHome }
+      ]);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      Alert.alert('Error', 'Failed to submit rating. Please try again later.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -116,6 +132,7 @@ const RatingScreen = ({ navigation, route }: any) => {
           onPress={handleSubmit}
           disabled={rating === 0}
           style={styles.submitButton}
+          isLoading={isLoading}
         />
         
         <Hyperlink 

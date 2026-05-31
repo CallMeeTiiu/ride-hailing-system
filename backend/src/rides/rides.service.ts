@@ -120,4 +120,12 @@ export class RidesService {
 
     return saved
   }
+
+  async getCustomerTripHistory(customerId: string): Promise<Trip[]> {
+    return this.tripRepository.find({
+      where: { customer_id: customerId },
+      relations: ['driver'],
+      order: { created_at: 'DESC' },
+    })
+  }
 }

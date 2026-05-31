@@ -29,6 +29,7 @@ import RatingListScreen from './src/screens/rating/RatingListScreen';
 import EditProfileScreen from './src/screens/profile/EditProfileScreen';
 import EditAddressScreen from './src/screens/profile/EditAddressScreen';
 import AddressListScreen from './src/screens/profile/AddressListScreen';
+import HistoryScreen from './src/screens/history/HistoryScreen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export type RootStackParamList = {
@@ -62,6 +63,7 @@ export type RootStackParamList = {
   EditProfile: undefined;
   AddressList: undefined;
   EditAddress: { addressId?: string } | undefined;
+  History: undefined;
 };
 
 const RootNavigator = () => {
@@ -102,6 +104,7 @@ const RootNavigator = () => {
             <Stack.Screen name="EditProfile" component={EditProfileScreen} />
             <Stack.Screen name="AddressList" component={AddressListScreen} />
             <Stack.Screen name="EditAddress" component={EditAddressScreen} />
+            <Stack.Screen name="History" component={HistoryScreen} />
           </>
         )}
       </Stack.Navigator>

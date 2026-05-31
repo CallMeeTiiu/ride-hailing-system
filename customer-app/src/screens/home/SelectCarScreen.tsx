@@ -125,8 +125,10 @@ const SelectCarScreen = () => {
         {/* --- DANH SÁCH CARDS --- */}
         <View style={styles.cardsContainer}>
           {isLoading ? (
+            // eslint-disable-next-line react-native/no-inline-styles
             <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 50 }} />
           ) : vehicles.length === 0 ? (
+            // eslint-disable-next-line react-native/no-inline-styles
             <Text style={{ textAlign: 'center', color: colors.textBody, marginTop: 20 }}>
               There are no available vehicles for this route at the moment. Please try again later.
             </Text>
@@ -151,7 +153,6 @@ const SelectCarScreen = () => {
       {/* --- BOTTOM SECTION --- */}
       <View style={[styles.bottomSection, { backgroundColor: colors.background }]}>
         
-        {/* Khung chứa 3 thông số (Pill) */}
         <View style={[styles.statsPill, { backgroundColor: colors.white }]}>
           {/* Distance */}
           <View style={styles.statItem}>
@@ -167,7 +168,7 @@ const SelectCarScreen = () => {
             </Text>
           </View>
           
-          {/* Costs (Cập nhật theo selectedVehicle) */}
+          {/* Costs  */}
           <View style={styles.statItem}>
             <FontAwesomeIcon icon={faWallet} size={16} color={colors.primary} />
             <Text style={[styles.statText, { color: colors.textTitle }]}>
@@ -176,7 +177,6 @@ const SelectCarScreen = () => {
           </View>
         </View>
 
-        {/* Nút Confirm với logic disabled gọn gàng nhờ nâng cấp lần trước */}
         <PrimaryButton
           title="Confirm"
           disabled={!selectedMethodId || isLoading}

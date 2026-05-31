@@ -31,7 +31,7 @@ const SearchingDriverScreen = () => {
   const [tripId, setTripId] = useState<string | null>(null);
   const socketRef = useRef<Socket | null>(null);
 
-  const { fromLocation } = useLocation();
+  const { fromLocation, destinationLocation } = useLocation();
   const mapRef = useRef<MapBackgroundRef>(null);
 
   useEffect(() => {
@@ -52,7 +52,13 @@ const SearchingDriverScreen = () => {
         const response = await apiClient.post('/rides/request', {
           fare_quote_id: fare_quote_id,
           vehicle_type: selectedVehicleId,
-          payment_method: 'CASH', // Tạm thời fix cứng tiền mặt
+          payment_method: 'CASH', 
+          pickup_address: fromLocation?.address || fromLocation?.name,
+          dropoff_address: destinationLocation?.address || destinationLocation?.name,
+          pickup_latitude: fromLocation?.latitude,
+          pickup_longitude: fromLocation?.longitude,
+          dropoff_latitude: destinationLocation?.latitude,
+          dropoff_longitude: destinationLocation?.longitude,
         });
 
         setTripId(response.data.id);
@@ -65,7 +71,7 @@ const SearchingDriverScreen = () => {
     };
 
     createRideRequest();
-  }, [fare_quote_id, navigation, selectedVehicleId]);
+  }, [destinationLocation?.address, destinationLocation?.latitude, destinationLocation?.longitude, destinationLocation?.name, fare_quote_id, fromLocation?.address, fromLocation?.latitude, fromLocation?.longitude, fromLocation?.name, navigation, selectedVehicleId]);
 
   useEffect(() => {
     if (!tripId) return;

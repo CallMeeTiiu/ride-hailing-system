@@ -1,7 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faHouse, faClipboardList, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faHouse, faClipboardList, faUser, faClock } from '@fortawesome/free-solid-svg-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import theme from '../constants/theme';
@@ -10,6 +10,7 @@ import { useTheme } from '../contexts/ThemeContext'
 import HomeScreen from '../screens/home/HomeScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import RatingListScreen from '../screens/rating/RatingListScreen';
+import HistoryScreen from '../screens/history/HistoryScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -41,6 +42,17 @@ const MainTabNavigator = () => {
       })}
     >
       <Tab.Screen 
+        name="HomeTab" 
+        component={HomeScreen} 
+        options={{
+          tabBarLabel: 'Home',
+          // eslint-disable-next-line react/no-unstable-nested-components
+          tabBarIcon: ({ color, size }) => (
+            <FontAwesomeIcon icon={faHouse} color={color} size={size + 2} />
+          ),
+        }}
+      />
+      <Tab.Screen 
         name="RatingTab" 
         component={RatingListScreen} 
         options={{
@@ -52,13 +64,13 @@ const MainTabNavigator = () => {
         }}
       />
       <Tab.Screen 
-        name="HomeTab" 
-        component={HomeScreen} 
+        name="HistoryTab" 
+        component={HistoryScreen} 
         options={{
-          tabBarLabel: 'Home',
+          tabBarLabel: 'Activity',
           // eslint-disable-next-line react/no-unstable-nested-components
           tabBarIcon: ({ color, size }) => (
-            <FontAwesomeIcon icon={faHouse} color={color} size={size + 2} />
+            <FontAwesomeIcon icon={faClock} color={color} size={size + 2} />
           ),
         }}
       />

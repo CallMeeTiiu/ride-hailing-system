@@ -125,13 +125,11 @@ export class RidesController {
       throw new BadRequestException('Báo giá không hợp lệ hoặc đã hết hạn')
     }
 
-    // TÌM ĐÚNG GIÁ TIỀN CỦA LOẠI XE MÀ KHÁCH HÀNG VỪA CHỌN
     const selectedVehicle = quoteData.options.find(opt => opt.vehicle_type === createRideDto.vehicle_type);
     if (!selectedVehicle) {
        throw new BadRequestException('Loại xe không hợp lệ');
     }
 
-    // 1. Create the Trip entity in PostgreSQL via TypeORM
     const newTrip = await this.ridesService.createTrip({
       customer_id: req.user.userId,
       vehicle_type: createRideDto.vehicle_type,
@@ -142,28 +140,31 @@ export class RidesController {
       dropoff_longitude: quoteData.dropoff_longitude,
       estimated_distance_m: quoteData.estimated_distance_m,
       estimated_duration_s: quoteData.estimated_duration_s,
-      estimated_fare: selectedVehicle.price, // Gắn đúng giá tiền vào Database
+      estimated_fare: selectedVehicle.price, 
+      
+      pickup_address: createRideDto.pickup_address,
+      dropoff_address: createRideDto.dropoff_address,
     })
 
-    // 2. Tìm các tài xế gần đó (bán kính 5km)
     const nearbyDrivers = await this.locationService.findNearbyDrivers(
       quoteData.pickup_latitude,
       quoteData.pickup_longitude,
-      5, // km
+      5,
     )
 
-    // 3. Gửi event WebSockets cho các tài xế trong mảng `nearbyDrivers`
     const requestPayload = {
       trip_id: newTrip.id,
       pickup: {
         lat: quoteData.pickup_latitude,
         lng: quoteData.pickup_longitude,
+        address: createRideDto.pickup_address,
       },
       dropoff: {
         lat: quoteData.dropoff_latitude,
         lng: quoteData.dropoff_longitude,
+        address: createRideDto.dropoff_address,
       },
-      estimated_fare: selectedVehicle.price, // Gắn đúng giá tiền bắn qua WebSocket
+      estimated_fare: selectedVehicle.price,
       vehicle_type: createRideDto.vehicle_type,
     }
 
@@ -171,7 +172,6 @@ export class RidesController {
       this.tripGateway.notifyDrivers(nearbyDrivers, requestPayload)
     }
 
-    // Gửi Push Notification cho tài xế qua Firebase
     for (const driverId of nearbyDrivers) {
       const driver = await this.usersService.findById(driverId)
       if (driver?.device_token) {
@@ -322,10 +322,12 @@ export class RidesController {
   @ApiOperation({ summary: 'Người dùng: Lấy lịch sử chuyến đi' })
   @ApiResponse({
     status: 200,
-    description: 'Danh sách lịch sử các chuyến đi',
-    type: [TripResponseDto],
+    description: 'Danh sách lịch sử các chuyến đi đầy đủ chi tiết',
   })
-  async getHistory(): Promise<TripResponseDto[]> {
-    return []
+  async getHistory(@Request() req): Promise<any[]> {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const userId = req.user.userId
+    const trips = await this.ridesService.getCustomerTripHistory(userId)
+    return trips
   }
 }

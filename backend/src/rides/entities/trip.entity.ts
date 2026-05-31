@@ -44,11 +44,17 @@ export class Trip {
   @Column({ type: 'decimal', precision: 10, scale: 6 })
   pickup_longitude: number
 
+  @Column({ type: 'text', nullable: true })
+  pickup_address: string
+
   @Column({ type: 'decimal', precision: 10, scale: 6 })
   dropoff_latitude: number
 
   @Column({ type: 'decimal', precision: 10, scale: 6 })
   dropoff_longitude: number
+
+  @Column({ type: 'text', nullable: true })
+  dropoff_address: string
 
   @Column({ type: 'int' })
   estimated_distance_m: number

@@ -151,7 +151,6 @@ const SelectCarScreen = () => {
       {/* --- BOTTOM SECTION --- */}
       <View style={[styles.bottomSection, { backgroundColor: colors.background }]}>
         
-        {/* Khung chứa 3 thông số (Pill) */}
         <View style={[styles.statsPill, { backgroundColor: colors.white }]}>
           {/* Distance */}
           <View style={styles.statItem}>
@@ -167,7 +166,7 @@ const SelectCarScreen = () => {
             </Text>
           </View>
           
-          {/* Costs (Cập nhật theo selectedVehicle) */}
+          {/* Costs  */}
           <View style={styles.statItem}>
             <FontAwesomeIcon icon={faWallet} size={16} color={colors.primary} />
             <Text style={[styles.statText, { color: colors.textTitle }]}>
@@ -176,7 +175,6 @@ const SelectCarScreen = () => {
           </View>
         </View>
 
-        {/* Nút Confirm với logic disabled gọn gàng nhờ nâng cấp lần trước */}
         <PrimaryButton
           title="Confirm"
           disabled={!selectedMethodId || isLoading}

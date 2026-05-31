@@ -125,8 +125,10 @@ const SelectCarScreen = () => {
         {/* --- DANH SÁCH CARDS --- */}
         <View style={styles.cardsContainer}>
           {isLoading ? (
+            // eslint-disable-next-line react-native/no-inline-styles
             <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 50 }} />
           ) : vehicles.length === 0 ? (
+            // eslint-disable-next-line react-native/no-inline-styles
             <Text style={{ textAlign: 'center', color: colors.textBody, marginTop: 20 }}>
               There are no available vehicles for this route at the moment. Please try again later.
             </Text>

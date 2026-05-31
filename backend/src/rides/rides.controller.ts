@@ -269,6 +269,19 @@ export class RidesController {
     }
   }
 
+  @Get('history')
+  @ApiOperation({ summary: 'Lấy lịch sử chuyến đi' })
+  @ApiResponse({
+    status: 200,
+    description: 'Danh sách lịch sử các chuyến đi đầy đủ chi tiết',
+  })
+  async getHistory(@Request() req): Promise<any[]> {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const userId = req.user.userId
+    const trips = await this.ridesService.getCustomerTripHistory(userId)
+    return trips
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Lấy chi tiết chuyến đi' })
   @ApiResponse({
@@ -316,18 +329,5 @@ export class RidesController {
       estimated_fare: 50000,
       driver_user_id: '2',
     }
-  }
-
-  @Get('history')
-  @ApiOperation({ summary: 'Người dùng: Lấy lịch sử chuyến đi' })
-  @ApiResponse({
-    status: 200,
-    description: 'Danh sách lịch sử các chuyến đi đầy đủ chi tiết',
-  })
-  async getHistory(@Request() req): Promise<any[]> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-    const userId = req.user.userId
-    const trips = await this.ridesService.getCustomerTripHistory(userId)
-    return trips
   }
 }

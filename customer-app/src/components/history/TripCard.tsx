@@ -9,11 +9,10 @@ export interface TripHistoryItem {
   id: string;
   status: 'COMPLETED' | 'CANCELLED' | 'PENDING' | 'IN_PROGRESS';
   estimated_fare: number;
-  driver_user_id?: string;
-
-  createdAt?: string; 
-  fromLocationName?: string;
-  destinationLocationName?: string;
+  created_at: string;
+  pickup_address: string;
+  dropoff_address: string;
+  driver?: any; 
 }
 
 interface TripCardProps {
@@ -28,21 +27,34 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPressRebook, onPressDetail 
   const getStatusDisplay = (status: string) => {
     switch (status) {
       case 'COMPLETED':
-        return { text: 'Hoàn thành', color: theme.stateColors.completed, bg: theme.COLORS.background}; 
+        return { text: 'Completed', color: theme.stateColors.completed, bg: theme.COLORS.background}; 
       case 'CANCELLED':
-        return { text: 'Đã hủy', color: theme.stateColors.cancelled, bg: theme.COLORS.background }; 
+        return { text: 'Cancelled', color: theme.stateColors.cancelled, bg: theme.COLORS.background }; 
       case 'IN_PROGRESS':
-        return { text: 'Đang di chuyển', color: theme.stateColors.inProgress, bg: theme.COLORS.background }; 
+        return { text: 'In Progress', color: theme.stateColors.inProgress, bg: theme.COLORS.background }; 
       default:
-        return { text: 'Đang xử lý', color: theme.stateColors.pending, bg: theme.COLORS.background }; 
+        return { text: 'Pending', color: theme.stateColors.pending, bg: theme.COLORS.background }; 
     }
   };
 
   const statusConfig = getStatusDisplay(trip.status);
 
   const formatPrice = (price: number) => {
-    return price.toLocaleString('eng-ENG', { style: 'currency', currency: '$' });
+    if (!price) return '$0';
+    
+    return "$" + Number(price)
+      .toString()
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
+
+  const formatDate = (dateString?: string) => {
+      if (!dateString) return 'Nearby';
+      const date = new Date(dateString);
+      return date.toLocaleString('eng-ENG', { 
+          day: '2-digit', month: '2-digit', year: 'numeric', 
+          hour: '2-digit', minute: '2-digit' 
+      });
+  }
 
   return (
     <TouchableOpacity 
@@ -52,7 +64,7 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPressRebook, onPressDetail 
     >
       <View style={styles.headerRow}>
         <Text style={[styles.timeText, { color: colors.textBody }]}>
-          {trip.createdAt || 'Today, 10:30 AM'}
+          {formatDate(trip.created_at)}
         </Text>
         <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
           <Text style={[styles.statusText, { color: statusConfig.color }]}>
@@ -65,19 +77,16 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPressRebook, onPressDetail 
 
       <View style={styles.locationContainer}>
         <View style={styles.locationRow}>
-          <FontAwesomeIcon icon={faMapMarkerAlt} size={16} color="#10B981" />
+          <FontAwesomeIcon icon={faMapMarkerAlt} size={16} color={theme.stateColors.cancelled} />
           <Text style={[styles.locationText, { color: colors.textTitle }]} numberOfLines={1}>
-            {trip.fromLocationName || 'University of Information Technology (UIT)'}
+            {trip.pickup_address || 'Pickup location - Empty'}
           </Text>
         </View>
-        
-        {/* Đường kẻ dọc nối 2 icon */}
         <View style={styles.verticalDashedLine} />
-
         <View style={styles.locationRow}>
-          <FontAwesomeIcon icon={faLocationDot} size={16} color={theme.COLORS.red} />
+          <FontAwesomeIcon icon={faLocationDot} size={16} color={theme.stateColors.completed} />
           <Text style={[styles.locationText, { color: colors.textTitle }]} numberOfLines={1}>
-            {trip.destinationLocationName || 'Destination not updated'}
+            {trip.dropoff_address || 'Drop-off location - Empty'}
           </Text>
         </View>
       </View>
@@ -93,8 +102,8 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPressRebook, onPressDetail 
             style={styles.rebookButton} 
             onPress={() => onPressRebook && onPressRebook(trip)}
           >
-            <FontAwesomeIcon icon={faRedoAlt} size={12} color={theme.COLORS.primary} />
-            <Text style={[styles.rebookText, { color: theme.COLORS.primary }]}>Rebook</Text>
+            <FontAwesomeIcon icon={faRedoAlt} size={12} color='white' />
+            <Text style={styles.rebookText}>Rebook</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -179,6 +188,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: theme.FONTS.bold,
     marginLeft: 5,
+    color: 'white',
   },
 });
 

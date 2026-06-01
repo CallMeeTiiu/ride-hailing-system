@@ -14,6 +14,6 @@ import { CustomersController } from '../customers/customers.controller'
   imports: [TypeOrmModule.forFeature([User, SavedPlace, CustomerProfile])],
   providers: [UsersService, AddressesService, CustomersService],
   controllers: [AddressesController, CustomersController, DevicesController],
-  exports: [UsersService, AddressesService, CustomersService],
+  exports: [UsersService, AddressesService, CustomersService, TypeOrmModule],
 })
 export class UsersModule {}

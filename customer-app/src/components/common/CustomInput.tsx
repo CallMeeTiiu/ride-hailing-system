@@ -16,9 +16,10 @@ interface CustomInputProps extends TextInputProps {
   label?: string;
   iconName?: any; 
   isPassword?: boolean;
+  errorText?: string;
 }
 
-const CustomInput: React.FC<CustomInputProps> = ({ label, iconName, isPassword = false, style, ...props }) => {
+const CustomInput: React.FC<CustomInputProps> = ({ label, iconName, isPassword = false, errorText, style, ...props }) => {
   const [isSecure, setIsSecure] = useState(isPassword);
   const { colors } = useTheme();
 
@@ -62,6 +63,8 @@ const CustomInput: React.FC<CustomInputProps> = ({ label, iconName, isPassword =
           </TouchableOpacity>
         )}
       </View>
+
+      {errorText ? <Text style={styles.errorText}>{errorText}</Text> : null}
     </View>
   );
 };
@@ -101,6 +104,13 @@ const styles = StyleSheet.create({
     padding: 5,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  errorText: {
+    color: theme.COLORS.red, 
+    fontSize: 12,
+    marginTop: 6,
+    marginLeft: 4,
+    fontFamily: theme.FONTS.regular,
   }
 });
 

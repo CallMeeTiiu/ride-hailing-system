@@ -36,6 +36,7 @@ export class TripGateway implements OnGatewayConnection, OnGatewayDisconnect {
       await client.join(`${payload.role.toLowerCase()}_${payload.sub}`)
       console.log(`Client connected: ${client.id} (User: ${payload.sub})`)
     } catch (err) {
+      console.log('❌ Lỗi xác thực Socket:', err.message);
       client.disconnect()
     }
   }

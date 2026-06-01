@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -7,15 +7,20 @@ import {
   TouchableOpacity, 
   Image,
   ScrollView,
-  Platform
+  Platform,
+  Alert
 } from 'react-native';
 import theme from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext'
-import { faEnvelope, faLock } from '@fortawesome/free-solid-svg-icons';
+import { useAuth } from '../../contexts/AuthContext';
+import { faPhone, faLock } from '@fortawesome/free-solid-svg-icons';
 
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../../App';
+
+import apiClient from '../../utils/apiClient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import CustomInput from '../../components/common/CustomInput';
 import PrimaryButton from '../../components/common/PrimaryButton';
@@ -23,10 +28,82 @@ import Hyperlink from '../../components/common/Hyperlink';
 
 const LoginScreen = () => {
   const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [password, setPassword] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
+  const { login } = useAuth();
 
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   const { colors } = useTheme();
+
+  useEffect(() => {
+    const loadRememberedCredentials = async () => {
+      try {
+        const savedPhone = await AsyncStorage.getItem('@remembered_phone');
+        const savedPassword = await AsyncStorage.getItem('@remembered_password');
+        
+        if (savedPhone && savedPassword) {
+          setPhoneNumber(savedPhone);
+          setPassword(savedPassword);
+          setRememberMe(true);
+        }
+      } catch (error) {
+        console.log('Error while loading remembered credentials:', error);
+      }
+    };
+    loadRememberedCredentials();
+  }, []);
+
+  const handleLogin = async () => {
+    setPhoneError('');
+    setPasswordError('');
+    let isValid = true;
+
+    if (!phoneNumber) {
+      setPhoneError('Please enter your phone number');
+      isValid = false;
+    }
+    if (!password) {
+      setPasswordError('Please enter your password');
+      isValid = false;
+    }
+
+    if (!isValid) return;
+    setIsLoading(true);
+
+    try {
+      const response = await apiClient.post('/auth/customer/login', {
+        phone_number: phoneNumber,
+        password: password
+      });
+
+      const { access_token, user } = response.data;
+
+      await login(access_token, user);
+
+      if (rememberMe) {
+        await AsyncStorage.setItem('@remembered_phone', phoneNumber);
+        await AsyncStorage.setItem('@remembered_password', password);
+      } else {
+        await AsyncStorage.removeItem('@remembered_phone');
+        await AsyncStorage.removeItem('@remembered_password');
+      }
+      
+    } catch (error: any) {
+      console.log('API Login Error:', error.response?.data || error);
+      Alert.alert(
+        "Đăng nhập thất bại",
+        error.response?.data?.message || "Số điện thoại hoặc mật khẩu không chính xác."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={[ styles.safeArea, {backgroundColor: colors.background} ]}>
@@ -44,19 +121,31 @@ const LoginScreen = () => {
           <Text style={styles.title}>Login to your{"\n"}Account</Text>
 
           {/* Form nhập liệu */}
-          <CustomInput 
-            label="Email"
-            iconName={faEnvelope}
-            placeholder="andrew_ainsley@yourdomain.com"
-            keyboardType="email-address"
+          <CustomInput
+            label="Phone Number"
+            iconName={faPhone}
+            placeholder="090xxxx123"
+            keyboardType="phone-pad"
+            value={phoneNumber}
+            onChangeText={(text) => {
+              setPhoneNumber(text);
+              if (phoneError) setPhoneError(''); 
+            }}
             autoCapitalize="none"
+            errorText={phoneError}
           />
 
-          <CustomInput 
+          <CustomInput
             label="Password"
             iconName={faLock}
             placeholder="••••••••••••"
             isPassword={true}
+            value={password}
+            onChangeText={(text) => {
+              setPassword(text);
+              if (passwordError) setPasswordError('');
+            }}
+            errorText={passwordError}
           />
 
           {/* Remember me & Forgot Password Row */}
@@ -74,9 +163,10 @@ const LoginScreen = () => {
           </View>
 
           {/* Nút Sign In */}
-          <PrimaryButton 
-            title="Sign in" 
-            onPress={() => navigation.replace('MainTabs')} 
+          <PrimaryButton
+            title="Sign in"
+            onPress={handleLogin}
+            isLoading={isLoading}
           />
 
           {/* Quên mật khẩu */}
@@ -92,7 +182,7 @@ const LoginScreen = () => {
             <View style={styles.dividerLine} />
           </View>
 
-          {/* Social Login (Đã bỏ Apple theo yêu cầu) */}
+          {/* Social Login */}
           <View style={styles.socialContainer}>
             <TouchableOpacity style={[ styles.socialSquareButton, {backgroundColor: colors.background} ]}>
               <Image 

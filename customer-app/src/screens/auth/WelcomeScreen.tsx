@@ -5,8 +5,8 @@ import {
   StyleSheet, 
   Image, 
   TouchableOpacity, 
-  SafeAreaView, 
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import theme from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -17,10 +17,38 @@ import { RootStackParamList } from '../../../App';
 import PrimaryButton from '../../components/common/PrimaryButton';
 import Hyperlink from '../../components/common/Hyperlink';
 
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import auth from '@react-native-firebase/auth';
+
+GoogleSignin.configure({
+  webClientId: '504462941265-g53eeqguu4t2774mv57cann02tl99ruf.apps.googleusercontent.com', 
+});
+
 const WelcomeScreen = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   const { colors } = useTheme();
+
+  const handleGoogleLogin = async () => {
+    try {
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      const response = await GoogleSignin.signIn();
+      const idToken = response.data?.idToken || (response as any).idToken;
+      if (!idToken) {
+        throw new Error('Cannot obtain idToken from Google Sign-In response');
+      }
+
+      const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+      const userCredential = await auth().signInWithCredential(googleCredential);
+      
+      console.log('🎉 Login with Google success:', userCredential.user);
+
+      navigation.replace('MainTabs');
+
+    } catch (error: any) {
+      console.log('🚨 Error while login with Google:', error);
+    }
+  };
 
   return (
     <SafeAreaView style={[ styles.container, {backgroundColor: colors.background} ]}>
@@ -45,7 +73,7 @@ const WelcomeScreen = () => {
         </TouchableOpacity>
 
         {/* Nút đăng nhập Google */}
-        <TouchableOpacity style={[ styles.socialButton, {backgroundColor: colors.inputBg} ]}>
+        <TouchableOpacity style={[ styles.socialButton, {backgroundColor: colors.inputBg} ]} onPress={handleGoogleLogin}>
           <Image 
             source={require('../../assets/images/google_icon.png')} 
             style={styles.socialIcon} 

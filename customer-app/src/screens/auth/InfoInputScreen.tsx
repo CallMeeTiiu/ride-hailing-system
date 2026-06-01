@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -6,10 +6,13 @@ import {
   SafeAreaView, 
   ScrollView, 
   TouchableOpacity,
-  Platform 
+  Platform, 
+  Alert
 } from 'react-native';
 import theme from '../../constants/theme';
-import { useTheme } from '../../contexts/ThemeContext' 
+import apiClient from '../../utils/apiClient';
+import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -20,21 +23,50 @@ import { useRoute, RouteProp } from '@react-navigation/native';
 import CustomInput from '../../components/common/CustomInput';
 import PrimaryButton from '../../components/common/PrimaryButton';
 
-import { faUser, faEnvelope, faPhone, faLocationDot } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faPhone, faLocationDot, faEnvelope } from '@fortawesome/free-solid-svg-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const InfoInputScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'InfoInput'>>();
   const receivedName = route.params?.userName || "Friend";
+  const receivedPhone = route.params?.phoneNumber || "";
+  const receivedPassword = route.params?.password || "";
 
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   const [formData, setFormData] = useState({
-    userName: receivedName, 
-    email: 'andrew_ainsley@yourdomain.com',
-    phoneNumber: '',
-    address: ''
+    userName: receivedName,
+    email: '', 
+    phoneNumber: receivedPhone, 
+    address: '',
+    lat: null as number | null, 
+    lng: null as number | null
   });
 
+  const { colors }= useTheme();
+  const { login } = useAuth();
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [addressError, setAddressError] = useState('');
+
+  useEffect(() => {
+    if (route.params?.selectedPlace) {
+      const { name, latitude, longitude } = route.params.selectedPlace;
+      
+      setFormData(prev => ({
+        ...prev,
+        address: name,
+        lat: latitude,
+        lng: longitude
+      }));
+      
+      if (addressError) setAddressError('');
+
+      navigation.setParams({ selectedPlace: undefined });
+    }
+  }, [route.params.selectedPlace, navigation, addressError]);
+  
   const handleInputChange = (key: string, value: string) => {
     setFormData({
       ...formData,
@@ -42,12 +74,64 @@ const InfoInputScreen = () => {
     });
   };
 
-  const handleConfirm = () => {
-    console.log("Data is ready to send to BackEnd:", formData);
-    navigation.replace('MainTabs')
-  };
+  const handleConfirm = async () => {
+    setEmailError('');
+    setAddressError('');
+    let isValid = true;
 
-  const { colors }= useTheme();
+    if (!formData.email) {
+      setEmailError('Please enter your email');
+      isValid = false;
+    } else if (!formData.email.includes('@')) {
+      setEmailError('Invalid email format (missing @)');
+      isValid = false;
+    }
+
+    if (!formData.address) {
+      setAddressError('Please enter your address');
+      isValid = false;
+    }
+
+    if (!isValid) return;
+    setIsLoading(true);
+
+    try {
+      const response = await apiClient.post('/auth/customer/register', {
+        username: formData.userName,       
+        phone_number: formData.phoneNumber, 
+        password: receivedPassword,        
+        email: formData.email,        
+      });
+
+      const { access_token, user } = response.data;
+      await AsyncStorage.setItem('access_token', access_token);
+
+      try {
+        await apiClient.post('/users/addresses', {
+          customer_user_id: user.id, 
+          label: 'Default Address',
+          address_text: formData.address,
+          latitude: formData.lat,
+          longitude: formData.lng,
+          icon: 'home'
+        });
+        console.log("Đã lưu địa chỉ mặc định lúc đăng ký!");
+      } catch (err) {
+        console.log("Lỗi lưu địa chỉ mặc định:", err);
+      }
+
+      await login(access_token, user);
+
+    } catch (error: any) {
+      console.log('API Register Error:', error.response?.data || error);
+      Alert.alert(
+        "Đăng ký thất bại",
+        error.response?.data?.message || "Không thể kết nối đến máy chủ hoặc số điện thoại đã tồn tại."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={[ styles.safeArea, {backgroundColor: colors.background} ]}>
@@ -69,6 +153,16 @@ const InfoInputScreen = () => {
           </Text>
 
           <CustomInput 
+            label="Phone Number"
+            iconName={faPhone}
+            value={formData.phoneNumber}
+            editable={false}
+            placeholder="+123456789"
+            keyboardType="phone-pad"
+            onChangeText={(text) => handleInputChange('phoneNumber', text)}
+          />
+
+          <CustomInput 
             label="User Name"
             iconName={faUser}
             value={formData.userName}
@@ -76,33 +170,49 @@ const InfoInputScreen = () => {
             onChangeText={(text) => handleInputChange('userName', text)}
           />
 
-          <CustomInput 
+          <CustomInput
             label="Email"
             iconName={faEnvelope}
             value={formData.email}
             placeholder="Enter your email"
             keyboardType="email-address"
-            onChangeText={(text) => handleInputChange('email', text)}
+            onChangeText={(text) => {
+              handleInputChange('email', text);
+              if (emailError) setEmailError('');
+            }}
+            errorText={emailError} 
           />
 
-          <CustomInput 
-            label="Phone Number"
-            iconName={faPhone}
-            placeholder="+123456789"
-            keyboardType="phone-pad"
-            onChangeText={(text) => handleInputChange('phoneNumber', text)}
-          />
-
-          <CustomInput 
-            label="Address"
-            iconName={faLocationDot}
-            placeholder="1A Queen, New York, USA"
-            onChangeText={(text) => handleInputChange('address', text)}
-          />
+          <TouchableOpacity 
+          activeOpacity={0.8} 
+          onPress={() => navigation.navigate('Search', { 
+            onSelect: (place: any) => {
+              setFormData(prev => ({
+                ...prev,
+                address: place.name,
+                lat: place.latitude,
+                lng: place.longitude
+              }));
+              if (addressError) setAddressError('');
+            } 
+          })}
+        >
+          <View pointerEvents="none">
+            <CustomInput
+              label="Address"
+              iconName={faLocationDot}
+              placeholder="Tap to search your default address..."
+              value={formData.address}
+              onChangeText={() => {}}
+              errorText={addressError}
+            />
+          </View>
+        </TouchableOpacity>
 
           <PrimaryButton 
             title="Confirm" 
             onPress={handleConfirm}
+            isLoading={isLoading}
             style={styles.confirmButton}
           />
         </View>

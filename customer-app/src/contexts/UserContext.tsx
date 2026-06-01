@@ -1,50 +1,44 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import { useAuth } from './AuthContext'; 
 
-export interface AddressItem {
-  id: string;
-  title: string;    
-  address: string;
-  isDefault?: boolean;
-}
-
-export interface UserData {
+export interface UserProfile {
   name: string;
-  phoneNumber: string;
-  avatar: string;
   email: string;
-  dob?: string;     
-  gender?: string;
-  addresses: AddressItem[];
+  avatar: string;
+  address?: string;
 }
 
-interface UserContextProps {
-  user: UserData | null;
-  setUser: (user: UserData | null) => void;
-  updateUser: (data: Partial<UserData>) => void;
+interface UserContextType {
+  profile: UserProfile | null;
+  updateProfile: (newData: Partial<UserProfile>) => Promise<void>;
 }
 
-const UserContext = createContext<UserContextProps | undefined>(undefined);
+const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserData | null>({
-    name: "Andrew Ainsley",
-    phoneNumber: "+1 111 467 378 399",
-    avatar: "https://i.pravatar.cc/150?u=andrew",
-    email: "andrew_ainsley@yourdomain.com",
-    dob: "12/27/1995",
-    gender: "Male",
-    addresses: [
-      { id: '1', title: 'Home', address: '1A Queen, New York, USA', isDefault: true },
-      { id: '2', title: 'Office', address: '100 King St, New York, USA' }
-    ]
-  });
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  
+  const { isAuthenticated, user } = useAuth();
 
-  const updateUser = (data: Partial<UserData>) => {
-    setUser(prev => prev ? { ...prev, ...data } : null);
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setProfile({
+        name: "Khanh",
+        email: "khanh@gmail.com",
+        avatar: "https://i.pravatar.cc/150",
+        address: "Hồ Chí Minh, Việt Nam"
+      });
+    } else {
+      setProfile(null);
+    }
+  }, [isAuthenticated, user]);
+
+  const updateProfile = async (newData: Partial<UserProfile>) => {
+    setProfile(prev => prev ? { ...prev, ...newData } : null);
   };
 
   return (
-    <UserContext.Provider value={{ user, setUser, updateUser }}>
+    <UserContext.Provider value={{ profile, updateProfile }}>
       {children}
     </UserContext.Provider>
   );

@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from './AuthContext';
+import apiClient from '../utils/apiClient';
 
 export interface SavedAddress {
   id: string;
@@ -21,58 +22,84 @@ const AddressContext = createContext<AddressContextType | undefined>(undefined);
 
 export const AddressProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false); 
+  const { isAuthenticated, user } = useAuth();
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const storedData = await AsyncStorage.getItem('@saved_addresses');
-        if (storedData) {
-          setAddresses(JSON.parse(storedData));
-        } else {
-          setAddresses([
-            { id: 'home', name: 'Home', details: 'Tap to add your home address', lat: null, lng: null, icon: 'home' },
-            { id: 'work', name: 'Office', details: 'Tap to add your work address', lat: null, lng: null, icon: 'briefcase' }
-          ]);
-        }
-      } catch (error) {
-        console.log('Error while loading addresses:', error);
-      } finally {
-        setIsLoaded(true); 
-      }
-    };
-    loadData();
-  }, []);
+  const mapToFrontend = (item: any): SavedAddress => ({
+    id: item.id?.toString(),
+    name: item.label,
+    details: item.address_text,
+    lat: Number(item.latitude),
+    lng: Number(item.longitude),
+    icon: item.icon,
+  });
 
-  // 3. Tự động lưu dữ liệu khi mảng addresses thay đổi
-  useEffect(() => {
-    if (!isLoaded) return; // Không lưu nếu chưa load xong data cũ
+  const mapToBackend = (address: Partial<SavedAddress>) => ({
+    customer_user_id: user?.id, 
+    label: address.name,
+    address_text: address.details,
+    latitude: address.lat,
+    longitude: address.lng,
+    icon: address.icon,
+  });
 
-    const saveData = async () => {
-      try {
-        await AsyncStorage.setItem('@saved_addresses', JSON.stringify(addresses));
-      } catch (error) {
-        console.log('Error while saving addresses:', error);
-      }
-    };
-    saveData();
-  }, [addresses, isLoaded]);
-
-  // 4. Các hàm thao tác dữ liệu (CRUD)
-  const addAddress = (address: SavedAddress) => {
-    setAddresses((prev) => [...prev, address]);
+  const fetchAddresses = async () => {
+    if (!user?.id) return;
+    try {
+      const response = await apiClient.get('/users/addresses', {
+        params: { customer_user_id: user.id }
+      });
+      
+      const dataArray = Array.isArray(response.data) ? response.data : response.data?.data || [];
+      setAddresses(dataArray.map(mapToFrontend)); 
+    } catch (error: any) {
+      console.log('Lỗi fetch array: ', error.response?.data || error);
+    }
   };
 
-  const updateAddress = (id: string, updatedData: Partial<SavedAddress>) => {
-    setAddresses((prev) =>
-      prev.map((addr) =>
-        addr.id === id ? { ...addr, ...updatedData } : addr
-      )
-    );
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      fetchAddresses();
+    } else {
+      setAddresses([]); 
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user?.id]);
+
+  const addAddress = async (address: SavedAddress) => {
+    try {
+      const payload = mapToBackend(address);
+      await apiClient.post('/users/addresses', payload);
+
+      await fetchAddresses();
+    } catch (error) {
+      console.log('Error adding address:', error);
+    }
   };
 
-  const removeAddress = (id: string) => {
-    setAddresses((prev) => prev.filter((addr) => addr.id !== id));
+  const updateAddress = async (id: string, updatedData: Partial<SavedAddress>) => {
+    try {
+      const payload: any = {};
+      if (updatedData.name !== undefined) payload.label = updatedData.name;
+      if (updatedData.details !== undefined) payload.address_text = updatedData.details;
+      if (updatedData.lat !== undefined) payload.latitude = updatedData.lat;
+      if (updatedData.lng !== undefined) payload.longitude = updatedData.lng;
+      if (updatedData.icon !== undefined) payload.icon = updatedData.icon;
+
+      await apiClient.put(`/users/addresses/${id}`, payload);
+      await fetchAddresses();
+    } catch (error) {
+      console.log('Error updating address:', error);
+    }
+  };
+
+  const removeAddress = async (id: string) => {
+    try {
+      setAddresses((prev) => prev.filter((addr) => addr.id !== id));
+      await apiClient.delete(`/users/addresses/${id}`);
+      await fetchAddresses();
+    } catch (error) {
+      console.log('Error removing address:', error);
+    }
   };
 
   return (

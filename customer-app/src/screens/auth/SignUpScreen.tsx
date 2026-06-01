@@ -19,17 +19,47 @@ import CustomInput from '../../components/common/CustomInput';
 import PrimaryButton from '../../components/common/PrimaryButton';
 import Hyperlink from '../../components/common/Hyperlink';
 
-import { faUser, faEnvelope, faLock } from '@fortawesome/free-solid-svg-icons'; 
+import { faUser, faPhone, faLock } from '@fortawesome/free-solid-svg-icons'; 
 
 const SignupScreen = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-  const [userName, setUserName] = React.useState('');
 
-  const handleCreateAccount = () => {
-    navigation.navigate('InfoInput', { userName: userName });
-  };
+  const [userName, setUserName] = React.useState('');
+  const [phoneNumber, setPhoneNumber] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [confirmPassword, setConfirmPassword] = React.useState('');
+  const [nameError, setNameError] = React.useState('');
+  const [phoneError, setPhoneError] = React.useState('');
+  const [passwordError, setPasswordError] = React.useState('');
+  const [confirmError, setConfirmError] = React.useState('');
 
   const { colors } = useTheme();
+
+  const handleSignUp = () => {
+    setNameError('');
+    setPhoneError('');
+    setPasswordError('');
+    setConfirmError('');
+    
+    let isValid = true;
+
+    if (!userName) { setNameError('Please enter your name'); isValid = false; }
+    if (!phoneNumber) { setPhoneError('Please enter your phone number'); isValid = false; }
+    if (!password) { setPasswordError('Please enter your password'); isValid = false; }
+
+    if (password !== confirmPassword) {
+      setConfirmError('Confirm password does not match!');
+      isValid = false;
+    }
+
+    if (!isValid) return;
+
+    navigation.navigate('InfoInput', { 
+      userName: userName,
+      phoneNumber: phoneNumber,
+      password: password
+    });
+  }
 
   return (
     <SafeAreaView style={[ styles.safeArea, {backgroundColor: colors.background} ]}>
@@ -47,43 +77,65 @@ const SignupScreen = () => {
           <Text style={styles.title}>Create your{"\n"}Account</Text>
 
           {/* Form nhập liệu */}
-          <CustomInput 
+          <CustomInput
             label="User Name"
-            iconName={faUser} 
-            onChangeText={(text) => setUserName(text)}
-            placeholder="andrew_ainsley"
+            iconName={faUser}
+            placeholder="yourname"
             autoCapitalize="none"
+            value={userName}
+            onChangeText={(text) => {
+              setUserName(text);
+              if (nameError) setNameError('');
+            }}
+            errorText={nameError}
           />
 
-          <CustomInput 
-            label="Email"
-            iconName={faEnvelope} 
-            placeholder="andrew_ainsley@yourdomain.com"
-            keyboardType="email-address"
-            autoCapitalize="none"
+          <CustomInput
+            label="Phone Number"
+            iconName={faPhone}
+            placeholder="090xxxx123"
+            keyboardType="phone-pad"
+            value={phoneNumber}
+            onChangeText={(text) => {
+              setPhoneNumber(text);
+              if (phoneError) setPhoneError('');
+            }}
+            errorText={phoneError}
           />
 
-          <CustomInput 
+          <CustomInput
             label="Password"
-            iconName={faLock} 
+            iconName={faLock}
             placeholder="••••••••••••"
             isPassword={true}
+            value={password}
+            onChangeText={(text) => {
+              setPassword(text);
+              if (passwordError) setPasswordError('');
+            }}
+            errorText={passwordError}
           />
 
-          <CustomInput 
+          <CustomInput
             label="Confirm Password"
-            iconName={faLock} 
+            iconName={faLock}
             placeholder="••••••••••••"
             isPassword={true}
+            value={confirmPassword}
+            onChangeText={(text) => {
+              setConfirmPassword(text);
+              if (confirmError) setConfirmError('');
+            }}
+            errorText={confirmError}
           />
 
           {/* Nút Đăng ký */}
-          <PrimaryButton 
-            title="Create" 
-            onPress={handleCreateAccount} 
-            // eslint-disable-next-line react-native/no-inline-styles
-            style={{ marginTop: 15 }}
-          />
+          <PrimaryButton
+          title="Create"
+          onPress={handleSignUp}
+          // eslint-disable-next-line react-native/no-inline-styles
+          style={{ marginTop: 15 }}
+        />
 
           {/* Footer chuyển về Login */}
           <View style={styles.footerContainer}>

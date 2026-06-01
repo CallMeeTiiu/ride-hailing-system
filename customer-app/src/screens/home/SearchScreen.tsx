@@ -106,11 +106,16 @@ const SearchScreen = () => {
     const cleanItem = { ...selectedItem, distance: '' };
     addRecentLocation(cleanItem); 
 
-    const currentParams = route.params as any;
+    if (route.params?.onSelect) {
+      route.params.onSelect(cleanItem); 
+      navigation.goBack();              
+      return;
+    }
 
+    const currentParams = route.params as any;
     if (currentParams?.mode === 'address_search') {
       (navigation as any).navigate({
-        name: 'EditAddressScreen',
+        name: 'EditAddress',
         params: { selectedPlace: cleanItem },
         merge: true, 
       });
@@ -204,141 +209,141 @@ const SearchScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top + 10, paddingBottom: insets.bottom + 10 }]}>
-          <View style={[styles.header]}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-              <FontAwesomeIcon icon={faArrowLeft} size={20} color={colors.textTitle} />
-            </TouchableOpacity>
-            <Text style={[styles.headerTitle, { color: colors.textTitle }]}>Select Destination</Text>
+      <View style={[styles.header]}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <FontAwesomeIcon icon={faArrowLeft} size={20} color={colors.textTitle} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: colors.textTitle }]}>Select Destination</Text>
+        {/*eslint-disable-next-line react-native/no-inline-styles*/}
+        <View style={{ width: 20 }} /> 
+      </View>
+
+      <View style={styles.inputContainer}>
+        <View style={[
+            styles.searchBox, 
+            // eslint-disable-next-line react-native/no-inline-styles
+            { 
+                backgroundColor: isFocused ? colors.backgroundLight : colors.inputBg,
+                borderColor: isFocused ? theme.COLORS.primary : 'transparent',
+            }]}>
+          <FontAwesomeIcon icon={faMagnifyingGlass} size={18} color={theme.COLORS.primary} style={styles.inputIcon} />
+          <TextInput
+            style={[styles.input, { color: colors.textTitle }]}
+            placeholder="Where would you go?"
+            placeholderTextColor={colors.textBody}
+            autoFocus={true}
+            value={searchText}
+            onChangeText={setSearchText} 
+            onFocus={() => setIsFocused(true)} 
+            onBlur={() => setIsFocused(false)} 
+          />
+        </View>
+      </View>
+
+      <View style={styles.sectionHeaderRow}>
+        {searchText.length > 0 ? (
+          <Text style={[styles.sectionTitle, { color: colors.textTitle }]}>
             {/*eslint-disable-next-line react-native/no-inline-styles*/}
-            <View style={{ width: 20 }} /> 
-          </View>
+            Result for <Text style={{ color: theme.COLORS.primary, fontWeight: 'bold' }}>"{searchText}"</Text>
+          </Text>
+        ) : (
+          <Text style={[styles.sectionTitle, { color: colors.textBody }]}>
+            {recentLocations.length > 0 ? "Recent Places" : "Suggested Places"}
+          </Text>
+        )}
 
-          <View style={styles.inputContainer}>
-            <View style={[
-                styles.searchBox, 
-                // eslint-disable-next-line react-native/no-inline-styles
-                { 
-                    backgroundColor: isFocused ? colors.backgroundLight : colors.inputBg,
-                    borderColor: isFocused ? theme.COLORS.primary : 'transparent',
-                }]}>
-              <FontAwesomeIcon icon={faMagnifyingGlass} size={18} color={theme.COLORS.primary} style={styles.inputIcon} />
-              <TextInput
-                style={[styles.input, { color: colors.textTitle }]}
-                placeholder="Where would you go?"
-                placeholderTextColor={colors.textBody}
-                autoFocus={true}
-                value={searchText}
-                onChangeText={setSearchText} 
-                onFocus={() => setIsFocused(true)} 
-                onBlur={() => setIsFocused(false)} 
-              />
-            </View>
-          </View>
+        {searchText.length > 0 ? (
+          isLoading ? (
+            <ActivityIndicator size="small" color={theme.COLORS.primary} />
+          ) : (
+            <Text style={[styles.resultCount, { color: theme.COLORS.primary }]}>
+              {displayData.length} {displayData.length > 1 ? "founds" : "found"}
+            </Text>
+          )
+        ) : ("")}
+      </View>
 
-          <View style={styles.sectionHeaderRow}>
-            {searchText.length > 0 ? (
-              <Text style={[styles.sectionTitle, { color: colors.textTitle }]}>
-                {/*eslint-disable-next-line react-native/no-inline-styles*/}
-                Result for <Text style={{ color: theme.COLORS.primary, fontWeight: 'bold' }}>"{searchText}"</Text>
-              </Text>
-            ) : (
-              <Text style={[styles.sectionTitle, { color: colors.textBody }]}>
-                {recentLocations.length > 0 ? "Recent Places" : "Suggested Places"}
-              </Text>
-            )}
+      <ScrollView 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={styles.listContainer}
+        style={styles.container}>
 
-            {searchText.length > 0 ? (
-              isLoading ? (
-                <ActivityIndicator size="small" color={theme.COLORS.primary} />
-              ) : (
-                <Text style={[styles.resultCount, { color: theme.COLORS.primary }]}>
-                  {displayData.length} {displayData.length > 1 ? "founds" : "found"}
-                </Text>
-              )
-            ) : ("")}
-          </View>
-
-          <ScrollView 
-            showsVerticalScrollIndicator={false} 
-            contentContainerStyle={styles.listContainer}
-            style={styles.container}>
-
-            {displayData.map((item) => (
-              <SwipeableItem 
+        {displayData.map((item) => (
+          <SwipeableItem 
+            key={item.id} 
+            item={item} 
+            onDelete={handleDeleteRecent} 
+            swipeEnabled={!isSearching}
+          >
+            <TouchableOpacity 
                 key={item.id} 
-                item={item} 
-                onDelete={handleDeleteRecent} 
-                swipeEnabled={!isSearching}
-              >
-                <TouchableOpacity 
-                    key={item.id} 
-                    activeOpacity={1} 
-                    style={[styles.locationItem, { borderBottomColor: colors.border, backgroundColor: colors.background }]}
-                    onPress={() => handleSelectLocation(item)}
-                >
-                    {isSearching || isSuggesting? (
-                    <View style={[styles.outerCircle, {backgroundColor: colors.backgroundLight}]}>
-                        <View style={styles.innerCircle}>
-                        <FontAwesomeIcon icon={faMapMarkerAlt} size={14} color={colors.textTitle} />
-                        </View>
+                activeOpacity={1} 
+                style={[styles.locationItem, { borderBottomColor: colors.border, backgroundColor: colors.background }]}
+                onPress={() => handleSelectLocation(item)}
+            >
+                {isSearching || isSuggesting? (
+                <View style={[styles.outerCircle, {backgroundColor: colors.backgroundLight}]}>
+                    <View style={styles.innerCircle}>
+                    <FontAwesomeIcon icon={faMapMarkerAlt} size={14} color={colors.textTitle} />
                     </View>
-                    ) : (
-                    <View style={styles.iconCircle}>
-                        <FontAwesomeIcon icon={faClock} size={16} color={colors.textBody} />
-                    </View>
-                    )}
+                </View>
+                ) : (
+                <View style={styles.iconCircle}>
+                    <FontAwesomeIcon icon={faClock} size={16} color={colors.textBody} />
+                </View>
+                )}
 
-                    <View style={styles.locationTextContainer}>
-                    <Text style={[styles.locationName, { color: colors.textTitle }]}>{item.name}</Text>
-                    <Text style={[styles.locationAddress, { color: colors.textBody }]} numberOfLines={1}>
-                        {item.address}
-                    </Text>
-                    </View>
-
-                    <Text style={[styles.locationDistance, { color: colors.textTitle }]}>{item.distance}</Text>
-                </TouchableOpacity>
-              </SwipeableItem>
-            ))}
-
-            {displayData.length === 0 && (
-              <View style={styles.notFoundContainer}>
-                <Image 
-                  source={require('../../assets/images/no_locations_found.png')} 
-                  style={styles.notFoundImage}
-                  resizeMode="contain"
-                />
-                <Text style={[styles.notFoundTitle, { color: colors.textTitle }]}>Not Found</Text>
-                <Text style={[styles.notFoundText, { color: colors.textBody }]}>
-                  Sorry, the keyword you entered cannot be found, please check again or search with another keyword.
+                <View style={styles.locationTextContainer}>
+                <Text style={[styles.locationName, { color: colors.textTitle }]}>{item.name}</Text>
+                <Text style={[styles.locationAddress, { color: colors.textBody }]} numberOfLines={1}>
+                    {item.address}
                 </Text>
-              </View>
-            )}
-          </ScrollView>
+                </View>
 
-          {/* KHỐI NÚT BẤM DÀNH RIÊNG CHO SEARCH ĐỘC LẬP */}
-          {(!searchType && standaloneLocation) && (
-            <View style={styles.actionButtonsWrapper}>
-              <TouchableOpacity 
-                style={[styles.actionButton, { backgroundColor: theme.COLORS.primary }]}
-                onPress={() => {
-                  setFromLocation(standaloneLocation);
-                  navigation.goBack();
-                }}
-              >
-                <Text style={styles.actionButtonText}>Set as Pick Up</Text>
-              </TouchableOpacity>
+                <Text style={[styles.locationDistance, { color: colors.textTitle }]}>{item.distance}</Text>
+            </TouchableOpacity>
+          </SwipeableItem>
+        ))}
 
-              <TouchableOpacity 
-                style={[styles.actionButton, { backgroundColor: theme.COLORS.iconDisable }]}
-                onPress={() => {
-                  setDestinationLocation(standaloneLocation);
-                  navigation.goBack();
-                }}
-              >
-                <Text style={styles.actionButtonText}>Set as Destination</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+        {displayData.length === 0 && (
+          <View style={styles.notFoundContainer}>
+            <Image 
+              source={require('../../assets/images/no_locations_found.png')} 
+              style={styles.notFoundImage}
+              resizeMode="contain"
+            />
+            <Text style={[styles.notFoundTitle, { color: colors.textTitle }]}>Not Found</Text>
+            <Text style={[styles.notFoundText, { color: colors.textBody }]}>
+              Sorry, the keyword you entered cannot be found, please check again or search with another keyword.
+            </Text>
+          </View>
+        )}
+      </ScrollView>
+
+      {/* KHỐI NÚT BẤM DÀNH RIÊNG CHO SEARCH ĐỘC LẬP */}
+      {(!searchType && standaloneLocation) && (
+        <View style={styles.actionButtonsWrapper}>
+          <TouchableOpacity 
+            style={[styles.actionButton, { backgroundColor: theme.COLORS.primary }]}
+            onPress={() => {
+              setFromLocation(standaloneLocation);
+              navigation.goBack();
+            }}
+          >
+            <Text style={styles.actionButtonText}>Set as Pick Up</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.actionButton, { backgroundColor: theme.COLORS.iconDisable }]}
+            onPress={() => {
+              setDestinationLocation(standaloneLocation);
+              navigation.goBack();
+            }}
+          >
+            <Text style={styles.actionButtonText}>Set as Destination</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
@@ -365,13 +370,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20, 
     paddingVertical: 15 
   },
-  handleBar: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#E0E0E0',
-    marginBottom: 15,
-  },
   headerRow: {
     flexDirection: 'row',
     width: '100%',
@@ -384,9 +382,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: theme.FONTS.bold,
     fontSize: 18,
-  },
-  spacer: {
-    width: 20,
   },
   inputContainer: {
     paddingHorizontal: theme.SIZES.padding,

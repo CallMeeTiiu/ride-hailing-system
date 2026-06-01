@@ -9,6 +9,7 @@ import { Payment } from '../payments/entities/payment.entity'
 import { PricingService } from '../google/pricing.service'
 import { User } from '../users/entities/user.entity'
 import { In } from 'typeorm'
+import { BadRequestException, NotFoundException } from '@nestjs/common'
 
 @Injectable()
 export class RidesService {
@@ -41,11 +42,47 @@ export class RidesService {
     })
   }
 
+  private readonly VALID_STATUS_TRANSITIONS: Record<TripStatus, TripStatus[]> =
+    {
+      [TripStatus.PENDING]: [
+        TripStatus.ACCEPTED,
+        TripStatus.CANCELLED_BY_CUSTOMER,
+        TripStatus.CANCELLED_BY_DRIVER,
+      ],
+      [TripStatus.ACCEPTED]: [
+        TripStatus.ARRIVED,
+        TripStatus.CANCELLED_BY_CUSTOMER,
+        TripStatus.CANCELLED_BY_DRIVER,
+      ],
+      [TripStatus.ARRIVED]: [
+        TripStatus.IN_PROGRESS,
+        TripStatus.CANCELLED_BY_CUSTOMER,
+        TripStatus.CANCELLED_BY_DRIVER,
+      ],
+      [TripStatus.IN_PROGRESS]: [TripStatus.COMPLETED],
+      [TripStatus.COMPLETED]: [],
+      [TripStatus.CANCELLED_BY_CUSTOMER]: [],
+      [TripStatus.CANCELLED_BY_DRIVER]: [],
+    }
+
   async updateTripStatus(
     id: string,
     status: TripStatus,
     driverId?: string,
   ): Promise<Trip | null> {
+    const currentTrip = await this.findTripById(id)
+    if (!currentTrip) {
+      throw new NotFoundException('Trip not found')
+    }
+
+    const currentStatus = currentTrip.status
+    const allowedNextStates = this.VALID_STATUS_TRANSITIONS[currentStatus]
+    if (!allowedNextStates || !allowedNextStates.includes(status)) {
+      throw new BadRequestException(
+        `Invalid status transition: Cannot change from ${currentStatus} to ${status}.`,
+      )
+    }
+
     const updateData: Partial<Trip> = { status }
     if (driverId) {
       updateData.driver_id = driverId

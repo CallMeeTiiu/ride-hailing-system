@@ -3,10 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { 
-  faArrowLeft, faCrosshairs, faLocationDot, 
-  faUser, faStar, faMoneyBill, faCalendarAlt, faCar 
-} from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faUser, faStar, faMoneyBill, faCalendarAlt, faCar, faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import apiClient from '../../utils/apiClient';
 import theme from '../../constants/theme';
@@ -129,6 +126,7 @@ const TripDetailScreen = () => {
           <FontAwesomeIcon icon={faArrowLeft} size={20} color={colors.textTitle} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.textTitle }]}>Trip Details</Text>
+        { /* eslint-disable-next-line react-native/no-inline-styles */ }
         <View style={{ width: 40 }} /> 
       </View>
 
@@ -173,13 +171,9 @@ const TripDetailScreen = () => {
           <Text style={[styles.sectionTitle, { color: colors.textTitle }]}>Route</Text>
           <View style={styles.routeContainer}>
             <View style={styles.iconColumn}>
-              <View style={[styles.outerCircle, { backgroundColor: colors.backgroundLight }]}>
-                <FontAwesomeIcon icon={faCrosshairs} size={14} color="black" />
-              </View>
+              <FontAwesomeIcon icon={faMapMarkerAlt} size={16} color={theme.stateColors.cancelled} />
               <View style={[styles.dashedLine, { borderColor: colors.textBody }]} />
-              <View style={[styles.outerCircle, { backgroundColor: colors.backgroundLight }]}>
-                <FontAwesomeIcon icon={faLocationDot} size={14} color="black" />
-              </View>
+              <FontAwesomeIcon icon={faMapMarkerAlt} size={16} color={theme.stateColors.completed} />
             </View>
 
             <View style={styles.addressColumn}>
@@ -204,8 +198,8 @@ const TripDetailScreen = () => {
           
           <View style={styles.receiptRow}>
             <View style={styles.receiptLabelGroup}>
-              <FontAwesomeIcon icon={faMoneyBill} size={16} color={colors.textBody} />
-              <Text style={[styles.receiptLabel, { color: colors.textBody }]}>Fare</Text>
+              <FontAwesomeIcon icon={faMoneyBill} size={16} color={theme.COLORS.primary} />
+              <Text style={styles.receiptLabel}>Fare</Text>
             </View>
             <Text style={[styles.receiptValue, { color: colors.textTitle }]}>
               {formatPrice(trip.estimated_fare)}
@@ -214,8 +208,8 @@ const TripDetailScreen = () => {
 
           <View style={styles.receiptRow}>
             <View style={styles.receiptLabelGroup}>
-              <FontAwesomeIcon icon={faCalendarAlt} size={16} color={colors.textBody} />
-              <Text style={[styles.receiptLabel, { color: colors.textBody }]}>Booking Time</Text>
+              <FontAwesomeIcon icon={faCalendarAlt} size={16} color={theme.COLORS.primary} />
+              <Text style={styles.receiptLabel}>Booking Time</Text>
             </View>
             <Text style={[styles.receiptValue, { color: colors.textTitle }]}>
               {formatDate(trip.created_at)}
@@ -224,8 +218,8 @@ const TripDetailScreen = () => {
 
           <View style={styles.receiptRow}>
             <View style={styles.receiptLabelGroup}>
-              <FontAwesomeIcon icon={faCar} size={16} color={colors.textBody} />
-              <Text style={[styles.receiptLabel, { color: colors.textBody }]}>Payment Method</Text>
+              <FontAwesomeIcon icon={faCar} size={16} color={theme.COLORS.primary} />
+              <Text style={styles.receiptLabel}>Payment Method</Text>
             </View>
             <Text style={[styles.receiptValue, { color: colors.textTitle }]}>
               {trip.payment_method === 'CASH' ? 'Cash' : trip.payment_method}
@@ -371,7 +365,8 @@ const styles = StyleSheet.create({
   iconColumn: { 
     alignItems: 'center', 
     width: 30, 
-    marginRight: 10 
+    marginRight: 10,
+    paddingVertical: 10,
   },
   outerCircle: { 
     width: 24, 
@@ -388,11 +383,11 @@ const styles = StyleSheet.create({
   },
   addressColumn: { 
     flex: 1, 
-    justifyContent: 'space-between' 
+    justifyContent: 'space-between',
   },
   addressItem: { 
     minHeight: 40, 
-    justifyContent: 'center' 
+    justifyContent: 'center',
   },
   addressText: { 
     fontSize: 14, 
@@ -410,11 +405,12 @@ const styles = StyleSheet.create({
   receiptLabelGroup: { 
     flexDirection: 'row', 
     alignItems: 'center',
-    width: 120 
+    width: 140 
   },
   receiptLabel: { 
     marginLeft: 10, 
-    fontSize: 14 
+    fontSize: 14,
+    color: theme.COLORS.primary,
   },
   receiptValue: { 
     fontSize: 15, 

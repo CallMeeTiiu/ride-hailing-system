@@ -26,6 +26,8 @@ const SearchingDriverScreen = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   const route = useRoute<RouteProp<RootStackParamList, 'SearchingDriver'>>();
+  const isRecovery = route.params?.isRecovery;
+  const recoveredTripId = route.params?.tripId;
   const { selectedVehicleId, fare_quote_id } = route.params || {};
 
   const [tripId, setTripId] = useState<string | null>(null);
@@ -41,6 +43,12 @@ const SearchingDriverScreen = () => {
   }, [fromLocation]);
 
   useEffect(() => {
+    if (isRecovery && recoveredTripId) {
+      console.log("Phục hồi chuyến đi, không tạo cuốc mới!");
+      setTripId(recoveredTripId);
+      return;
+    }
+
     const createRideRequest = async () => {
       try {
         if (!fare_quote_id || !selectedVehicleId) {
@@ -68,17 +76,17 @@ const SearchingDriverScreen = () => {
         Alert.alert('Lỗi', 'Không thể tạo chuyến đi lúc này.');
         navigation.goBack();
       }
-    };
+    };  
 
     createRideRequest();
-  }, [destinationLocation?.address, destinationLocation?.latitude, destinationLocation?.longitude, destinationLocation?.name, fare_quote_id, fromLocation?.address, fromLocation?.latitude, fromLocation?.longitude, fromLocation?.name, navigation, selectedVehicleId]);
+  }, [destinationLocation?.address, destinationLocation?.latitude, destinationLocation?.longitude, destinationLocation?.name, fare_quote_id, fromLocation?.address, fromLocation?.latitude, fromLocation?.longitude, fromLocation?.name, isRecovery, navigation, recoveredTripId, selectedVehicleId]);
 
   useEffect(() => {
     if (!tripId) return;
 
     const setupSocket = async () => {
       const token = await AsyncStorage.getItem('access_token'); 
-      const SOCKET_URL = 'http://localhost:3000'; // Chú ý: Đổi URL này theo BASE_URL
+      const SOCKET_URL = 'http://localhost:3000'; 
 
       const socket = io(SOCKET_URL, {
         auth: { token: token }, 

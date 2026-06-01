@@ -31,6 +31,7 @@ import EditAddressScreen from './src/screens/profile/EditAddressScreen';
 import AddressListScreen from './src/screens/profile/AddressListScreen';
 import HistoryScreen from './src/screens/history/HistoryScreen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import TripDetailScreen from './src/screens/history/TripDetailScreen';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -43,6 +44,7 @@ export type RootStackParamList = {
     selectedPlace?: any;
   }; 
   Home: undefined;
+  HomeTab: undefined;
   ForgotPassword: undefined;
   FillOTP: { contactMethod: string; contactValue: string };
   NewPassword: undefined;
@@ -53,10 +55,14 @@ export type RootStackParamList = {
     onSelect?: (place: any) => void; 
   };
   SelectCar: { distance: number };
-  SearchingDriver: { selectedVehicleId: string, fare_quote_id: string };
+  SearchingDriver: { 
+    selectedVehicleId?: string, 
+    fare_quote_id?: string,
+    isRecovery?: boolean,
+    tripId?: string };
   Traveling: {
-    tripId: string;
-    driverId: string;
+    tripId?: string;
+    driverId?: string;
   };
   Rating: {tripId: string };
   RatingList: undefined;
@@ -64,6 +70,9 @@ export type RootStackParamList = {
   AddressList: undefined;
   EditAddress: { addressId?: string } | undefined;
   History: undefined;
+  TripDetail: {
+    tripId: string;
+  };
 };
 
 const RootNavigator = () => {
@@ -95,6 +104,7 @@ const RootNavigator = () => {
         ) : (
           <>
             <Stack.Screen name="MainTabs" component={MainTabNavigator} />
+            <Stack.Screen name="HomeTab" component={MainTabNavigator} />
             <Stack.Screen name="Search" component={SearchScreen} />
             <Stack.Screen name="SelectCar" component={SelectCarScreen}/>
             <Stack.Screen name="SearchingDriver" component={SearchingDriverScreen}  />
@@ -105,6 +115,7 @@ const RootNavigator = () => {
             <Stack.Screen name="AddressList" component={AddressListScreen} />
             <Stack.Screen name="EditAddress" component={EditAddressScreen} />
             <Stack.Screen name="History" component={HistoryScreen} />
+            <Stack.Screen name="TripDetail" component={TripDetailScreen} />
           </>
         )}
       </Stack.Navigator>

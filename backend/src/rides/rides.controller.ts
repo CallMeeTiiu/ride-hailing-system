@@ -282,6 +282,17 @@ export class RidesController {
     return trips
   }
 
+  @Get('current')
+  @ApiOperation({ summary: 'Lấy chuyến đi hiện tại đang diễn ra' })
+  async getCurrentRide(@Request() req) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+    const currentTrip = await this.ridesService.getCurrentTrip(req.user.userId)
+    if (!currentTrip) {
+      throw new NotFoundException('Không có chuyến đi nào đang diễn ra')
+    }
+    return currentTrip
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Lấy chi tiết chuyến đi' })
   @ApiResponse({
@@ -313,21 +324,5 @@ export class RidesController {
       comment: body.comment,
     } as any)
     return { message: 'Rating submitted', rating: saved }
-  }
-
-  @Get('current')
-  @ApiOperation({ summary: 'Lấy chuyến đi hiện tại đang diễn ra' })
-  @ApiResponse({
-    status: 200,
-    description: 'Thông tin chuyến đi hiện hành',
-    type: TripResponseDto,
-  })
-  async getCurrentRide(): Promise<TripResponseDto> {
-    return {
-      id: '1',
-      status: TripStatus.IN_PROGRESS,
-      estimated_fare: 50000,
-      driver_user_id: '2',
-    }
   }
 }

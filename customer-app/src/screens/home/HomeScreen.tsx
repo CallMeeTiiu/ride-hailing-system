@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native'; 
 
 import { useTheme } from '../../contexts/ThemeContext';
@@ -7,7 +7,7 @@ import BottomSearchBoard from '../../components/home/HomeBottomSheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../../App';
 import FloatingMapActions from '../../components/home/FloatingMapActions';
@@ -16,6 +16,7 @@ import AppMap from '../../components/home/AppMap';
 import theme from '../../constants/theme';
 import { MapBackgroundRef } from '../../components/home/MapBackground';
 import { useLocation } from '../../contexts/LocationContext';
+import apiClient from '../../utils/apiClient';
 
 const HomeScreen = () => {
   const { colors } = useTheme();
@@ -29,7 +30,7 @@ const HomeScreen = () => {
 
   const [distance, setDistance] = useState<string>('');
 
-  const { fromLocation, destinationLocation } = useLocation();
+  const { fromLocation, destinationLocation, setFromLocation, setDestinationLocation } = useLocation();
 
   useEffect(() => {
     if (fromLocation && !destinationLocation) {
@@ -44,7 +45,7 @@ const HomeScreen = () => {
 
     mapRef.current?.updateMarkers(markerFromLat, markerFromLng, markerDestLat, markerDestLng);
 
-    if (destinationLocation) {
+    if (fromLocation && destinationLocation) {
       const routeStartLat = fromLocation ? fromLocation.latitude : 10.8700;
       const routeStartLng = fromLocation ? fromLocation.longitude : 106.8031;
       
@@ -77,6 +78,53 @@ const HomeScreen = () => {
       setDistance('');              
     }
   }, [fromLocation, destinationLocation]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const checkCurrentRide = async () => {
+        try {
+          const response = await apiClient.get('/rides/current');
+          const currentRide = response.data; 
+
+          if (currentRide && currentRide.id) {
+            console.log("Phát hiện chuyến đi dở dang:", currentRide.id);
+
+            setFromLocation({
+              name: currentRide.pickup_address || 'Vị trí đón',
+              address: currentRide.pickup_address,
+              latitude: Number(currentRide.pickup_latitude),
+              longitude: Number(currentRide.pickup_longitude),
+            });
+
+            setDestinationLocation({
+              name: currentRide.dropoff_address || 'Vị trí đến',
+              address: currentRide.dropoff_address,
+              latitude: Number(currentRide.dropoff_latitude),
+              longitude: Number(currentRide.dropoff_longitude),
+            });
+            
+            if (currentRide.status === 'PENDING') {
+              navigation.navigate('SearchingDriver', { 
+                isRecovery: true, 
+                tripId: currentRide.id 
+              });
+            } else if (['ACCEPTED', 'ARRIVED', 'IN_PROGRESS'].includes(currentRide.status)) {
+              navigation.navigate('Traveling', { 
+                tripId: currentRide.id,
+                driverId: currentRide.driver?.id || currentRide.driver_user_id
+              });
+            }
+          }
+        } catch (error: any) {
+          if (error.response?.status !== 404) {
+            console.log("Lỗi check current ride:", error.response?.data || error.message);
+          }
+        }
+      };
+
+      checkCurrentRide();
+    }, [navigation, setDestinationLocation, setFromLocation])
+  );
   
   return (
     <View style={styles.container}>

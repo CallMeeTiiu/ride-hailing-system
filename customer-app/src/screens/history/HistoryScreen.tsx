@@ -5,16 +5,24 @@ import {
   StyleSheet, 
   FlatList, 
   ActivityIndicator, 
-  RefreshControl 
+  RefreshControl, 
+  Image
 } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 import theme from '../../constants/theme';
 import TripCard, { TripHistoryItem } from '../../components/history/TripCard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import apiClient from '../../utils/apiClient';
+import { useLocation } from '../../contexts/LocationContext';
+import { RootStackParamList } from '../../../App';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { useNavigation } from '@react-navigation/core';
 
 const HistoryScreen = () => {
   const { colors } = useTheme();
+  const { setFromLocation, setDestinationLocation } = useLocation();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  
   const [trips, setTrips] = useState<TripHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -47,17 +55,21 @@ const HistoryScreen = () => {
   }, []);
 
   const handleRebook = (trip: TripHistoryItem) => {
-    // Logic khi bấm "Đặt lại": Điều hướng sang Home/Search và truyền địa chỉ vào
-    // navigation.navigate('HomeTab', { 
-    //    rebookPickup: trip.pickup_address, 
-    //    rebookDropoff: trip.dropoff_address 
-    // });
-    console.log("Rebook trip:", trip.id);
-  };
+    setFromLocation({
+      name: trip.pickup_address || 'Pickup Location',
+      address: trip.pickup_address,
+      latitude: Number(trip.pickup_latitude),
+      longitude: Number(trip.pickup_longitude),
+    });
 
-  const handleDetail = (trip: TripHistoryItem) => {
-    // navigation.navigate('TripDetail', { trip });
-    console.log("View detail:", trip.id);
+    setDestinationLocation({
+      name: trip.dropoff_address || 'Destination',
+      address: trip.dropoff_address,
+      latitude: Number(trip.dropoff_latitude),
+      longitude: Number(trip.dropoff_longitude),
+    });
+
+    navigation.navigate('HomeTab'); 
   };
 
   // UI khi danh sách trống
@@ -65,8 +77,14 @@ const HistoryScreen = () => {
     if (loading) return null;
     return (
       <View style={styles.emptyContainer}>
+        <Image 
+          source={require('../../assets/images/welcome.png')} 
+          style={styles.emptyImage}
+          resizeMode="contain"
+        />
+        <Text style={[styles.emptyTitle, { color: colors.textTitle }]}>No Trips Found</Text>
         <Text style={[styles.emptyText, { color: colors.textBody }]}>
-          Bạn chưa có chuyến đi nào.
+          You have no trips to show.
         </Text>
       </View>
     );
@@ -77,7 +95,6 @@ const HistoryScreen = () => {
       <View style={styles.header}>
         <Text style={[styles.headerTitle, { color: colors.textTitle }]}>Activities</Text>
     </View>
-
       {loading && !refreshing ? (
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color={theme.COLORS.primary} />
@@ -92,7 +109,7 @@ const HistoryScreen = () => {
             <TripCard 
               trip={item} 
               onPressRebook={handleRebook}
-              onPressDetail={handleDetail}
+              onPressDetail={() => navigation.navigate('TripDetail', { tripId: item.id })}
             />
           )}
           ListEmptyComponent={renderEmptyComponent}
@@ -139,12 +156,24 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 50,
+    paddingHorizontal: theme.SIZES.padding,
+    marginTop: -50,
   },
-  emptyText: {
-    fontSize: 16,
-    fontFamily: theme.FONTS.medium,
-  }
+  emptyImage: { 
+    width: 200, 
+    height: 200, 
+    marginBottom: 20 
+  },
+  emptyTitle: { 
+    fontFamily: theme.FONTS.bold, 
+    fontSize: 22, 
+    marginBottom: 10 
+  },
+  emptyText: { 
+    fontFamily: theme.FONTS.regular, 
+    fontSize: 16, 
+    textAlign: 'center' 
+  },
 });
 
 export default HistoryScreen;

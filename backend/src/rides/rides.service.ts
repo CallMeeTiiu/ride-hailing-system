@@ -8,6 +8,8 @@ import { Rating } from './entities/rating.entity'
 import { Payment } from '../payments/entities/payment.entity'
 import { PricingService } from '../google/pricing.service'
 import { User } from '../users/entities/user.entity'
+import { In } from 'typeorm'
+import { BadRequestException, NotFoundException } from '@nestjs/common'
 
 @Injectable()
 export class RidesService {
@@ -34,14 +36,53 @@ export class RidesService {
   }
 
   async findTripById(id: string): Promise<Trip | null> {
-    return this.tripRepository.findOne({ where: { id } })
+    return await this.tripRepository.findOne({
+      where: { id },
+      relations: ['driver'],
+    })
   }
+
+  private readonly VALID_STATUS_TRANSITIONS: Record<TripStatus, TripStatus[]> =
+    {
+      [TripStatus.PENDING]: [
+        TripStatus.ACCEPTED,
+        TripStatus.CANCELLED_BY_CUSTOMER,
+        TripStatus.CANCELLED_BY_DRIVER,
+      ],
+      [TripStatus.ACCEPTED]: [
+        TripStatus.ARRIVED,
+        TripStatus.CANCELLED_BY_CUSTOMER,
+        TripStatus.CANCELLED_BY_DRIVER,
+      ],
+      [TripStatus.ARRIVED]: [
+        TripStatus.IN_PROGRESS,
+        TripStatus.CANCELLED_BY_CUSTOMER,
+        TripStatus.CANCELLED_BY_DRIVER,
+      ],
+      [TripStatus.IN_PROGRESS]: [TripStatus.COMPLETED],
+      [TripStatus.COMPLETED]: [],
+      [TripStatus.CANCELLED_BY_CUSTOMER]: [],
+      [TripStatus.CANCELLED_BY_DRIVER]: [],
+    }
 
   async updateTripStatus(
     id: string,
     status: TripStatus,
     driverId?: string,
   ): Promise<Trip | null> {
+    const currentTrip = await this.findTripById(id)
+    if (!currentTrip) {
+      throw new NotFoundException('Trip not found')
+    }
+
+    const currentStatus = currentTrip.status
+    const allowedNextStates = this.VALID_STATUS_TRANSITIONS[currentStatus]
+    if (!allowedNextStates || !allowedNextStates.includes(status)) {
+      throw new BadRequestException(
+        `Invalid status transition: Cannot change from ${currentStatus} to ${status}.`,
+      )
+    }
+
     const updateData: Partial<Trip> = { status }
     if (driverId) {
       updateData.driver_id = driverId
@@ -59,24 +100,30 @@ export class RidesService {
           Number(trip.dropoff_longitude),
         )
         const actual = Math.round(calc.estimated_fare)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         await this.tripRepository.update(id, { actual_fare: actual } as any)
 
         await this.paymentsRepository.save(
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           this.paymentsRepository.create({
             user_id: trip.customer_id,
             trip_id: trip.id,
             amount: actual,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             method: trip.payment_method as any,
             status: 'success',
           } as any),
         )
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (e) {
         // fallback to estimated
         await this.paymentsRepository.save(
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           this.paymentsRepository.create({
             user_id: trip.customer_id,
             trip_id: trip.id,
             amount: trip.estimated_fare,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             method: trip.payment_method as any,
             status: 'success',
           } as any),
@@ -98,6 +145,7 @@ export class RidesService {
 
     // If rating was for a driver, recalculate aggregate rating and count
     if (saved.driver_id) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const raw = await this.ratingRepository
         .createQueryBuilder('r')
         .select('AVG(r.rating)', 'avg')
@@ -105,14 +153,18 @@ export class RidesService {
         .where('r.driver_id = :driverId', { driverId: saved.driver_id })
         .getRawOne()
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
       const avg = parseFloat(raw?.avg ?? '0') || 0
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
       const count = parseInt(raw?.count ?? '0') || 0
 
       try {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         await this.usersRepository.update(saved.driver_id, {
           average_rating: Number(avg),
           rating_count: Number(count),
         } as any)
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (e) {
         // ignore update errors to not block rating save
       }
@@ -126,6 +178,21 @@ export class RidesService {
       where: { customer_id: customerId },
       relations: ['driver'],
       order: { created_at: 'DESC' },
+    })
+  }
+
+  async getCurrentTrip(customerId: string) {
+    return await this.tripRepository.findOne({
+      where: {
+        customer_id: customerId,
+        status: In([
+          TripStatus.PENDING,
+          TripStatus.ACCEPTED,
+          TripStatus.IN_PROGRESS,
+          TripStatus.ARRIVED,
+        ]),
+      },
+      relations: ['driver'],
     })
   }
 }

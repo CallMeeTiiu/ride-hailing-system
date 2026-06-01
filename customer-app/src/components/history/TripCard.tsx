@@ -13,6 +13,10 @@ export interface TripHistoryItem {
   pickup_address: string;
   dropoff_address: string;
   driver?: any; 
+  pickup_latitude: number | string; 
+  pickup_longitude: number | string;
+  dropoff_latitude: number | string;
+  dropoff_longitude: number | string;
 }
 
 interface TripCardProps {

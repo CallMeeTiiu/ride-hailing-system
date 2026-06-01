@@ -43,6 +43,7 @@ export type RootStackParamList = {
     selectedPlace?: any;
   }; 
   Home: undefined;
+  HomeTab: undefined;
   ForgotPassword: undefined;
   FillOTP: { contactMethod: string; contactValue: string };
   NewPassword: undefined;
@@ -95,6 +96,7 @@ const RootNavigator = () => {
         ) : (
           <>
             <Stack.Screen name="MainTabs" component={MainTabNavigator} />
+            <Stack.Screen name="HomeTab" component={MainTabNavigator} />
             <Stack.Screen name="Search" component={SearchScreen} />
             <Stack.Screen name="SelectCar" component={SelectCarScreen}/>
             <Stack.Screen name="SearchingDriver" component={SearchingDriverScreen}  />

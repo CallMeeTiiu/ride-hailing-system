@@ -12,9 +12,16 @@ import theme from '../../constants/theme';
 import TripCard, { TripHistoryItem } from '../../components/history/TripCard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import apiClient from '../../utils/apiClient';
+import { useLocation } from '../../contexts/LocationContext';
+import { RootStackParamList } from '../../../App';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { useNavigation } from '@react-navigation/core';
 
 const HistoryScreen = () => {
   const { colors } = useTheme();
+  const { setFromLocation, setDestinationLocation } = useLocation();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  
   const [trips, setTrips] = useState<TripHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -47,12 +54,21 @@ const HistoryScreen = () => {
   }, []);
 
   const handleRebook = (trip: TripHistoryItem) => {
-    // Logic khi bấm "Đặt lại": Điều hướng sang Home/Search và truyền địa chỉ vào
-    // navigation.navigate('HomeTab', { 
-    //    rebookPickup: trip.pickup_address, 
-    //    rebookDropoff: trip.dropoff_address 
-    // });
-    console.log("Rebook trip:", trip.id);
+    setFromLocation({
+      name: trip.pickup_address || 'Pickup Location',
+      address: trip.pickup_address,
+      latitude: Number(trip.pickup_latitude),
+      longitude: Number(trip.pickup_longitude),
+    });
+
+    setDestinationLocation({
+      name: trip.dropoff_address || 'Destination',
+      address: trip.dropoff_address,
+      latitude: Number(trip.dropoff_latitude),
+      longitude: Number(trip.dropoff_longitude),
+    });
+
+    navigation.navigate('HomeTab'); 
   };
 
   const handleDetail = (trip: TripHistoryItem) => {

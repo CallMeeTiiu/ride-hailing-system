@@ -48,10 +48,14 @@ export const CONFIG = {
 
 Tạo Axios instance + interceptors:
 
+> [!IMPORTANT]
+> **Review fix:** Request interceptor lấy token từ Zustand store (RAM) thay vì AsyncStorage (disk I/O).
+> `useAuthStore.getState().token` = đọc RAM (~0ms) vs `AsyncStorage.getItem()` = đọc disk (~5-15ms mỗi call).
+
 ```typescript
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CONFIG } from './config';
+import { useAuthStore } from '../store/authStore';
 
 const apiClient = axios.create({
   baseURL: CONFIG.API_BASE_URL,
@@ -59,9 +63,9 @@ const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Request interceptor: tự gắn JWT token
-apiClient.interceptors.request.use(async (config) => {
-  const token = await AsyncStorage.getItem('access_token');
+// Request interceptor: lấy token từ Zustand (RAM) — không cần async
+apiClient.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().token;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -71,11 +75,9 @@ apiClient.interceptors.request.use(async (config) => {
 // Response interceptor: bắt 401 → trigger logout
 apiClient.interceptors.response.use(
   (response) => response,
-  async (error) => {
+  (error) => {
     if (error.response?.status === 401) {
-      await AsyncStorage.multiRemove(['access_token', 'refresh_token']);
-      // Import động để tránh circular dependency
-      const { useAuthStore } = await import('../store/authStore');
+      // logout() đã xử lý xoá AsyncStorage bên trong
       useAuthStore.getState().logout();
     }
     return Promise.reject(error);
@@ -91,17 +93,24 @@ export default apiClient;
 
 Socket.IO client (chưa kết nối — Phase 2 mới dùng):
 
+> [!IMPORTANT]
+> **Review fix:** Truyền `token` trực tiếp qua parameter thay vì đọc từ AsyncStorage.
+> Lý do: Nếu user logout rồi login lại, AsyncStorage có thể trả token cũ chưa kịp cập nhật.
+> Caller sẽ lấy token từ `useAuthStore.getState().token` — luôn đảm bảo token mới nhất.
+
 ```typescript
 import { io, Socket } from 'socket.io-client';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CONFIG } from './config';
 
 let socket: Socket | null = null;
 
-export async function connectSocket(): Promise<Socket> {
+/**
+ * Kết nối Socket.IO với token truyền trực tiếp.
+ * Caller lấy token từ useAuthStore.getState().token
+ * để đảm bảo luôn dùng token mới nhất.
+ */
+export function connectSocket(token: string): Socket {
   if (socket?.connected) return socket;
-
-  const token = await AsyncStorage.getItem('access_token');
 
   socket = io(CONFIG.SOCKET_URL, {
     auth: { token },
@@ -176,8 +185,15 @@ Thay đổi lớn — từ mock sang API thật:
 +            await AsyncStorage.setItem('access_token', access_token);
 +            await AsyncStorage.setItem('refresh_token', refresh_token);
 +            set({ isLoggedIn: true, token: access_token, isLoading: false });
-+            // Fetch full profile sau khi có token
-+            await get().fetchProfile();
++
++            // Fetch profile — rollback login nếu thất bại
++            const profileOk = await get().fetchProfile();
++            if (!profileOk) {
++                // Profile fetch failed → rollback: user thấy login screen, không bị kẹt
++                get().logout();
++                set({ error: 'Không thể tải thông tin tài xế. Vui lòng thử lại.' });
++                return false;
++            }
 +            return true;
 +        } catch (err: any) {
 +            const msg = err.response?.data?.message || 'Đăng nhập thất bại';
@@ -188,18 +204,23 @@ Thay đổi lớn — từ mock sang API thật:
 
      logout: () => {
 +        AsyncStorage.multiRemove(['access_token', 'refresh_token']);
-         set({ isLoggedIn: false, token: null, driver: null });
+         set({ isLoggedIn: false, token: null, driver: null, error: null });
      },
 
 +    loadToken: async () => {
 +        const token = await AsyncStorage.getItem('access_token');
 +        if (token) {
 +            set({ isLoggedIn: true, token });
-+            await get().fetchProfile();
++            const profileOk = await get().fetchProfile();
++            if (!profileOk) {
++                // Token cũ nhưng profile fail → force re-login
++                get().logout();
++            }
 +        }
 +    },
 
-+    fetchProfile: async () => {
++    // Trả về boolean để caller biết thành công hay thất bại
++    fetchProfile: async (): Promise<boolean> => {
 +        try {
 +            const res = await apiClient.get('/drivers/me');
 +            const profile = res.data.profile;
@@ -214,9 +235,12 @@ Thay đổi lớn — từ mock sang API thật:
 +                        vehiclePlate: profile.vehicle_plate || '',
 +                    },
 +                });
++                return true;
 +            }
++            return false;
 +        } catch (err) {
 +            console.error('[AuthStore] fetchProfile failed:', err);
++            return false;
 +        }
 +    },
  }));

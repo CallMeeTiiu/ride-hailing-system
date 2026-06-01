@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { TripData, TripStatus } from '../types';
-import { MOCK_TRIP } from '../data/mockData';
+import { toFrontendStatus } from '../utils/tripStatusMapper';
+import { connectSocket, disconnectSocket, getSocket } from '../services/socketClient';
+import apiClient from '../services/apiClient';
+import { useAuthStore } from './authStore';
 
 interface TripState {
     tripStatus: TripStatus;
@@ -14,20 +17,20 @@ interface TripState {
     ratingStep: 'mood' | 'star' | null;
 
     // Trip lifecycle actions
-    toggleOnline: (online: boolean) => void;
+    toggleOnline: (online: boolean) => Promise<void>;
     receiveBooking: () => void;
-    acceptTrip: () => void;
+    acceptTrip: () => Promise<void>;
     rejectTrip: () => void;
-    confirmArrived: () => void;
-    startTrip: () => void;
-    finishTrip: () => void;
-    cancelTrip: () => void;
+    confirmArrived: () => Promise<void>;
+    startTrip: () => Promise<void>;
+    finishTrip: () => Promise<void>;
+    cancelTrip: () => Promise<void>;
     completeFinish: () => void;
     dismissCancel: () => void;
 
     // Rating actions
     submitMood: (moodId: string | null) => void;
-    submitRating: (rating: number) => void;
+    submitRating: (rating: number) => Promise<void>;
 }
 
 export const useTripStore = create<TripState>((set, get) => ({
@@ -40,30 +43,115 @@ export const useTripStore = create<TripState>((set, get) => ({
     setTripStatus: (status) => set({ tripStatus: status }),
     setCurrentTrip: (trip) => set({ currentTrip: trip }),
 
-    toggleOnline: (online) => {
-        if (online) {
-            set({ tripStatus: TripStatus.ONLINE });
-        } else {
-            set({ tripStatus: TripStatus.OFFLINE, currentTrip: null });
+    toggleOnline: async (online) => {
+        try {
+            await apiClient.patch('/drivers/availability', { is_active: online });
+            if (online) {
+                const token = useAuthStore.getState().token;
+                if (token) {
+                    const socket = connectSocket(token);
+
+                    // Gỡ hết listener cũ để tránh trùng lặp khi toggle lại
+                    socket.off('server:ride_request');
+                    socket.off('server:offer_expired');
+                    socket.off('server:trip_cancelled');
+                    socket.off('connect');
+
+                    // Lắng nghe yêu cầu chuyến đi từ backend
+                    socket.on('server:ride_request', (payload) => {
+                        const tripData: TripData = {
+                            id: payload.trip_id,
+                            customer: {
+                                id: payload.customer?.id || payload.customer_id || 'unknown',
+                                name: payload.customer?.full_name || payload.customer_name || 'Khách hàng',
+                                phone: payload.customer?.phone || payload.customer_phone || '',
+                                rating: payload.customer?.rating || payload.customer_rating || 5.0,
+                                avatarUrl: payload.customer?.avatar_url || payload.customer_avatar || '',
+                            },
+                            pickup: {
+                                address: payload.pickup?.address || payload.pickup_address || '',
+                                latitude: payload.pickup?.lat || payload.pickup_latitude,
+                                longitude: payload.pickup?.lng || payload.pickup_longitude,
+                            },
+                            dropoff: {
+                                address: payload.dropoff?.address || payload.dropoff_address || '',
+                                latitude: payload.dropoff?.lat || payload.dropoff_latitude,
+                                longitude: payload.dropoff?.lng || payload.dropoff_longitude,
+                            },
+                            fare: payload.estimated_fare || payload.fare || 0,
+                            status: TripStatus.BOOKING_INCOMING,
+                            createdAt: new Date().toISOString(),
+                        };
+                        set({
+                            tripStatus: TripStatus.BOOKING_INCOMING,
+                            currentTrip: tripData,
+                        });
+                    });
+
+                    // Cuốc hết hạn
+                    socket.on('server:offer_expired', () => {
+                        if (get().tripStatus === TripStatus.BOOKING_INCOMING) {
+                            set({ tripStatus: TripStatus.ONLINE, currentTrip: null });
+                        }
+                    });
+
+                    // Khách hủy chuyến
+                    socket.on('server:trip_cancelled', () => {
+                        const trip = get().currentTrip;
+                        if (trip) {
+                            set({
+                                tripStatus: TripStatus.CANCELED,
+                                currentTrip: { ...trip, status: TripStatus.CANCELED },
+                            });
+                        }
+                    });
+
+                    // Reconnect Sync: cập nhật trạng thái thực tế từ BE phòng khi rớt mạng
+                    socket.on('connect', async () => {
+                        const trip = get().currentTrip;
+                        if (!trip?.id) return;
+                        try {
+                            const res = await apiClient.get(`/rides/${trip.id}`);
+                            const latestStatus = toFrontendStatus(res.data.status);
+                            if (latestStatus !== get().tripStatus) {
+                                console.log('[Socket] Reconnect sync:', get().tripStatus, '→', latestStatus);
+                                set({
+                                    tripStatus: latestStatus,
+                                    currentTrip: { ...trip, status: latestStatus },
+                                });
+                            }
+                        } catch (err) {
+                            console.error('[Socket] Reconnect sync failed:', err);
+                        }
+                    });
+                }
+                set({ tripStatus: TripStatus.ONLINE });
+            } else {
+                disconnectSocket();
+                set({ tripStatus: TripStatus.OFFLINE, currentTrip: null });
+            }
+        } catch (err) {
+            console.error('[TripStore] toggleOnline failed:', err);
         }
     },
 
     receiveBooking: () => {
-        if (get().tripStatus === TripStatus.ONLINE) {
-            set({
-                tripStatus: TripStatus.BOOKING_INCOMING,
-                currentTrip: { ...MOCK_TRIP, status: TripStatus.BOOKING_INCOMING },
-            });
-        }
+        // Được quản lý trực tiếp thông qua luồng WebSocket từ Gateway
     },
 
-    acceptTrip: () => {
-        const current = get().currentTrip;
-        if (current) {
+    acceptTrip: async () => {
+        const trip = get().currentTrip;
+        if (!trip) return;
+        try {
+            const res = await apiClient.post(`/rides/${trip.id}/accept`);
+            const beStatus = res.data.status; // "ACCEPTED"
+            const feStatus = toFrontendStatus(beStatus); // TripStatus.ARRIVING
             set({
-                tripStatus: TripStatus.ARRIVING,
-                currentTrip: { ...current, status: TripStatus.ARRIVING },
+                tripStatus: feStatus,
+                currentTrip: { ...trip, status: feStatus },
             });
+        } catch (err) {
+            console.error('[TripStore] acceptTrip failed:', err);
         }
     },
 
@@ -74,55 +162,70 @@ export const useTripStore = create<TripState>((set, get) => ({
         });
     },
 
-    confirmArrived: () => {
-        const current = get().currentTrip;
-        if (current) {
+    confirmArrived: async () => {
+        const trip = get().currentTrip;
+        if (!trip) return;
+        try {
+            await apiClient.patch(`/trips/${trip.id}/status`, { status: 'ARRIVED' });
             set({
                 tripStatus: TripStatus.ARRIVED,
-                currentTrip: { ...current, status: TripStatus.ARRIVED },
+                currentTrip: { ...trip, status: TripStatus.ARRIVED },
             });
-            // Auto-transition ARRIVED -> WAITING right away as confirmed in plan
             setTimeout(() => {
                 if (get().tripStatus === TripStatus.ARRIVED) {
                     set({
                         tripStatus: TripStatus.WAITING,
-                        currentTrip: { ...current, status: TripStatus.WAITING },
+                        currentTrip: { ...trip, status: TripStatus.WAITING },
                     });
                 }
             }, 500);
+        } catch (err) {
+            console.error('[TripStore] confirmArrived failed:', err);
         }
     },
 
-    startTrip: () => {
-        const current = get().currentTrip;
-        if (current) {
+    startTrip: async () => {
+        const trip = get().currentTrip;
+        if (!trip) return;
+        try {
+            await apiClient.patch(`/trips/${trip.id}/status`, { status: 'IN_PROGRESS' });
             set({
                 tripStatus: TripStatus.SERVING,
-                currentTrip: { ...current, status: TripStatus.SERVING },
+                currentTrip: { ...trip, status: TripStatus.SERVING },
             });
+        } catch (err) {
+            console.error('[TripStore] startTrip failed:', err);
         }
     },
 
-    finishTrip: () => {
-        const current = get().currentTrip;
-        if (current) {
+    finishTrip: async () => {
+        const trip = get().currentTrip;
+        if (!trip) return;
+        try {
+            await apiClient.patch(`/trips/${trip.id}/status`, { status: 'COMPLETED' });
             set({
                 tripStatus: TripStatus.FINISHED,
                 ratingStep: 'mood',
                 customerMood: null,
                 customerRating: 0,
-                currentTrip: { ...current, status: TripStatus.FINISHED },
+                currentTrip: { ...trip, status: TripStatus.FINISHED },
             });
+        } catch (err) {
+            console.error('[TripStore] finishTrip failed:', err);
         }
     },
 
-    cancelTrip: () => {
-        const current = get().currentTrip;
-        if (current && (get().tripStatus === TripStatus.ARRIVING || get().tripStatus === TripStatus.WAITING)) {
+    cancelTrip: async () => {
+        const trip = get().currentTrip;
+        if (!trip) return;
+        try {
+            await apiClient.patch(`/trips/${trip.id}/status`, { status: 'CANCELLED_BY_DRIVER' });
             set({
                 tripStatus: TripStatus.CANCELED,
-                currentTrip: { ...current, status: TripStatus.CANCELED },
+                currentTrip: { ...trip, status: TripStatus.CANCELED },
             });
+        } catch (err) {
+            console.error('[TripStore] cancelTrip failed:', err);
         }
     },
 
@@ -150,13 +253,18 @@ export const useTripStore = create<TripState>((set, get) => ({
         });
     },
 
-    submitRating: (rating) => {
+    submitRating: async (rating) => {
+        const trip = get().currentTrip;
+        if (!trip) return;
         const currentMood = get().customerMood;
-        console.log('[TripStore] Customer Rating Submitted:', {
-            tripId: get().currentTrip?.id,
-            mood: currentMood,
-            rating: rating,
-        });
+        try {
+            await apiClient.post(`/rides/${trip.id}/rate`, {
+                rating: rating,
+                comment: currentMood || undefined,
+            });
+        } catch (err) {
+            console.error('[TripStore] submitRating failed:', err);
+        }
 
         // Hoàn tất luồng, cập nhật State về lại trạng thái chờ cuốc mới (ONLINE)
         set({

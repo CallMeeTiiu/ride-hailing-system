@@ -34,8 +34,8 @@
 | **Reanimated** | ✅ react-native-reanimated v4 |
 | **Screens** | ✅ react-native-screens v4 |
 | **Permissions** | ✅ react-native-permissions v4 |
-| **API Integration** | ❌ Chưa setup (mock data only) |
-| **Real-time** | ❌ Chưa có WebSocket/Socket.IO |
+| **API Integration** | ✅ Hoàn thành tích hợp API (Authentication, Profile, Cập nhật trạng thái) |
+| **Real-time** | ✅ Kích hoạt Socket.IO (Chuyến đi, Geolocation streaming) |
 
 #### 📱 Screens (5 màn hình)
 
@@ -130,7 +130,7 @@ OFFLINE → ONLINE → BOOKING_INCOMING → ARRIVING → ARRIVED → WAITING →
 | **Pricing** | ✅ PricingService tính cước (base + distance + time) |
 | **Notifications** | ✅ Firebase push (NotificationService) |
 | **Validation** | ✅ class-validator + class-transformer GlobalPipe |
-| **API Integration (FE)** | ❌ Driver-app chưa gọi bất kỳ API nào |
+| **API Integration (FE)** | ✅ Driver-app đã tích hợp đầy đủ API nghỉ dưỡng/hoạt động và Socket.IO |
 
 #### 🔗 API Endpoints (27+)
 
@@ -245,11 +245,8 @@ OFFLINE → ONLINE → BOOKING_INCOMING → ARRIVING → ARRIVED → WAITING →
 
 | Module | Setup | Navigation | Screens | Components | API/Integration | **Tổng** |
 |--------|-------|-----------|---------|------------|-----------------|----------|
-| Driver App UI | 100% | 100% | 70% | 80% | 0% | **~65%** |
-| Customer App | 80% | 0% | 5% | 40% | 0% | **~20%** |
-| Backend API | 100% | — | — | — | 55% | **~55%** |
-| FE↔BE Integration | — | — | — | — | 0% | **0%** |
-| **Tổng dự án** | **90%** | **50%** | **38%** | **60%** | **14%** | **~40%** |
+| FE↔BE Integration | — | — | — | — | 100% | **~35%** |
+| **Tổng dự án** | **90%** | **50%** | **38%** | **60%** | **30%** | **~52%** |
 
 ---
 

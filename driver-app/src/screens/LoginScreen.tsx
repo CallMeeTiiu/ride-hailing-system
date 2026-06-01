@@ -19,9 +19,9 @@ import Icon from 'react-native-vector-icons/Feather';
 export default function LoginScreen() {
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
     const [errorText, setErrorText] = useState('');
     const login = useAuthStore((state) => state.login);
+    const loading = useAuthStore((state) => state.isLoading);
 
     const handlePhoneChange = (text: string) => {
         // Dynamic phone formatting
@@ -42,16 +42,14 @@ export default function LoginScreen() {
             return;
         }
 
-        setLoading(true);
         setErrorText('');
-        try {
-            await login(phone, password);
-        } catch (e) {
-            setErrorText('Đăng nhập thất bại. Vui lòng thử lại.');
-        } finally {
-            setLoading(false);
+        const success = await login(phone, password);
+        if (!success) {
+            const apiError = useAuthStore.getState().error;
+            setErrorText(apiError || 'Đăng nhập thất bại. Vui lòng thử lại.');
         }
     };
+
 
     return (
         <KeyboardAvoidingView

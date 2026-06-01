@@ -28,23 +28,32 @@ Sau phase này, toàn bộ luồng chuyến đi hoạt động thực tế:
 
 #### Chi tiết từng action:
 
+> [!IMPORTANT]
+> **Review fix #1:** Tất cả action **KHÔNG nhận `tripId` parameter** từ UI.
+> Mọi hàm đều lấy `get().currentTrip!.id` trực tiếp từ store bên trong.
+> UI chỉ cần gọi `acceptTrip()`, `confirmArrived()`, `cancelTrip()`... không truyền gì.
+
 | Action | API Call | Status Mapping | Ghi chú |
 |--------|----------|---------------|---------|
 | `toggleOnline(true)` | `PATCH /drivers/availability` body `{ is_active: true }` | UI-only (ONLINE) | + `connectSocket()` |
 | `toggleOnline(false)` | `PATCH /drivers/availability` body `{ is_active: false }` | UI-only (OFFLINE) | + `disconnectSocket()` |
 | `receiveBooking()` | *(không gọi API — lắng nghe Socket)* | `toFrontendStatus('PENDING')` → BOOKING_INCOMING | Data từ `server:ride_request` event |
-| `acceptTrip(tripId)` | `POST /rides/:id/accept` | `toFrontendStatus('ACCEPTED')` → ARRIVING | Chờ response 200 rồi mới set state |
+| `acceptTrip()` | `POST /rides/:id/accept` (id từ store) | `toFrontendStatus('ACCEPTED')` → ARRIVING | Chờ response 200 rồi mới set state |
 | `rejectTrip()` | *(không gọi API — chỉ set ONLINE)* | UI-only | Cuốc tự expire ở BE |
-| `confirmArrived()` | `PATCH /trips/:id/status` body `{ status: 'ARRIVED' }` | `toBackendStatus(ARRIVED)` → `'ARRIVED'` | Trạng thái khớp tên |
+| `confirmArrived()` | `PATCH /trips/:id/status` body `{ status: 'ARRIVED' }` | `toBackendStatus(ARRIVED)` → `'ARRIVED'` | id từ store |
 | `startTrip()` | `PATCH /trips/:id/status` body `{ status: 'IN_PROGRESS' }` | `toBackendStatus(SERVING)` → `'IN_PROGRESS'` | **Chú ý mapping!** |
 | `finishTrip()` | `PATCH /trips/:id/status` body `{ status: 'COMPLETED' }` | `toBackendStatus(FINISHED)` → `'COMPLETED'` | Auto-tính tiền ở BE |
-| `cancelTrip()` | `POST /rides/:id/cancel` | `toBackendStatus(CANCELED)` → `'CANCELLED_BY_DRIVER'` | Driver cancel |
-| `submitRating(rating)` | `POST /rides/:id/rate` body `{ rating, comment }` | *(không mapping)* | Gửi sau khi chấm sao |
+| `cancelTrip()` | `POST /rides/:id/cancel` | `toBackendStatus(CANCELED)` → `'CANCELLED_BY_DRIVER'` | id từ store |
+| `submitRating(rating)` | `POST /rides/:id/rate` body `{ rating, comment }` | *(không mapping)* | id từ store |
 
 #### Pseudo-code mẫu cho `acceptTrip`:
 
 ```typescript
-acceptTrip: async (tripId: string) => {
+// KHÔNG có parameter — tripId lấy từ store
+acceptTrip: async () => {
+    const tripId = get().currentTrip?.id;
+    if (!tripId) return;
+
     try {
         const res = await apiClient.post(`/rides/${tripId}/accept`);
         const beStatus = res.data.status; // "ACCEPTED"
@@ -55,7 +64,6 @@ acceptTrip: async (tripId: string) => {
             currentTrip: {
                 ...get().currentTrip!,
                 status: feStatus,
-                id: tripId,
             },
         });
     } catch (err) {
@@ -99,6 +107,42 @@ socket.on('server:trip_cancelled', (payload) => {
         tripStatus: TripStatus.CANCELED,
         currentTrip: { ...get().currentTrip!, status: TripStatus.CANCELED },
     });
+});
+
+// ⚡ REVIEW FIX #2: Reconnect sync
+// Khi Socket reconnect sau mất mạng, fetch lại trạng thái chuyến đi từ API
+// để tránh kẹt UI (VD: khách huỷ cuốc lúc tài xế trong hầm → lỡ mất event)
+socket.on('connect', async () => {
+    const trip = get().currentTrip;
+    if (!trip?.id) return;
+
+    try {
+        const res = await apiClient.get(`/rides/${trip.id}`);
+        const latestStatus = toFrontendStatus(res.data.status);
+
+        // Chỉ cập nhật nếu status đã thay đổi so với local
+        if (latestStatus !== get().tripStatus) {
+            console.log('[Socket] Reconnect sync:', get().tripStatus, '→', latestStatus);
+            if (latestStatus === TripStatus.CANCELED) {
+                set({
+                    tripStatus: TripStatus.CANCELED,
+                    currentTrip: { ...trip, status: TripStatus.CANCELED },
+                });
+            } else if (latestStatus === TripStatus.FINISHED) {
+                set({
+                    tripStatus: TripStatus.FINISHED,
+                    currentTrip: { ...trip, status: TripStatus.FINISHED },
+                });
+            } else {
+                set({
+                    tripStatus: latestStatus,
+                    currentTrip: { ...trip, status: latestStatus },
+                });
+            }
+        }
+    } catch (err) {
+        console.error('[Socket] Reconnect sync failed:', err);
+    }
 });
 ```
 
@@ -188,20 +232,22 @@ export function useLocationStream() {
 
 ### [MODIFY] `TripBottomSheet.tsx`
 
-Thay đổi nhỏ — truyền `tripId` vào các callback:
+> [!TIP]
+> **Review fix #1 impact:** Không cần thay đổi callback nào!
+> Mọi action đều `zero-argument` nên UI gọi y hệt code cũ: `acceptTrip()`, `confirmArrived()`, `cancelTrip()`.
+
+Thay đổi duy nhất: `submitRating()` gọi API thay vì `console.log`.
 
 ```diff
- // Accept button
--onPress={() => acceptTrip()}
-+onPress={() => acceptTrip(currentTrip?.id)}
+ // Accept button — KHÔNG thay đổi
+ onPress={() => acceptTrip()}   // tripId tự lấy từ store bên trong
 
- // Arrived button
--onPress={() => confirmArrived()}
-+onPress={() => confirmArrived()}  // tripId lấy từ store bên trong
+ // Arrived button — KHÔNG thay đổi
+ onPress={() => confirmArrived()}
 
- // Finish button → submitRating gửi API
+ // Finish button → submitRating gọi API
 -console.log('[TripStore] Customer Rating Submitted:', ...)
-+// Đã xử lý trong tripStore.submitRating() → gọi API
++// Đã xử lý trong tripStore.submitRating() → gọi POST /rides/:id/rate
 ```
 
 ---
@@ -238,6 +284,7 @@ Thay đổi nhỏ — truyền `tripId` vào các callback:
 4. **Edge cases:**
    - ❌ Mất mạng giữa chừng → API fail → state KHÔNG thay đổi
    - ❌ Socket disconnect → auto-reconnect sau 3s
+   - ✅ **Reconnect sync (Review fix #2):** Tài xế mất mạng → khách huỷ → tài xế có mạng lại → Socket reconnect → app tự gọi `GET /rides/:id` → phát hiện CANCELLED → cập nhật UI về CANCELED → không bị kẹt
 
 ---
 

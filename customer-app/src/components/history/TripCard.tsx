@@ -11,7 +11,9 @@ export interface TripHistoryItem {
   estimated_fare: number;
   created_at: string;
   pickup_address: string;
+  pickup_name: string;
   dropoff_address: string;
+  dropoff_name: string;
   driver?: any; 
   pickup_latitude: number | string; 
   pickup_longitude: number | string;
@@ -54,12 +56,12 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPressRebook, onPressDetail 
   };
 
   const formatDate = (dateString?: string) => {
-      if (!dateString) return 'Nearby';
-      const date = new Date(dateString);
-      return date.toLocaleString('eng-ENG', { 
-          day: '2-digit', month: '2-digit', year: 'numeric', 
-          hour: '2-digit', minute: '2-digit' 
-      });
+    if (!dateString) return 'Nearby';
+    const date = new Date(dateString);
+    return date.toLocaleString('eng-ENG', { 
+        day: '2-digit', month: '2-digit', year: 'numeric', 
+        hour: '2-digit', minute: '2-digit' 
+    });
   }
 
   return (
@@ -85,14 +87,14 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPressRebook, onPressDetail 
         <View style={styles.locationRow}>
           <FontAwesomeIcon icon={faMapMarkerAlt} size={16} color={theme.stateColors.cancelled} />
           <Text style={[styles.locationText, { color: colors.textTitle }]} numberOfLines={1}>
-            {trip.pickup_address || 'Pickup location - Empty'}
+            {trip.pickup_name || trip.pickup_address || 'Pickup location - Empty'}
           </Text>
         </View>
         <View style={styles.verticalDashedLine} />
         <View style={styles.locationRow}>
           <FontAwesomeIcon icon={faLocationDot} size={16} color={theme.stateColors.completed} />
           <Text style={[styles.locationText, { color: colors.textTitle }]} numberOfLines={1}>
-            {trip.dropoff_address || 'Drop-off location - Empty'}
+            {trip.dropoff_name || trip.dropoff_address || 'Drop-off location - Empty'}
           </Text>
         </View>
       </View>

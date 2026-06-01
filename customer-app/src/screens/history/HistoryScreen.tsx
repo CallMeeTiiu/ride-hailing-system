@@ -5,7 +5,8 @@ import {
   StyleSheet, 
   FlatList, 
   ActivityIndicator, 
-  RefreshControl 
+  RefreshControl, 
+  Image
 } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 import theme from '../../constants/theme';
@@ -71,18 +72,19 @@ const HistoryScreen = () => {
     navigation.navigate('HomeTab'); 
   };
 
-  const handleDetail = (trip: TripHistoryItem) => {
-    // navigation.navigate('TripDetail', { trip });
-    console.log("View detail:", trip.id);
-  };
-
   // UI khi danh sách trống
   const renderEmptyComponent = () => {
     if (loading) return null;
     return (
       <View style={styles.emptyContainer}>
+        <Image 
+          source={require('../../assets/images/welcome.png')} 
+          style={styles.emptyImage}
+          resizeMode="contain"
+        />
+        <Text style={[styles.emptyTitle, { color: colors.textTitle }]}>No Trips Found</Text>
         <Text style={[styles.emptyText, { color: colors.textBody }]}>
-          Bạn chưa có chuyến đi nào.
+          You have no trips to show.
         </Text>
       </View>
     );
@@ -93,7 +95,6 @@ const HistoryScreen = () => {
       <View style={styles.header}>
         <Text style={[styles.headerTitle, { color: colors.textTitle }]}>Activities</Text>
     </View>
-
       {loading && !refreshing ? (
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color={theme.COLORS.primary} />
@@ -108,7 +109,7 @@ const HistoryScreen = () => {
             <TripCard 
               trip={item} 
               onPressRebook={handleRebook}
-              onPressDetail={handleDetail}
+              onPressDetail={() => navigation.navigate('TripDetail', { tripId: item.id })}
             />
           )}
           ListEmptyComponent={renderEmptyComponent}
@@ -155,12 +156,24 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 50,
+    paddingHorizontal: theme.SIZES.padding,
+    marginTop: -50,
   },
-  emptyText: {
-    fontSize: 16,
-    fontFamily: theme.FONTS.medium,
-  }
+  emptyImage: { 
+    width: 200, 
+    height: 200, 
+    marginBottom: 20 
+  },
+  emptyTitle: { 
+    fontFamily: theme.FONTS.bold, 
+    fontSize: 22, 
+    marginBottom: 10 
+  },
+  emptyText: { 
+    fontFamily: theme.FONTS.regular, 
+    fontSize: 16, 
+    textAlign: 'center' 
+  },
 });
 
 export default HistoryScreen;

@@ -45,7 +45,7 @@ const HomeScreen = () => {
 
     mapRef.current?.updateMarkers(markerFromLat, markerFromLng, markerDestLat, markerDestLng);
 
-    if (destinationLocation) {
+    if (fromLocation && destinationLocation) {
       const routeStartLat = fromLocation ? fromLocation.latitude : 10.8700;
       const routeStartLng = fromLocation ? fromLocation.longitude : 106.8031;
       
@@ -85,7 +85,7 @@ const HomeScreen = () => {
         try {
           const response = await apiClient.get('/rides/current');
           const currentRide = response.data; 
-          
+
           if (currentRide && currentRide.id) {
             console.log("Phát hiện chuyến đi dở dang:", currentRide.id);
 

@@ -35,7 +35,10 @@ export class RidesService {
   }
 
   async findTripById(id: string): Promise<Trip | null> {
-    return this.tripRepository.findOne({ where: { id } })
+    return await this.tripRepository.findOne({
+      where: { id },
+      relations: ['driver'],
+    })
   }
 
   async updateTripStatus(

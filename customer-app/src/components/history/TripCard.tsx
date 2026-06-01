@@ -7,7 +7,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 
 export interface TripHistoryItem {
   id: string;
-  status: 'COMPLETED' | 'CANCELLED' | 'PENDING' | 'IN_PROGRESS';
+  status: 'COMPLETED' | 'CANCELLED' | 'CANCELLED_BY_CUSTOMER' | 'CANCELLED_BY_DRIVER' | 'PENDING' | 'IN_PROGRESS';
   estimated_fare: number;
   created_at: string;
   pickup_address: string;
@@ -29,6 +29,8 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPressRebook, onPressDetail 
       case 'COMPLETED':
         return { text: 'Completed', color: theme.stateColors.completed, bg: theme.COLORS.background}; 
       case 'CANCELLED':
+      case 'CANCELLED_BY_CUSTOMER':
+      case 'CANCELLED_BY_DRIVER':
         return { text: 'Cancelled', color: theme.stateColors.cancelled, bg: theme.COLORS.background }; 
       case 'IN_PROGRESS':
         return { text: 'In Progress', color: theme.stateColors.inProgress, bg: theme.COLORS.background }; 
@@ -97,7 +99,7 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPressRebook, onPressDetail 
           {formatPrice(trip.estimated_fare)}
         </Text>
         
-        {(trip.status === 'COMPLETED' || trip.status === 'CANCELLED') && (
+        {(trip.status === 'COMPLETED' || trip.status === 'CANCELLED' || trip.status === 'CANCELLED_BY_CUSTOMER' || trip.status === 'CANCELLED_BY_DRIVER') && (
           <TouchableOpacity 
             style={styles.rebookButton} 
             onPress={() => onPressRebook && onPressRebook(trip)}

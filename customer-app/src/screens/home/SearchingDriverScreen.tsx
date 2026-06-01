@@ -116,9 +116,22 @@ const SearchingDriverScreen = () => {
     };
   }, [navigation, tripId]);
 
-  const handleCancel = () => {
-    // Sẽ gọi API Hủy chuyến ở đây sau
-    navigation.goBack();
+  const handleCancel = async () => {
+    try {
+      if (tripId) {
+        await apiClient.post(`/rides/${tripId}/cancel`);
+        console.log('Đã hủy chuyến đi thành công trên server:', tripId);
+      }
+    } catch (error: any) {
+      console.log('Lỗi khi hủy chuyến:', error.response?.data || error.message);
+    } finally {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        console.log('Đã ngắt kết nối Socket do khách hàng chủ động hủy');
+      }
+      
+      navigation.goBack();
+    }
   };
 
   return (

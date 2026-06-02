@@ -7,6 +7,8 @@ import {
   Image, 
   ScrollView,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -60,7 +62,7 @@ const NewPasswordScreen = () => {
       await apiClient.post('/auth/customer/reset', {
         phone_number: phoneNumber,
         otp_code: otpCode,
-        new_password: newPassword.trim(),
+        new_password: newPassword.trim() 
       });
 
       setShowPopup(true);
@@ -88,64 +90,70 @@ const NewPasswordScreen = () => {
         text="Your account is ready to use. Please log in with your new password." 
       />
 
-      <ScrollView 
-        contentContainerStyle={[
-          styles.scrollContainer, 
-          { paddingBottom: Math.max(insets.bottom, 30) }
-        ]} 
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView 
+        // eslint-disable-next-line react-native/no-inline-styles
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        
-        <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Text style={[ styles.backIcon, {color: colors.textTitle} ]}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Create New Password</Text>
-        </View>
+        <ScrollView 
+          contentContainerStyle={[
+            styles.scrollContainer, 
+            { paddingBottom: Math.max(insets.bottom, 30) }
+          ]} 
+          showsVerticalScrollIndicator={false}
+        >
+          
+          <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Text style={[ styles.backIcon, {color: colors.textTitle} ]}>←</Text>
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Create New Password</Text>
+          </View>
 
-        <View style={styles.content}>
-          <Image 
-            source={require('../../assets/images/create_new_password.png')} 
-            style={styles.illustration}
-            resizeMode="contain"
-          />
+          <View style={styles.content}>
+            <Image 
+              source={require('../../assets/images/create_new_password.png')} 
+              style={styles.illustration}
+              resizeMode="contain"
+            />
 
-          <Text style={[ styles.description, {color: colors.textTitle} ]}>
-            Create Your New Password
-          </Text>
+            <Text style={[ styles.description, {color: colors.textTitle} ]}>
+              Create Your New Password
+            </Text>
 
-          <CustomInput
-            placeholder="New Password"
-            iconName={faLock}
-            isPassword={true}
-            value={newPassword}
-            onChangeText={(text) => {
-              setNewPassword(text);
-              if (confirmError) setConfirmError(''); 
-            }}
-          />
+            <CustomInput
+              placeholder="New Password"
+              iconName={faLock}
+              isPassword={true}
+              value={newPassword}
+              onChangeText={(text) => {
+                setNewPassword(text);
+                if (confirmError) setConfirmError(''); 
+              }}
+            />
 
-          <CustomInput
-            placeholder="Confirm New Password"
-            iconName={faLock}
-            isPassword={true}
-            value={confirmPassword}
-            onChangeText={(text) => {
-              setConfirmPassword(text);
-              if (confirmError) setConfirmError('');
-            }}
-            errorText={confirmError} 
-            // eslint-disable-next-line react-native/no-inline-styles
-            style={{ marginBottom: confirmError ? 10 : 30 }}
-          />
+            <CustomInput
+              placeholder="Confirm New Password"
+              iconName={faLock}
+              isPassword={true}
+              value={confirmPassword}
+              onChangeText={(text) => {
+                setConfirmPassword(text);
+                if (confirmError) setConfirmError('');
+              }}
+              errorText={confirmError} 
+              // eslint-disable-next-line react-native/no-inline-styles
+              style={{ marginBottom: confirmError ? 10 : 30 }}
+            />
 
-          <PrimaryButton 
-            title={isLoading ? "Loading..." : "Continue"} 
-            onPress={handleResetPassword} 
-            disabled={isLoading}
-          />
-        </View>
-      </ScrollView>
+            <PrimaryButton 
+              title={isLoading ? "Loading..." : "Continue"} 
+              onPress={handleResetPassword} 
+              disabled={isLoading}
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 };

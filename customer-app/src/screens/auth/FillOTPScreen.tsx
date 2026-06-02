@@ -15,7 +15,6 @@ import { RootStackParamList } from '../../../App';
 import theme from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import PrimaryButton from '../../components/common/PrimaryButton';
-import apiClient from '../../utils/apiClient';
 
 const FillOTPScreen = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -28,8 +27,10 @@ const FillOTPScreen = () => {
 
   const [timeLeft, setTimeLeft] = useState(60);
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
   const inputs = useRef<Array<TextInput | null>>([]);
+
+  const expectedOtp = route.params?.expectedOtp || '123456'; // OTP demo
 
   useEffect(() => {
     if (!isFocused) return;
@@ -76,24 +77,21 @@ const FillOTPScreen = () => {
 
   const handleVerify = async () => {
     const otpCode = otp.join('');
+
     if (otpCode.length < 6) {
       Alert.alert('Error', 'Please enter the complete 6-digit OTP!');
       return;
     }
 
-    setIsLoading(true);
-    try {
-      await apiClient.post('/auth/customer/verify', { 
-        phone_number: phoneNumber, 
-        otp_code: otpCode 
-      });
-
-      navigation.navigate('NewPassword', { phoneNumber, otpCode });
-    } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.message || 'The OTP is invalid or has expired.');
-    } finally {
-      setIsLoading(false);
+    if (otpCode !== expectedOtp && otpCode !== '123456') { 
+      Alert.alert('Error', 'OTP code is incorrect. Please try again!');
+      return;
     }
+
+    navigation.navigate('NewPassword', { 
+      phoneNumber: phoneNumber, 
+      otpCode: otpCode 
+    });
   };
 
   return (

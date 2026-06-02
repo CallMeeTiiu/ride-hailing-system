@@ -38,9 +38,24 @@ const ForgotPasswordScreen = () => {
 
     setIsLoading(true);
     try {
-      await apiClient.post('/auth/customer/forgot', { phone_number: phoneNumber });
-      
-      navigation.navigate('FillOTP', { phoneNumber: phoneNumber });
+      const response = await apiClient.post('/auth/customer/forgot', { phone_number: phoneNumber });
+      const receivedOtp = response.data?.otp;
+
+      if (response.data && response.data.otp) {
+        Alert.alert(
+          'Demo OTP', 
+          `Phone number: ${phoneNumber} - OTP: ${response.data.otp}`,
+          [
+            { 
+              text: 'OK', 
+              onPress: () => navigation.navigate('FillOTP', { phoneNumber: phoneNumber, expectedOtp: receivedOtp }) 
+            }
+          ]
+        );
+      } else {
+        navigation.navigate('FillOTP', { phoneNumber: phoneNumber });
+      }
+
     } catch (error: any) {
       console.log('❌ Lỗi API Forgot Password:', error.response?.data || error.message);
       Alert.alert('Error', error.response?.data?.message || 'Unable to send OTP, please try again.');

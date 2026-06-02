@@ -72,7 +72,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const uploadAvatar = async (imageUri: string, mimeType: string, fileName: string) => {
     try {
-      // 1. Khởi tạo FormData
       const formData = new FormData();
       
       formData.append('file', {

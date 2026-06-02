@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -15,20 +15,21 @@ import { RootStackParamList } from '../../../App';
 import theme from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import PrimaryButton from '../../components/common/PrimaryButton';
+import apiClient from '../../utils/apiClient';
 
 const FillOTPScreen = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'FillOTP'>>();
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const isFocused = useIsFocused();
 
-  const { contactValue } = route.params;
+  const phoneNumber = route.params?.phoneNumber || '';
 
   const [timeLeft, setTimeLeft] = useState(60);
-
-  const [otp, setOtp] = useState(['', '', '', '']);
-  const inputRefs = useRef<Array<TextInput | null>>([]);
-
-  const isFocused = useIsFocused();
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [isLoading, setIsLoading] = useState(false);
+  const inputs = useRef<Array<TextInput | null>>([]);
 
   useEffect(() => {
     if (!isFocused) return;
@@ -36,7 +37,7 @@ const FillOTPScreen = () => {
     if (timeLeft === 0) {
       Alert.alert(
         "OTP Resent",
-        `Your OTP has been resent, please check your ${contactValue}`,
+        `The OTP has been resent to ${phoneNumber}`,
         [{ text: "OK", onPress: () => setTimeLeft(60) }]
       );
       return;
@@ -48,44 +49,57 @@ const FillOTPScreen = () => {
 
     return () => clearInterval(intervalId);
     
-  }, [timeLeft, contactValue, isFocused]);
+  }, [timeLeft, phoneNumber, isFocused]);
 
-  const handleOtpChange = (text: string, index: number) => {
+  const handleChangeText = (text: string, index: number) => {
     const newOtp = [...otp];
-
-    if (text.length > 0) {
-      newOtp[index] = text[text.length - 1]; 
-      setOtp(newOtp);
-      
-      if (index < 3) {
-        inputRefs.current[index + 1]?.focus();
+    newOtp[index] = text;
+    setOtp(newOtp);
+    
+    if (text !== '') {
+      if (index < 5) {
+        inputs.current[index + 1]?.focus();
       }
-    } else {
-      newOtp[index] = '';
-      setOtp(newOtp);
-      
+    } 
+    else {
       if (index > 0) {
-        inputRefs.current[index - 1]?.focus();
+        inputs.current[index - 1]?.focus();
       }
     }
   };
 
   const handleKeyPress = (e: any, index: number) => {
     if (e.nativeEvent.key === 'Backspace' && otp[index] === '' && index > 0) {
-      const newOtp = [...otp];
-      newOtp[index - 1] = '';
-      setOtp(newOtp);
-      inputRefs.current[index - 1]?.focus();
+      inputs.current[index - 1]?.focus();
     }
   };
 
-  const { colors } = useTheme();
+  const handleVerify = async () => {
+    const otpCode = otp.join('');
+    if (otpCode.length < 6) {
+      Alert.alert('Error', 'Please enter the complete 6-digit OTP!');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await apiClient.post('/auth/customer/verify', { 
+        phone_number: phoneNumber, 
+        otp_code: otpCode 
+      });
+
+      navigation.navigate('NewPassword', { phoneNumber, otpCode });
+    } catch (error: any) {
+      Alert.alert('Error', error.response?.data?.message || 'The OTP is invalid or has expired.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <View style={[ styles.safeArea, {backgroundColor: colors.background} ]}>
       <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 30) }]}>
         
-        {/* Header */}
         <View style={[styles.headerRow, { paddingTop: insets.top + 10 }]}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Text style={[ styles.backIcon, {color: colors.textTitle} ]}>←</Text>
@@ -94,39 +108,35 @@ const FillOTPScreen = () => {
         </View>
 
         <View style={styles.content}>
-          {/* Thông báo gửi mã tới đâu */}
           <Text style={[ styles.description, {color: colors.textTitle} ]}>
-            Code has been sent to {contactValue}
+            The OTP has been sent to {phoneNumber}. Please check and enter below.
           </Text>
 
-          {/* Cụm 4 ô nhập OTP */}
           <View style={styles.otpContainer}>
             {otp.map((digit, index) => (
               <TextInput
                 key={index}
-                ref={(ref) => { inputRefs.current[index] = ref; }}
-                style={[styles.otpInput, digit !== '' && styles.otpInputActive, {color: colors.textTitle}]}
-                keyboardType="numeric"
+                style={[styles.otpInput, { color: colors.textTitle, backgroundColor: colors.inputBg }]}
+                keyboardType="number-pad"
                 maxLength={1}
                 value={digit}
-                onChangeText={(text) => handleOtpChange(text, index)}
+                onChangeText={(text) => handleChangeText(text, index)}
                 onKeyPress={(e) => handleKeyPress(e, index)}
-                selectTextOnFocus 
+                ref={(ref) => {inputs.current[index] = ref}}
               />
             ))}
           </View>
 
-          {/* Bộ đếm thời gian */}
           <Text style={[ styles.timerText, {color: colors.textBody} ]}>
             Resend code in <Text style={styles.timerCount}>{timeLeft} s</Text>
           </Text>
         </View>
 
-        {/* Nút Verify đẩy xuống cuối màn hình */}
         <View style={styles.footer}>
           <PrimaryButton 
-            title="Verify" 
-            onPress={() => navigation.navigate('NewPassword')} 
+            title={isLoading ? "Loading..." : "Verify"} 
+            onPress={handleVerify} 
+            disabled={isLoading} 
           />
         </View>
 
@@ -174,11 +184,11 @@ const styles = StyleSheet.create({
   otpContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 15, 
+    gap: 10, 
     marginBottom: 50,
   },
   otpInput: {
-    width: 65,
+    width: 50,
     height: 60,
     borderRadius: 16,
     borderWidth: 1,

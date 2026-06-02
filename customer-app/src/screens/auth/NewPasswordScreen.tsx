@@ -6,8 +6,9 @@ import {
   TouchableOpacity, 
   Image, 
   ScrollView,
+  Alert,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { faLock } from '@fortawesome/free-solid-svg-icons';
@@ -18,22 +19,64 @@ import { useTheme } from '../../contexts/ThemeContext';
 import CustomInput from '../../components/common/CustomInput';
 import PrimaryButton from '../../components/common/PrimaryButton';
 import SuccessPopup from '../../components/common/SuccessPopup';
+import apiClient from '../../utils/apiClient';
+
 
 const NewPasswordScreen = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
+  const route = useRoute<RouteProp<RootStackParamList, 'NewPassword'>>();
 
-  const [rememberMe, setRememberMe] = useState(false);
+  const { phoneNumber, otpCode } = route.params;
 
   const [showPopup, setShowPopup] = useState(false);
-  
-  const handleContinue = () => {
-    setShowPopup(true);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [confirmError, setConfirmError] = useState('');
+
+  const validatePasswords = () => {
+    const trimmedNew = newPassword.trim();
+    const trimmedConfirm = confirmPassword.trim();
+
+    if (trimmedNew.length < 6) {
+      setConfirmError('Password must be at least 6 characters long!');
+      return false;
+    }
+
+    if (trimmedNew !== trimmedConfirm) {
+      setConfirmError('Confirmation password does not match!'); 
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleResetPassword = async () => {
+    if (!validatePasswords()) return;
+
+    setIsLoading(true);
+    try {
+      await apiClient.post('/auth/customer/reset', {
+        phone_number: phoneNumber,
+        otp_code: otpCode,
+        new_password: newPassword.trim(),
+      });
+
+      setShowPopup(true);
     
-    setTimeout(() => {
-      setShowPopup(false);
-      navigation.replace('MainTabs');
-    }, 3000);
+      setTimeout(() => {
+        setShowPopup(false);
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Login' }], 
+        });
+      }, 3000);
+    } catch (error: any) {
+      Alert.alert('Error', error.response?.data?.message || 'Unable to reset password at the moment.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const { colors } = useTheme();
@@ -42,7 +85,7 @@ const NewPasswordScreen = () => {
     <View style={[ styles.safeArea, {backgroundColor: colors.background} ]}>
       <SuccessPopup 
         visible={showPopup} 
-        text="Your account is ready to use. You will be redirected to the Home page in a few seconds." 
+        text="Your account is ready to use. Please log in with your new password." 
       />
 
       <ScrollView 
@@ -53,7 +96,6 @@ const NewPasswordScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         
-        {/* Header */}
         <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Text style={[ styles.backIcon, {color: colors.textTitle} ]}>←</Text>
@@ -62,7 +104,6 @@ const NewPasswordScreen = () => {
         </View>
 
         <View style={styles.content}>
-          {/* Hình ảnh minh họa */}
           <Image 
             source={require('../../assets/images/create_new_password.png')} 
             style={styles.illustration}
@@ -73,39 +114,35 @@ const NewPasswordScreen = () => {
             Create Your New Password
           </Text>
 
-          {/* Ô nhập Mật khẩu mới */}
-          <CustomInput 
-            iconName={faLock} 
-            placeholder="••••••••••••"
+          <CustomInput
+            placeholder="New Password"
+            iconName={faLock}
             isPassword={true}
+            value={newPassword}
+            onChangeText={(text) => {
+              setNewPassword(text);
+              if (confirmError) setConfirmError(''); 
+            }}
           />
 
-          {/* Ô Xác nhận Mật khẩu mới */}
-          <CustomInput 
-            iconName={faLock} 
-            placeholder="••••••••••••"
+          <CustomInput
+            placeholder="Confirm New Password"
+            iconName={faLock}
             isPassword={true}
+            value={confirmPassword}
+            onChangeText={(text) => {
+              setConfirmPassword(text);
+              if (confirmError) setConfirmError('');
+            }}
+            errorText={confirmError} 
+            // eslint-disable-next-line react-native/no-inline-styles
+            style={{ marginBottom: confirmError ? 10 : 30 }}
           />
 
-          {/* Checkbox Remember me */}
-          <View style={styles.rememberContainer}>
-            <TouchableOpacity 
-              style={styles.checkboxRow} 
-              activeOpacity={0.7}
-              onPress={() => setRememberMe(!rememberMe)}
-            >
-              <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
-                {rememberMe && <Text style={styles.checkMark}>✓</Text>}
-              </View>
-              <Text style={[ styles.rememberText, {color: colors.textTitle} ]}>Remember me</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Nút Continue */}
           <PrimaryButton 
-            title="Continue" 
-            onPress={handleContinue}
-            style={styles.continueButton}
+            title={isLoading ? "Loading..." : "Continue"} 
+            onPress={handleResetPassword} 
+            disabled={isLoading}
           />
         </View>
       </ScrollView>

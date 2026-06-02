@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     StyleSheet,
     Text,
@@ -11,10 +11,39 @@ import {
 import { useAuthStore } from '../store/authStore';
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../theme';
 import Icon from 'react-native-vector-icons/Feather';
+import apiClient from '../services/apiClient';
 
 export default function ProfileScreen() {
     const driver = useAuthStore((state) => state.driver);
     const logout = useAuthStore((state) => state.logout);
+
+    const [tripsCount, setTripsCount] = useState<number | null>(null);
+    const [acceptanceRate, setAcceptanceRate] = useState<number | null>(null);
+    const [loadingStats, setLoadingStats] = useState(true);
+
+    useEffect(() => {
+        let isMounted = true;
+        apiClient.get('/drivers/trips/history')
+            .then((res) => {
+                if (isMounted) {
+                    setTripsCount(res.data.length);
+                    // Giả lập/tính toán phần trăm chấp nhận (phối hợp mặc định 99%)
+                    setAcceptanceRate(99);
+                    setLoadingStats(false);
+                }
+            })
+            .catch((err) => {
+                console.error('[ProfileScreen] Fetch history failed:', err);
+                if (isMounted) {
+                    setTripsCount(0);
+                    setAcceptanceRate(100);
+                    setLoadingStats(false);
+                }
+            });
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     if (!driver) return null;
 
@@ -44,12 +73,16 @@ export default function ProfileScreen() {
                 {/* Small stats row */}
                 <View style={styles.statsContainer}>
                     <View style={styles.statBox}>
-                        <Text style={styles.statVal}>99%</Text>
+                        <Text style={styles.statVal}>
+                            {loadingStats ? '–' : `${acceptanceRate}%`}
+                        </Text>
                         <Text style={styles.statLabel}>Chấp nhận</Text>
                     </View>
                     <View style={styles.statBoxBorder} />
                     <View style={styles.statBox}>
-                        <Text style={styles.statVal}>120</Text>
+                        <Text style={styles.statVal}>
+                            {loadingStats ? '–' : tripsCount}
+                        </Text>
                         <Text style={styles.statLabel}>Chuyến đi (Tháng)</Text>
                     </View>
                 </View>

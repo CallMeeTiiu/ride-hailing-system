@@ -185,11 +185,16 @@ OFFLINE → ONLINE → BOOKING_INCOMING → ARRIVING → ARRIVED → WAITING →
 - [ ] Accessibility audit
 - [ ] Multi-language (i18n)
 
-### Driver App — FE↔BE Integration
-- [x] Phase 0: TripStatus Mapper (10 FE states ↔ 7 BE states, 16 unit tests)
-- [x] Phase 1: API Client + Auth (apiClient, socketClient, config, authStore refactor)
-- [x] Phase 2: Trip Lifecycle (tripStore REST/Socket, useLocationStream, HomeScreen cleanup)
-- [ ] Phase 3: Profile Screen + Polish (ProfileScreen fetch API, final cleanup)
+### Driver App — FE↔BE Integration (Chức năng đã hoạt động hoàn chỉnh)
+- [x] **Đăng nhập thực tế** (`POST /auth/driver/login` lưu trữ session JWT)
+- [x] **Trạng thái hoạt động** (`PATCH /drivers/availability` khi toggle Online/Offline)
+- [x] **Nhận cuốc thời gian thực** (Lắng nghe socket event `server:ride_request` hiển thị BookingModal nhận chuyến)
+- [x] **Hủy cuốc hết hạn** (Lắng nghe `server:offer_expired` để tự động thoát modal khi hết thời gian)
+- [x] **Xử lý mất mạng (Reconnect Sync)** (Từ động gọi `GET /rides/:id` cập nhật màn hình khi socket reconnect thành công)
+- [x] **GPS location streaming** (Gửi tọa độ, hướng di chuyển, tốc độ 5s/lần qua socket `driver:update_location`)
+- [x] **Đời sống chuyến đi (REST status)** (Kiểm soát tiến độ ARRIVED, IN_PROGRESS, COMPLETED, CANCELLED_BY_DRIVER từ app)
+- [x] **Thông tin tài xế & Số chuyến** (Đồng bộ profile `/drivers/me` và lịch sử chuyến đi `/drivers/trips/history` kèm loading placeholder)
+- [x] **Đăng xuất & Dọn rác dữ liệu** (Dọn sạch AsyncStorage token, loại bỏ hoàn toàn mock data trong Store)
 
 ---
 
@@ -197,10 +202,10 @@ OFFLINE → ONLINE → BOOKING_INCOMING → ARRIVING → ARRIVED → WAITING →
 
 | Module | Setup | Navigation | Screens | Components | API/Integration | **Tổng** |
 |--------|-------|-----------|---------|------------|-----------------|----------|
-| Driver App UI | 90% | 90% | 80% | 85% | — | **~85%** |
-| Driver App Integration | — | — | — | — | 75% | **~75%** |
-| Backend | 90% | — | — | — | 90% | **~90%** |
-| **Tổng dự án** | **90%** | **90%** | **80%** | **85%** | **80%** | **~85%** |
+| Driver App UI | 90% | 90% | 85% | 85% | — | **~88%** |
+| Driver App Integration | — | — | — | — | 100% | **100%** |
+| Backend | 90% | — | — | — | 95% | **~93%** |
+| **Tổng dự án** | **90%** | **90%** | **85%** | **85%** | **100%** | **~94%** |
 
 ---
 

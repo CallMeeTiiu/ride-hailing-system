@@ -23,6 +23,7 @@ Sau phase này:
 |-----------|----------|
 | Data source | Thay `MOCK_DRIVER` → `authStore.driver` (đã fetch từ Phase 1) |
 | Stats row | Fetch từ `GET /drivers/trips/history` → count trips |
+| Stats loading | Hiển thị placeholder `–` hoặc skeleton nhấp nháy trong lúc chờ API, tránh flash `0` → số thật |
 | Sign out | `authStore.logout()` → clear AsyncStorage + navigate AuthStack |
 | Avatar | Dùng `driver.avatarUrl` từ store (hoặc placeholder nếu null) |
 
@@ -111,6 +112,7 @@ Nếu cần, bổ sung fields cho `DriverProfile` để khớp với response BE
 1. **Profile screen:**
    - ✅ Tên + phone + avatar = data từ BE (không phải "Nguyễn Văn Mạnh" hardcoded)
    - ✅ Rating badge = số thực từ DB
+   - ✅ Stats row hiển thị `–` hoặc skeleton khi đang fetch, không flash `0`
    - ✅ Sign out → quay về LoginScreen → mở lại app vẫn ở LoginScreen
 
 2. **Login screen:**
@@ -154,3 +156,14 @@ Driver App Integration:  0%  →  ~70%
 Backend sử dụng:        55%  →  ~65%  (driver-app đã gọi API thật)
 Tổng dự án:             ~40% →  ~55%
 ```
+
+---
+
+## Review Feedback Đã Tích Hợp
+
+| # | Góp ý | Trạng thái |
+|---|--------|------------|
+| 1 | Dọn rác `MOCK_DRIVER` / `MOCK_TRIP`, giữ `MOCK_CHAT_HISTORY` | ✅ Đã có trong plan |
+| 2 | `authStore.error` inline dưới form thay vì Alert | ✅ Đã có trong plan |
+| 3 | Luồng đăng xuất chuẩn qua `logout()` | ✅ Đã có trong plan |
+| 4 | **Loading skeleton/placeholder cho Stats row** khi chờ API | ✅ **Đã bổ sung** |

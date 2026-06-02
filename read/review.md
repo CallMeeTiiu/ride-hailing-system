@@ -1,3 +1,8 @@
-Sự đồng bộ của tham số: Ở phần TripBottomSheet.tsx, ông gọi acceptTrip(currentTrip?.id) là có truyền tham số từ ngoài vào, nhưng ngay bên dưới chỗ confirmArrived() lại không truyền gì mà comment là "lấy từ store bên trong". Tui nghĩ ông nên quy hoạch lại thống nhất một kiểu thôi, tốt nhất là dẹp luôn cái tham số truyền vào mà dùng get().currentTrip.id ngay bên trong tripStore cho mọi hàm, vậy UI nó gọn hơn.
+Dọn rác triệt để (Cleanup): Tụi mình code rất hay có thói quen để quên file mock. Việc mạnh tay xoá sạch MOCK_DRIVER và MOCK_TRIP ở các file store sẽ giúp app không bị rò rỉ data giả lúc demo. Việc giữ lại MOCK_CHAT_HISTORY do backend chưa làm tới module chat là một pha xử lý linh hoạt, chống cháy cực tốt cho UI.
 
-Ca khó lúc mất mạng: Ở phần Edge cases ông có ghi "Socket disconnect → auto-reconnect sau 3s". Tuy nhiên, nếu tài xế chui xuống hầm hẻo sóng, đúng lúc đó khách huỷ cuốc, lát sau tài xế lên lại mặt đất thì Socket tự kết nối lại, nhưng app sẽ bị kẹt ở màn hình đang chở khách (do đã lỡ mất event huỷ lúc rớt mạng). Chỗ này mốt code thực tế chắc phải kẹp thêm cái trò gọi API fetch lại trạng thái chuyến đi ngay khi event socket reconnect nổ ra.
+Cải thiện UX đăng nhập: Việc lấy cái authStore.error hiển thị ngay bên dưới form ở LoginScreen (thay vì văng cục Alert chung chung) nhìn app sẽ xịn và pro hơn hẳn. Thầy cô test thử nhập sai pass mà thấy báo lỗi chuẩn tiếng Việt từ server trả về là điểm cộng lớn.
+
+Luồng đăng xuất chuẩn: Chỗ ProfileScreen dùng logout() để xoá sạch token dưới AsyncStorage rồi mượn RootNavigator đá văng về AuthStack là chuẩn bài bảo mật.
+
+Góp ý nhỏ thêm cho UI/UX
+Ở file ProfileScreen.tsx, chỗ hiển thị số chuyến đi (Stats row): Khi bạn gọi API GET /drivers/trips/history về để đếm số lượng, data sẽ mất khoảng vài trăm mili-giây để tải. Bạn nên nhét thêm một cái loading skeleton (hiệu ứng nhấp nháy xám xám) hoặc để mặc định là dấu - trong lúc chờ. Tránh trường hợp UI chớp số 0 rồi giật nảy sang số thật, nhìn sẽ hơi "phèn" một chút.

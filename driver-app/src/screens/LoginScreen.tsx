@@ -19,15 +19,17 @@ import Icon from 'react-native-vector-icons/Feather';
 export default function LoginScreen() {
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
     const [errorText, setErrorText] = useState('');
     const login = useAuthStore((state) => state.login);
+    const loading = useAuthStore((state) => state.isLoading);
+    const serverError = useAuthStore((state) => state.error);
 
     const handlePhoneChange = (text: string) => {
         // Dynamic phone formatting
         const formatted = formatPhoneNumber(text);
         setPhone(formatted);
         setErrorText('');
+        useAuthStore.setState({ error: null });
     };
 
     const handleLogin = async () => {
@@ -42,16 +44,11 @@ export default function LoginScreen() {
             return;
         }
 
-        setLoading(true);
         setErrorText('');
-        try {
-            await login(phone, password);
-        } catch (e) {
-            setErrorText('Đăng nhập thất bại. Vui lòng thử lại.');
-        } finally {
-            setLoading(false);
-        }
+        useAuthStore.setState({ error: null });
+        await login(phone, password);
     };
+
 
     return (
         <KeyboardAvoidingView
@@ -103,13 +100,14 @@ export default function LoginScreen() {
                             onChangeText={(text) => {
                                 setPassword(text);
                                 setErrorText('');
+                                useAuthStore.setState({ error: null });
                             }}
                             editable={!loading}
                         />
                     </View>
 
-                    {errorText ? (
-                        <Text style={styles.errorText}>{errorText}</Text>
+                    {(errorText || serverError) ? (
+                        <Text style={styles.errorText}>{errorText || serverError}</Text>
                     ) : null}
 
                     {/* Login Action Trigger */}

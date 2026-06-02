@@ -1,51 +1,8 @@
-1. Giữ lại react-native-maps làm fallback hay xóa hoàn toàn?
-Quyết định: XÓA HOÀN TOÀN.
+Dọn rác triệt để (Cleanup): Tụi mình code rất hay có thói quen để quên file mock. Việc mạnh tay xoá sạch MOCK_DRIVER và MOCK_TRIP ở các file store sẽ giúp app không bị rò rỉ data giả lúc demo. Việc giữ lại MOCK_CHAT_HISTORY do backend chưa làm tới module chat là một pha xử lý linh hoạt, chống cháy cực tốt cho UI.
 
-Lý do:
+Cải thiện UX đăng nhập: Việc lấy cái authStore.error hiển thị ngay bên dưới form ở LoginScreen (thay vì văng cục Alert chung chung) nhìn app sẽ xịn và pro hơn hẳn. Thầy cô test thử nhập sai pass mà thấy báo lỗi chuẩn tiếng Việt từ server trả về là điểm cộng lớn.
 
-Giữ đúng tinh thần MVP (Tối ưu nguồn lực): Việc duy trì song song 2 luồng logic bản đồ (Native và WebView) trong codebase sẽ làm tăng gấp đôi thời gian bảo trì, test và fix bug. Ở giai đoạn này, chúng ta cần tốc độ và sự đơn giản.
+Luồng đăng xuất chuẩn: Chỗ ProfileScreen dùng logout() để xoá sạch token dưới AsyncStorage rồi mượn RootNavigator đá văng về AuthStack là chuẩn bài bảo mật.
 
-Giảm thiểu dung lượng và thời gian build: react-native-maps mang theo rất nhiều native dependencies (đặc biệt là Google Play Services trên Android). Xóa nó đi sẽ giúp app nhẹ hơn đáng kể và thời gian build Gradle/Xcode nhanh hơn.
-
-Không sợ mất code: Git history đã lưu lại toàn bộ code cũ. Nếu sau này scale up dự án, có budget và thấy WebView không còn đáp ứng được hiệu năng, bạn hoàn toàn có thể checkout lại các commit cũ để khôi phục react-native-maps dễ dàng.
-
-2. Setup Navigation Structure cho Customer App
-Quyết định: Xây dựng cấu trúc AuthStack + MainTab tương tự Driver App. Sự đồng nhất về mặt kiến trúc Navigation giữa Customer App và Driver App sẽ giúp bạn tái sử dụng được nhiều logic/component (như Header, TabBar tùy chỉnh) và dễ dàng quản lý luồng điều hướng hơn.
-
-Bạn nên thiết lập cấu trúc Navigation cho Customer App cụ thể như sau:
-
-RootNavigator: Xử lý logic chuyển đổi dựa trên trạng thái đăng nhập (đọc từ Zustand hoặc AsyncStorage).
-
-AuthStack (Dành cho người dùng chưa đăng nhập):
-
-LoginScreen: Nhập số điện thoại.
-
-OTPScreen: Xác thực mã OTP.
-
-RegisterScreen: Điền thông tin cá nhân (nếu là user mới).
-
-MainNavigator (Dành cho người dùng đã đăng nhập):
-
-MainTab (Bottom Tab Navigator):
-
-HomeMapScreen: Đây chính là màn hình chứa MapBackground (đặt xe, chọn điểm đón/đến).
-
-ActivityScreen: Lịch sử các chuyến đi.
-
-ProfileScreen: Cài đặt, thông tin tài khoản, ví thanh toán.
-
-BookingFlowStack (Các màn hình modal hoặc push đè lên tab chính khi đang thao tác):
-
-SearchLocationScreen: Màn hình gõ địa chỉ, autocomplete.
-
-TrackingTripScreen: Màn hình theo dõi tài xế đang tới/đang trong chuyến.
-
-Đề xuất hành động tiếp theo
-Dựa trên kế hoạch và tình trạng hiện tại, tôi đề xuất bạn nên bắt đầu bằng việc Tạo mới Customer App trước.
-
-Bước 1: Cài đặt @react-navigation và dựng khung kiến trúc Navigation (AuthStack + MainTab) cho Customer App.
-
-Bước 2: Đưa MapBackground vào HomeMapScreen của Customer App để test luồng cấp quyền GPS và render bản đồ trước.
-
-Bước 3: Sau khi Customer App chạy mượt mà, dùng kinh nghiệm đó quay lại refactor, gỡ bỏ react-native-maps bên phía Driver App.
-3. chỉ triển khai driver-app
+Góp ý nhỏ thêm cho UI/UX
+Ở file ProfileScreen.tsx, chỗ hiển thị số chuyến đi (Stats row): Khi bạn gọi API GET /drivers/trips/history về để đếm số lượng, data sẽ mất khoảng vài trăm mili-giây để tải. Bạn nên nhét thêm một cái loading skeleton (hiệu ứng nhấp nháy xám xám) hoặc để mặc định là dấu - trong lúc chờ. Tránh trường hợp UI chớp số 0 rồi giật nảy sang số thật, nhìn sẽ hơi "phèn" một chút.

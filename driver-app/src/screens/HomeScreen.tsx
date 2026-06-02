@@ -10,6 +10,7 @@ import {
     Platform,
 } from 'react-native';
 import { useLocationPermission } from '../hooks/useLocationPermission';
+import { useLocationStream } from '../hooks/useLocationStream';
 import MapBackground, { MapBackgroundRef } from '../components/MapBackground';
 import { fetchRoute } from '../utils/fetchRoute';
 import { useTripStore } from '../store/tripStore';
@@ -37,6 +38,9 @@ export default function HomeScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
     const driver = useAuthStore((state) => state.driver);
 
+    // Bắn GPS stream liên tục khi online
+    useLocationStream();
+
     // Zustand stores
     const {
         tripStatus,
@@ -62,20 +66,6 @@ export default function HomeScreen() {
             mapRef.current.flyToLocation(userLocation.latitude, userLocation.longitude);
         }
     }, [hasLocationPermission, userLocation]);
-
-    // Phase 3: Simulated 5-second incoming cuốc xe after switching Online
-    useEffect(() => {
-        let mockBookingTimer: any;
-        if (tripStatus === TripStatus.ONLINE) {
-            mockBookingTimer = setTimeout(() => {
-                receiveBooking();
-            }, 5000); // 5s countdown delay
-        }
-
-        return () => {
-            if (mockBookingTimer) clearTimeout(mockBookingTimer);
-        };
-    }, [tripStatus]);
 
     // Manage markers and routes based on trip status updates
     useEffect(() => {

@@ -230,4 +230,11 @@ export class DriversController {
       verification_status: body.verification_status || 'PENDING',
     } as any)
   }
+
+  @Get('drivers/:id')
+  @ApiOperation({ summary: 'Khách hàng: Lấy thông tin chi tiết của tài xế' })
+  @ApiResponse({ status: 200, description: 'Trả về thông tin tài xế và xe' })
+  async getDriverInfo(@Param('id') id: string) {
+    return this.driversService.getDriverInfo(id)
+  }
 }

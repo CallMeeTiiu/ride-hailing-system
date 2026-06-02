@@ -11,7 +11,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (phoneNumber: string, password?: string) => Promise<boolean>;
+  login: (token: string, userData: User) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -25,7 +25,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
-        const token = await AsyncStorage.getItem('@mock_access_token');
+        const token = await AsyncStorage.getItem('access_token');
         const userData = await AsyncStorage.getItem('@mock_user_info');
         
         if (token && userData) {
@@ -41,29 +41,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkLoginStatus();
   }, []);
 
-  const login = async (phoneNumber: string, password?: string) => {
-    return new Promise<boolean>((resolve) => {
-      setTimeout(async () => {
-        if (phoneNumber && password) {
-          const mockUser: User = {
-            id: 'mock_user_id_123',
-            role: 'CUSTOMER',
-            phone_number: phoneNumber,
-          };
+  const login = async (token: string, userData: User) => {
+    try {
+      await AsyncStorage.setItem('access_token', token);
+      await AsyncStorage.setItem('user_info', JSON.stringify(userData));
 
-          await AsyncStorage.setItem('@mock_access_token', 'fake_jwt_token_abc123');
-          await AsyncStorage.setItem('@mock_user_info', JSON.stringify(mockUser));
-
-          setUser(mockUser);
-          setIsAuthenticated(true);
-          resolve(true); 
-        } else {
-          resolve(false); 
-        }
-      }, 1000);
-    });
+      setUser(userData);
+      setIsAuthenticated(true);
+    } catch (error) {
+      console.log('Lỗi lưu Token:', error);
+    }
   };
-
+  
   const logout = async () => {
     await AsyncStorage.removeItem('@mock_access_token');
     await AsyncStorage.removeItem('@mock_user_info');

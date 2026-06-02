@@ -2,10 +2,10 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface LocationItem {
-  id: string;
+  id?: string;
   name: string;
   address: string;
-  distance: string;
+  distance?: string;
   latitude: number;
   longitude: number;
 }

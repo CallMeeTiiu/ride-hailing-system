@@ -1,93 +1,85 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   View, 
   Text, 
-  StyleSheet, 
-  TextInput, 
+  StyleSheet,
   TouchableOpacity, 
   ScrollView, 
   KeyboardAvoidingView, 
   Platform,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faArrowLeft, faCalendar, faEnvelope, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faCalendar, faEnvelope, faChevronDown, faChevronUp, faPhone, faUser } from '@fortawesome/free-solid-svg-icons';
 import theme from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useUser } from '../../contexts/UserContext';
 import PrimaryButton from '../../components/common/PrimaryButton';
 import CalendarPicker from '../../components/profile/CalendarPicker';
+import CustomInput from '../../components/common/CustomInput';
 
 const EditProfileScreen = ({ navigation }: any) => {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { user, updateUser } = useUser();
+  const { profile, updateProfile } = useUser();
 
   const [formData, setFormData] = useState({
-    name: user?.name || '',
-    dob: user?.dob || '',
-    email: user?.email || '',
-    country: 'United States',
-    phoneNumber: user?.phoneNumber || '',
-    gender: user?.gender || '',
+    name: profile?.name || '',
+    dob: profile?.dob || '',
+    email: profile?.email || '',
+    phoneNumber: profile?.phone_number || '',
+    gender: profile?.gender || '',
   });
 
   const [showDatePicker, setShowDatePicker] = useState(false);
-
   const [showGenderPicker, setShowGenderPicker] = useState(false);
+  const [emailError, setEmailError] = useState<string>('');
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
   const genderOptions = ['Male', 'Female', 'Other', 'Secret'];
+
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        name: profile.name || '',
+        dob: profile.dob || '',
+        email: profile.email || '',
+        phoneNumber: profile.phone_number || '',
+        gender: profile.gender || '',
+      });
+    }
+  }, [profile]);
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    if (field === 'email' && emailError) {
+      setEmailError('');
+    }
   };
 
-  const handleUpdate = () => {
-    updateUser({
-      name: formData.name,
-      dob: formData.dob,
-      email: formData.email,
-      phoneNumber: formData.phoneNumber,
-      gender: formData.gender,
-    });
-    navigation.goBack();
+  const handleUpdate = async () => {
+    if (formData.email && !emailRegex.test(formData.email)) {
+      setEmailError('Invalid email format (e.g., user@domain.com)');
+      return;
+    }
+    try {
+      const payload: any = {
+        name: formData.name,
+        dob: formData.dob === '' ? null : formData.dob,
+        email: formData.email,
+        gender: formData.gender,
+      };
+
+      await updateProfile(payload);
+
+      Alert.alert("Success", "Your information has been updated!");
+      navigation.goBack();
+    } catch (error) {
+      console.log("Error updating profile:", error);
+      Alert.alert("Failed", "An error occurred while saving information. Please try again!");
+    }
   };
-
-  const renderInput = (
-    placeholder: string, 
-    field: keyof typeof formData, 
-    icon?: any, 
-    keyboardType: any = 'default',
-    editable: boolean = true
-  ) => (
-    // eslint-disable-next-line react-native/no-inline-styles
-    <View style={[styles.inputContainer, { backgroundColor: colors.inputBg, opacity: editable ? 1 : 0.6 }]}>
-      {editable ? (
-        <TextInput
-          style={[styles.input, { color: colors.textTitle }]}
-          placeholder={placeholder}
-          placeholderTextColor={colors.textBody}
-          value={formData[field]}
-          onChangeText={(text) => handleChange(field, text)}
-          keyboardType={keyboardType}
-        />
-      ) : (
-        // eslint-disable-next-line react-native/no-inline-styles
-        <View style={{ flex: 1, justifyContent: 'center' }}>
-          <Text 
-            style={[ styles.inputTail, {color: colors.textTitle} ]} 
-            numberOfLines={1} 
-            ellipsizeMode="tail"
-          >
-            {formData[field] || placeholder}
-          </Text>
-        </View>
-      )}
-
-      {icon && (
-        <FontAwesomeIcon icon={icon} size={20} color={colors.textTitle} style={styles.inputIcon} />
-      )}
-    </View>
-  );
 
   return (
     <KeyboardAvoidingView 
@@ -109,36 +101,61 @@ const EditProfileScreen = ({ navigation }: any) => {
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.formContainer}>
             
-          {renderInput('Email', 'email', faEnvelope, 'email-address', false)}
-          {renderInput('Full Name', 'name')}
-
-          <TouchableOpacity 
-            style={[styles.inputContainer, { backgroundColor: colors.inputBg }]}
-            onPress={() => setShowDatePicker(true)}
-          >
-            <Text style={styles.inputLabel}>{formData.dob || 'Select Date of Birth'}</Text>
-            <FontAwesomeIcon icon={faCalendar} size={20} color={colors.textTitle} />
-          </TouchableOpacity>
-
-          {renderInput('Country', 'country')}
-          {renderInput('Phone Number', 'phoneNumber', undefined, 'phone-pad')}
+          <CustomInput 
+            placeholder="Phone Number"
+            iconName={faPhone}
+            keyboardType="phone-pad"
+            value={formData.phoneNumber}
+            editable={false}
+          />
           
-          {/* GENDER COMBOBOX */}
-          {/* eslint-disable-next-line react-native/no-inline-styles */}
-          <View style={{ zIndex: 10 }}>
-            <TouchableOpacity 
-              // eslint-disable-next-line react-native/no-inline-styles
-              style={[styles.inputContainer, { backgroundColor: colors.inputBg, marginBottom: showGenderPicker ? 10 : 20 }]}
-              activeOpacity={0.7}
-              onPress={() => setShowGenderPicker(!showGenderPicker)} 
-            >
-              <Text style={[styles.inputLabel, { color: formData.gender ? colors.textTitle : colors.textBody }]}>
-                {formData.gender || 'Select Gender'}
-              </Text>
-              <FontAwesomeIcon icon={showGenderPicker ? faChevronUp : faChevronDown} size={16} color={colors.textTitle} style={styles.inputIcon} />
+          <CustomInput 
+            placeholder="Full Name"
+            iconName={faUser}
+            value={formData.name}
+            onChangeText={(text) => handleChange('name', text)}
+            style={{ backgroundColor: colors.inputBg }}
+          />
+
+          <CustomInput 
+            placeholder="Email"
+            iconName={faEnvelope}
+            keyboardType="email-address"
+            value={formData.email}
+            onChangeText={(text) => handleChange('email', text)}
+            style={{ backgroundColor: colors.inputBg }}
+            errorText={emailError}
+          />
+
+          <TouchableOpacity activeOpacity={0.7} onPress={() => setShowDatePicker(true)}>
+            <View pointerEvents="none">
+              <CustomInput 
+                placeholder="Select Date of Birth"
+                iconName={faCalendar}
+                value={formData.dob}
+                editable={false}
+                style={{ backgroundColor: colors.inputBg }}
+              />
+            </View>
+          </TouchableOpacity>
+          
+          <View style={styles.floating}>
+            <TouchableOpacity activeOpacity={0.7} onPress={() => setShowGenderPicker(!showGenderPicker)}>
+              <View pointerEvents="none">
+                <CustomInput 
+                  placeholder="Select Gender"
+                  iconName={showGenderPicker ? faChevronUp : faChevronDown}
+                  value={formData.gender}
+                  editable={false}
+                  // eslint-disable-next-line react-native/no-inline-styles
+                  style={{ 
+                    backgroundColor: colors.inputBg, 
+                    marginBottom: showGenderPicker ? 10 : 20 
+                  }}
+                />
+              </View>
             </TouchableOpacity>
 
-            {/* List Dropdown sổ xuống ngay bên dưới */}
             {showGenderPicker && (
               <View style={[styles.dropdownContainer, { backgroundColor: colors.white, borderColor: colors.primary }]}>
                 {genderOptions.map((option, index) => (
@@ -201,66 +218,13 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 20 
   },
-  inputContainer: {
-    flexDirection: 'row', 
-    alignItems: 'center',
-    borderRadius: theme.SIZES.radiusInput || 16,
-    paddingHorizontal: 20, 
-    height: 60, 
-    marginBottom: 20,
-  },
-  input: { 
-    flex: 1, 
-    fontFamily: theme.FONTS.semiBold, 
-    fontSize: 16, 
-    height: '100%' 
-  },
-  inputTail: {
-    fontFamily: theme.FONTS.semiBold, 
-    fontSize: 16, 
-    textAlignVertical: 'center' 
-  },
-  inputLabel: { 
-    flex: 1, 
-    fontFamily: theme.FONTS.semiBold, 
-    fontSize: 16 
-  },
-  inputIcon: { 
-    marginLeft: 10 
+  floating: {
+    zIndex: 10,
   },
   footer: { 
     paddingHorizontal: theme.SIZES.padding, 
-    paddingTop: 10 
-  },
-  overlay: { 
-    flex: 1, 
-    backgroundColor: 'rgba(0, 0, 0, 0.5)' 
-  },
-  sheetContainer: {
-    position: 'absolute', bottom: 0, width: '100%',
-    borderTopLeftRadius: 32, borderTopRightRadius: 32,
-    paddingHorizontal: theme.SIZES.padding, paddingTop: 12,
-    alignItems: 'center', ...theme.SHADOWS.light,
-  },
-  handleIndicator: { 
-    width: 40, 
-    height: 4, 
-    backgroundColor: '#EEEEEE', 
-    borderRadius: 2, 
-    marginBottom: 20 
-  },
-  sheetTitle: { 
-    fontFamily: theme.FONTS.bold, 
-    fontSize: 20, 
-    marginBottom: 20 
-  },
-  optionItem: {
-    width: '100%', paddingVertical: 18, borderRadius: 16,
-    alignItems: 'center', marginBottom: 8,
-  },
-  optionText: { 
-    fontFamily: theme.FONTS.semiBold, 
-    fontSize: 18 
+    paddingTop: 10,
+    marginBottom: 20,
   },
   dropdownContainer: {
     marginTop: -10, 

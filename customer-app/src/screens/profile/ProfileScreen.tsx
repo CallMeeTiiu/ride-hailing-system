@@ -6,7 +6,9 @@ import {
   Image, 
   TouchableOpacity, 
   ScrollView, 
-  Switch 
+  Switch, 
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
@@ -27,16 +29,30 @@ import MenuItem from '../../components/profile/MenuItem';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUser } from '../../contexts/UserContext';
 import { useNavigation } from '@react-navigation/native';
+import { launchImageLibrary, ImageLibraryOptions } from 'react-native-image-picker';
 
 const ProfileScreen = () => {
   const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const { colors, isDarkMode, toggleTheme } = useTheme();
   const insets = useSafeAreaInsets();
 
-  const { user, logout } = useAuth();
-  const { profile } = useUser();
+  const { logout } = useAuth();
+  const { profile, uploadAvatar } = useUser();
   const navigation = useNavigation<any>();
+
+  const BACKEND_URL = 'http://localhost:3000';
+
+  const getAvatarUri = () => {
+    if (!profile?.avatar_url) {
+      return 'https://cdn-icons-png.flaticon.com/512/219/219988.png';
+    }
+    if (profile.avatar_url.startsWith('http')) {
+      return profile.avatar_url;
+    }
+    return `${BACKEND_URL}${profile.avatar_url}`;
+  };
 
   const handleLogoutAction = async () => {
     try {
@@ -47,6 +63,38 @@ const ProfileScreen = () => {
     }
   };
 
+  const handleUpdateAvatar = () => {
+    const options: ImageLibraryOptions = {
+      mediaType: 'photo' as const,
+      quality: 0.8,
+    };
+
+    launchImageLibrary(options, async (response) => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.errorCode) {
+        console.log('ImagePicker Error: ', response.errorMessage);
+        Alert.alert('Error', 'Unable to open image library');
+      } else if (response.assets && response.assets.length > 0) {
+        const asset = response.assets[0];
+        
+        if (asset.uri) {
+          try {
+            setIsUploading(true);
+            const mimeType = asset.type || 'image/jpeg';
+            const fileName = asset.fileName || `avatar_${Date.now()}.jpg`;
+            await uploadAvatar(asset.uri, mimeType, fileName);
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          } catch (error) {
+            Alert.alert('Failed', 'Unable to upload image. Please try again!');
+          } finally {
+            setIsUploading(false);
+          }
+        }
+      }
+    });
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top + 20 }]}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
@@ -55,16 +103,37 @@ const ProfileScreen = () => {
         <View style={styles.userInfoSection}>
           <View style={styles.avatarContainer}>
             <Image 
-              source={{ uri: profile?.avatar || 'https://cdn-icons-png.flaticon.com/512/219/219988.png' }} 
+              source={{ uri: getAvatarUri() }} 
               style={styles.avatar} 
             />
-            <TouchableOpacity style={[styles.editAvatarButton, { backgroundColor: theme.COLORS.primary }]} activeOpacity={0.8}>
+
+            <TouchableOpacity 
+              style={[styles.editAvatarButton, { backgroundColor: theme.COLORS.primary }]} 
+              activeOpacity={0.8}
+              onPress={handleUpdateAvatar}
+              disabled={isUploading}
+            >
               <FontAwesomeIcon icon={faPen} size={12} color={colors.white} />
             </TouchableOpacity>
+
+            {isUploading && (
+              <View style={[
+                StyleSheet.absoluteFill,
+                // eslint-disable-next-line react-native/no-inline-styles
+                { 
+                  backgroundColor: 'rgba(0, 0, 0, 0.4)', 
+                  borderRadius: 100,
+                  justifyContent: 'center', 
+                  alignItems: 'center' 
+                }
+              ]}>
+                <ActivityIndicator size="small" color={colors.white} />
+              </View>
+            )}
           </View>
           
           <Text style={[styles.userName, { color: colors.textTitle }]}>{profile?.name || "New User"}</Text>
-          <Text style={[styles.userPhone, { color: colors.textBody }]}>{user?.phone_number || ""}</Text>
+          <Text style={[styles.userPhone, { color: colors.textBody }]}>{profile?.phone_number || ""}</Text>
           <Text style={[styles.userPhone, { color: colors.textBody }]}>{profile?.email || ""}</Text>
         </View>
 

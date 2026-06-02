@@ -3,7 +3,6 @@ import {
   View, 
   Text, 
   StyleSheet, 
-  SafeAreaView, 
   TouchableOpacity, 
   Image,
   ScrollView,
@@ -18,6 +17,7 @@ import { faPhone, faLock } from '@fortawesome/free-solid-svg-icons';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../../App';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import apiClient from '../../utils/apiClient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -106,7 +106,7 @@ const LoginScreen = () => {
   };
 
   return (
-    <SafeAreaView style={[ styles.safeArea, {backgroundColor: colors.background} ]}>
+    <SafeAreaProvider style={[ styles.safeArea, {backgroundColor: colors.background} ]}>
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         
         {/* Nút Back */}
@@ -210,7 +210,7 @@ const LoginScreen = () => {
 
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </SafeAreaProvider>
   );
 };
 

@@ -34,7 +34,7 @@ const ProfileScreen = () => {
   const { colors, isDarkMode, toggleTheme } = useTheme();
   const insets = useSafeAreaInsets();
 
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const { profile } = useUser();
   const navigation = useNavigation<any>();
 
@@ -55,7 +55,7 @@ const ProfileScreen = () => {
         <View style={styles.userInfoSection}>
           <View style={styles.avatarContainer}>
             <Image 
-              source={{ uri: profile?.avatar || 'https://cdn-icons-png.flaticon.com/512/219/219988.png' }} 
+              source={{ uri: profile?.avatar_url || 'https://cdn-icons-png.flaticon.com/512/219/219988.png' }} 
               style={styles.avatar} 
             />
             <TouchableOpacity style={[styles.editAvatarButton, { backgroundColor: theme.COLORS.primary }]} activeOpacity={0.8}>
@@ -64,7 +64,7 @@ const ProfileScreen = () => {
           </View>
           
           <Text style={[styles.userName, { color: colors.textTitle }]}>{profile?.name || "New User"}</Text>
-          <Text style={[styles.userPhone, { color: colors.textBody }]}>{user?.phone_number || ""}</Text>
+          <Text style={[styles.userPhone, { color: colors.textBody }]}>{profile?.phone_number || ""}</Text>
           <Text style={[styles.userPhone, { color: colors.textBody }]}>{profile?.email || ""}</Text>
         </View>
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -8,10 +8,11 @@ import {
   ScrollView, 
   KeyboardAvoidingView, 
   Platform,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faArrowLeft, faCalendar, faEnvelope, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faCalendar, faEnvelope, faChevronDown, faChevronUp, faPhone, faUser } from '@fortawesome/free-solid-svg-icons';
 import theme from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useUser } from '../../contexts/UserContext';
@@ -21,35 +22,53 @@ import CalendarPicker from '../../components/profile/CalendarPicker';
 const EditProfileScreen = ({ navigation }: any) => {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { user, updateUser } = useUser();
+  const { profile, updateProfile } = useUser();
 
   const [formData, setFormData] = useState({
-    name: user?.name || '',
-    dob: user?.dob || '',
-    email: user?.email || '',
-    country: 'United States',
-    phoneNumber: user?.phoneNumber || '',
-    gender: user?.gender || '',
+    name: profile?.name || '',
+    dob: profile?.dob || '',
+    email: profile?.email || '',
+    phoneNumber: profile?.phone_number || '',
+    gender: profile?.gender || '',
   });
 
   const [showDatePicker, setShowDatePicker] = useState(false);
-
   const [showGenderPicker, setShowGenderPicker] = useState(false);
   const genderOptions = ['Male', 'Female', 'Other', 'Secret'];
+
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        name: profile.name || '',
+        dob: profile.dob || '',
+        email: profile.email || '',
+        phoneNumber: profile.phone_number || '',
+        gender: profile.gender || '',
+      });
+    }
+  }, [profile]);
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleUpdate = () => {
-    updateUser({
-      name: formData.name,
-      dob: formData.dob,
-      email: formData.email,
-      phoneNumber: formData.phoneNumber,
-      gender: formData.gender,
-    });
-    navigation.goBack();
+  const handleUpdate = async () => {
+    try {
+      const payload: any = {
+        name: formData.name,
+        dob: formData.dob === '' ? null : formData.dob,
+        email: formData.email,
+        gender: formData.gender,
+      };
+
+      await updateProfile(payload);
+
+      Alert.alert("Thành công", "Thông tin của bạn đã được cập nhật!");
+      navigation.goBack();
+    } catch (error) {
+      console.log("Lỗi update profile:", error);
+      Alert.alert("Thất bại", "Đã có lỗi xảy ra khi lưu thông tin. Vui lòng thử lại!");
+    }
   };
 
   const renderInput = (
@@ -109,8 +128,9 @@ const EditProfileScreen = ({ navigation }: any) => {
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.formContainer}>
             
-          {renderInput('Email', 'email', faEnvelope, 'email-address', false)}
-          {renderInput('Full Name', 'name')}
+          {renderInput('Phone Number', 'phoneNumber', faPhone, 'phone-pad', false)}
+          {renderInput('Full Name', 'name', faUser)}
+          {renderInput('Email', 'email', faEnvelope, 'email-address')}
 
           <TouchableOpacity 
             style={[styles.inputContainer, { backgroundColor: colors.inputBg }]}
@@ -119,9 +139,6 @@ const EditProfileScreen = ({ navigation }: any) => {
             <Text style={styles.inputLabel}>{formData.dob || 'Select Date of Birth'}</Text>
             <FontAwesomeIcon icon={faCalendar} size={20} color={colors.textTitle} />
           </TouchableOpacity>
-
-          {renderInput('Country', 'country')}
-          {renderInput('Phone Number', 'phoneNumber', undefined, 'phone-pad')}
           
           {/* GENDER COMBOBOX */}
           {/* eslint-disable-next-line react-native/no-inline-styles */}
@@ -223,7 +240,8 @@ const styles = StyleSheet.create({
   inputLabel: { 
     flex: 1, 
     fontFamily: theme.FONTS.semiBold, 
-    fontSize: 16 
+    fontSize: 16,
+    color: theme.COLORS.textBody
   },
   inputIcon: { 
     marginLeft: 10 

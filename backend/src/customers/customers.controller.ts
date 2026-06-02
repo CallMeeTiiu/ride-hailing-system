@@ -27,11 +27,6 @@ export class CustomersController {
     return this.customersService.findAll()
   }
 
-  @Get(':id')
-  async get(@Param('id') id: string) {
-    return this.customersService.findOneByUserId(id)
-  }
-
   @UseGuards(AuthGuard('jwt'))
   @Get('me')
   async me(@Request() req) {
@@ -42,6 +37,11 @@ export class CustomersController {
   @Put('me')
   async updateMe(@Request() req, @Body() body: any) {
     return this.customersService.updateProfile(req.user.userId, body)
+  }
+
+  @Get(':id')
+  async get(@Param('id') id: string) {
+    return this.customersService.findOneByUserId(id)
   }
 
   @UseGuards(AuthGuard('jwt'))

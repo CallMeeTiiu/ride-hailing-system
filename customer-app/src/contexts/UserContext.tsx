@@ -15,8 +15,8 @@ interface UserContextType {
   profile: UserProfile | null;
   isLoadingProfile: boolean;
   fetchProfile: () => Promise<void>;
-  // updateProfile tạm thời dùng cho local state, Bước 3 ta sẽ nối API
   updateProfile: (newData: Partial<UserProfile>) => Promise<void>;
+  uploadAvatar: (uri: string, mimeType: string, fileName: string) => Promise<any>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -70,8 +70,34 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const uploadAvatar = async (imageUri: string, mimeType: string, fileName: string) => {
+    try {
+      // 1. Khởi tạo FormData
+      const formData = new FormData();
+      
+      formData.append('file', {
+        uri: imageUri,
+        type: mimeType, 
+        name: fileName, 
+      } as any);
+
+      const response = await apiClient.post('/customers/me/avatar', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      await fetchProfile();
+      
+      return response.data;
+    } catch (error) {
+      console.error('Lỗi khi upload Avatar:', error);
+      throw error;
+    }
+  };
+
   return (
-    <UserContext.Provider value={{ profile, isLoadingProfile, fetchProfile, updateProfile }}>
+    <UserContext.Provider value={{ profile, isLoadingProfile, fetchProfile, updateProfile, uploadAvatar }}>
       {children}
     </UserContext.Provider>
   );

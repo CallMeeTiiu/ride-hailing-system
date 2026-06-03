@@ -90,14 +90,14 @@ const HomeScreen = () => {
             console.log("Phát hiện chuyến đi dở dang:", currentRide.id);
 
             setFromLocation({
-              name: currentRide.pickup_address || 'Vị trí đón',
+              name: currentRide.pickup_address || 'Pickup Location',
               address: currentRide.pickup_address,
               latitude: Number(currentRide.pickup_latitude),
               longitude: Number(currentRide.pickup_longitude),
             });
 
             setDestinationLocation({
-              name: currentRide.dropoff_address || 'Vị trí đến',
+              name: currentRide.dropoff_address || 'Destination Location',
               address: currentRide.dropoff_address,
               latitude: Number(currentRide.dropoff_latitude),
               longitude: Number(currentRide.dropoff_longitude),

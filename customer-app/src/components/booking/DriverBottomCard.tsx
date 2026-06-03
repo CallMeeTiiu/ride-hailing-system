@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Alert, Linking } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faMessage, faPhone, faTimes, faStar } from '@fortawesome/free-solid-svg-icons';
 import theme from '../../constants/theme';
@@ -11,7 +11,6 @@ export interface DriverData {
   plateNumber: string;
   rating: number;
   avatar: string;
-  phone_number: string;
 }
 
 interface DriverBottomCardProps {
@@ -21,37 +20,18 @@ interface DriverBottomCardProps {
   arrivalTime?: string;
   onCancel?: () => void;
   onChat?: () => void;
+  onCall?: () => void;
 }
 
 const DriverBottomCard: React.FC<DriverBottomCardProps> = ({
   tripStatus, driverData, distance, arrivalTime,
-  onCancel, onChat
+  onCancel, onChat, onCall
 }) => {
   const { colors } = useTheme();
 
-  const handleCall = async () => {
-    if (!driverData.phone_number) {
-      Alert.alert('Lỗi', 'Không tìm thấy số điện thoại của tài xế.');
-      return;
-    }
-
-    const url = `tel:${driverData.phone_number}`;
-    
-    try {
-      const supported = await Linking.canOpenURL(url);
-      if (supported) {
-        await Linking.openURL(url);
-      } else {
-        Alert.alert('Lỗi', 'Thiết bị của thiết bị không hỗ trợ gọi điện.');
-      }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
-      Alert.alert('Lỗi', 'Đã có lỗi xảy ra khi cố gắng mở trình gọi điện.');
-    }
-  };
-
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* 1. Header: Trạng thái thay đổi theo tripStatus */}
       <View style={styles.headerRow}>
         <Text style={[styles.statusText, { color: colors.textTitle }]}>
           {tripStatus === 'waiting' ? 'Driver is Arriving...' : 'Trip to Destination'}
@@ -63,6 +43,7 @@ const DriverBottomCard: React.FC<DriverBottomCardProps> = ({
 
       <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
+      {/* 2. Body: Thông tin tài xế & xe */}
       <View style={styles.driverInfoRow}>
         <Image source={{ uri: driverData.avatar }} style={styles.driverAvatar} />
         <View style={styles.detailsColumn}>
@@ -80,6 +61,7 @@ const DriverBottomCard: React.FC<DriverBottomCardProps> = ({
         </View>
       </View>
 
+      {/* 3. Footer: Cụm 3 nút Action (Chỉ hiện khi đang chờ tài xế) */}
       {tripStatus === 'waiting' && (
         <View style={styles.actionRow}>
           <TouchableOpacity 
@@ -98,7 +80,7 @@ const DriverBottomCard: React.FC<DriverBottomCardProps> = ({
 
           <TouchableOpacity 
             style={[styles.actionButton, { backgroundColor: colors.primary }]} 
-            onPress={handleCall}
+            onPress={onCall}
           >
             <FontAwesomeIcon icon={faPhone} size={20} color={colors.textBtn} />
           </TouchableOpacity>

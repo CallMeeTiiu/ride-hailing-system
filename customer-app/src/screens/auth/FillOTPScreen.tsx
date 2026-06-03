@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -20,17 +20,15 @@ const FillOTPScreen = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'FillOTP'>>();
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
-  const isFocused = useIsFocused();
 
-  const phoneNumber = route.params?.phoneNumber || '';
+  const { contactValue } = route.params;
 
   const [timeLeft, setTimeLeft] = useState(60);
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [isLoading] = useState(false);
-  const inputs = useRef<Array<TextInput | null>>([]);
 
-  const expectedOtp = route.params?.expectedOtp || '123456'; // OTP demo
+  const [otp, setOtp] = useState(['', '', '', '']);
+  const inputRefs = useRef<Array<TextInput | null>>([]);
+
+  const isFocused = useIsFocused();
 
   useEffect(() => {
     if (!isFocused) return;
@@ -38,7 +36,7 @@ const FillOTPScreen = () => {
     if (timeLeft === 0) {
       Alert.alert(
         "OTP Resent",
-        `The OTP has been resent to ${phoneNumber}`,
+        `Your OTP has been resent, please check your ${contactValue}`,
         [{ text: "OK", onPress: () => setTimeLeft(60) }]
       );
       return;
@@ -50,54 +48,44 @@ const FillOTPScreen = () => {
 
     return () => clearInterval(intervalId);
     
-  }, [timeLeft, phoneNumber, isFocused]);
+  }, [timeLeft, contactValue, isFocused]);
 
-  const handleChangeText = (text: string, index: number) => {
+  const handleOtpChange = (text: string, index: number) => {
     const newOtp = [...otp];
-    newOtp[index] = text;
-    setOtp(newOtp);
-    
-    if (text !== '') {
-      if (index < 5) {
-        inputs.current[index + 1]?.focus();
+
+    if (text.length > 0) {
+      newOtp[index] = text[text.length - 1]; 
+      setOtp(newOtp);
+      
+      if (index < 3) {
+        inputRefs.current[index + 1]?.focus();
       }
-    } 
-    else {
+    } else {
+      newOtp[index] = '';
+      setOtp(newOtp);
+      
       if (index > 0) {
-        inputs.current[index - 1]?.focus();
+        inputRefs.current[index - 1]?.focus();
       }
     }
   };
 
   const handleKeyPress = (e: any, index: number) => {
     if (e.nativeEvent.key === 'Backspace' && otp[index] === '' && index > 0) {
-      inputs.current[index - 1]?.focus();
+      const newOtp = [...otp];
+      newOtp[index - 1] = '';
+      setOtp(newOtp);
+      inputRefs.current[index - 1]?.focus();
     }
   };
 
-  const handleVerify = async () => {
-    const otpCode = otp.join('');
-
-    if (otpCode.length < 6) {
-      Alert.alert('Error', 'Please enter the complete 6-digit OTP!');
-      return;
-    }
-
-    if (otpCode !== expectedOtp && otpCode !== '123456') { 
-      Alert.alert('Error', 'OTP code is incorrect. Please try again!');
-      return;
-    }
-
-    navigation.navigate('NewPassword', { 
-      phoneNumber: phoneNumber, 
-      otpCode: otpCode 
-    });
-  };
+  const { colors } = useTheme();
 
   return (
     <View style={[ styles.safeArea, {backgroundColor: colors.background} ]}>
       <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 30) }]}>
         
+        {/* Header */}
         <View style={[styles.headerRow, { paddingTop: insets.top + 10 }]}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Text style={[ styles.backIcon, {color: colors.textTitle} ]}>←</Text>
@@ -106,35 +94,39 @@ const FillOTPScreen = () => {
         </View>
 
         <View style={styles.content}>
+          {/* Thông báo gửi mã tới đâu */}
           <Text style={[ styles.description, {color: colors.textTitle} ]}>
-            The OTP has been sent to {phoneNumber}. Please check and enter below.
+            Code has been sent to {contactValue}
           </Text>
 
+          {/* Cụm 4 ô nhập OTP */}
           <View style={styles.otpContainer}>
             {otp.map((digit, index) => (
               <TextInput
                 key={index}
-                style={[styles.otpInput, { color: colors.textTitle, backgroundColor: colors.inputBg }]}
-                keyboardType="number-pad"
+                ref={(ref) => { inputRefs.current[index] = ref; }}
+                style={[styles.otpInput, digit !== '' && styles.otpInputActive, {color: colors.textTitle}]}
+                keyboardType="numeric"
                 maxLength={1}
                 value={digit}
-                onChangeText={(text) => handleChangeText(text, index)}
+                onChangeText={(text) => handleOtpChange(text, index)}
                 onKeyPress={(e) => handleKeyPress(e, index)}
-                ref={(ref) => {inputs.current[index] = ref}}
+                selectTextOnFocus 
               />
             ))}
           </View>
 
+          {/* Bộ đếm thời gian */}
           <Text style={[ styles.timerText, {color: colors.textBody} ]}>
             Resend code in <Text style={styles.timerCount}>{timeLeft} s</Text>
           </Text>
         </View>
 
+        {/* Nút Verify đẩy xuống cuối màn hình */}
         <View style={styles.footer}>
           <PrimaryButton 
-            title={isLoading ? "Loading..." : "Verify"} 
-            onPress={handleVerify} 
-            disabled={isLoading} 
+            title="Verify" 
+            onPress={() => navigation.navigate('NewPassword')} 
           />
         </View>
 
@@ -182,11 +174,11 @@ const styles = StyleSheet.create({
   otpContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 10, 
+    gap: 15, 
     marginBottom: 50,
   },
   otpInput: {
-    width: 50,
+    width: 65,
     height: 60,
     borderRadius: 16,
     borderWidth: 1,

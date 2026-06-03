@@ -8,9 +8,7 @@ import {
   ScrollView, 
   Switch, 
   Alert,
-  ActivityIndicator,
-  Modal,
-  TouchableWithoutFeedback
+  ActivityIndicator
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
@@ -21,8 +19,7 @@ import {
   faGlobe, 
   faEye, 
   faRightFromBracket,
-  faPen,
-  faCheck
+  faPen
 } from '@fortawesome/free-solid-svg-icons';
 import theme from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -37,8 +34,6 @@ import { launchImageLibrary, ImageLibraryOptions } from 'react-native-image-pick
 const ProfileScreen = () => {
   const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [currentLanguage, setCurrentLanguage] = useState('English (US)');
-  const [isLangModalVisible, setLangModalVisible] = useState(false);
 
   const { colors, isDarkMode, toggleTheme } = useTheme();
   const insets = useSafeAreaInsets();
@@ -47,18 +42,7 @@ const ProfileScreen = () => {
   const { profile, uploadAvatar } = useUser();
   const navigation = useNavigation<any>();
 
-  const BACKEND_URL = 'https://ride-hailing-system-nuf0.onrender.com';
-
-  const LANGUAGES = [
-    { code: 'en', label: 'English (US)' },
-    { code: 'vi', label: 'Tiếng Việt' },
-  ];
-
-  const handleSelectLanguage = (langLabel: string) => {
-    setCurrentLanguage(langLabel);
-    setLangModalVisible(false);
-    // 💡 Nếu bạn có dùng i18next, bạn sẽ gọi i18n.changeLanguage(langCode) ở đây
-  };
+  const BACKEND_URL = 'http://localhost:3000';
 
   const getAvatarUri = () => {
     if (!profile?.avatar_url) {
@@ -175,47 +159,9 @@ const ProfileScreen = () => {
           <MenuItem 
             icon={faGlobe} 
             title="Language" 
-            value={currentLanguage}
-            onPress={() => setLangModalVisible(true)} 
+            value="English (US)"
+            onPress={() => console.log('Change Language')} 
           />
-
-          <Modal
-            visible={isLangModalVisible}
-            transparent={true}
-            animationType="fade"
-            onRequestClose={() => setLangModalVisible(false)}
-          >
-            <TouchableWithoutFeedback onPress={() => setLangModalVisible(false)}>
-              <View style={styles.modalOverlay}>
-                <TouchableWithoutFeedback>
-                  <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-                    <Text style={[styles.modalTitle, { color: colors.textTitle }]}>
-                      Select Language
-                    </Text>
-                    
-                    {LANGUAGES.map((lang) => (
-                      <TouchableOpacity 
-                        key={lang.code}
-                        style={styles.langOption}
-                        onPress={() => handleSelectLanguage(lang.label)}
-                      >
-                        <Text style={[
-                          styles.langText, 
-                          { color: currentLanguage === lang.label ? colors.primary : colors.textTitle }
-                        ]}>
-                          {lang.label}
-                        </Text>
-                        
-                        {currentLanguage === lang.label && (
-                          <FontAwesomeIcon icon={faCheck} size={20} color={colors.primary} />
-                        )}
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </TouchableWithoutFeedback>
-              </View>
-            </TouchableWithoutFeedback>
-          </Modal>
           
           <MenuItem 
             icon={faEye} 
@@ -311,40 +257,6 @@ const styles = StyleSheet.create({
   menuSection: {
     paddingHorizontal: theme.SIZES.padding,
     paddingTop: 20,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', 
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    width: '80%',
-    borderRadius: 16,
-    padding: 20,
-    elevation: 5,
-    shadowColor: 'black',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-  },
-  modalTitle: {
-    fontFamily: theme.FONTS.bold,
-    fontSize: 20,
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  langOption: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE', 
-  },
-  langText: {
-    fontFamily: theme.FONTS.medium,
-    fontSize: 16,
   },
 });
 

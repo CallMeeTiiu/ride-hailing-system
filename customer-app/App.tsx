@@ -46,8 +46,8 @@ export type RootStackParamList = {
   Home: undefined;
   HomeTab: undefined;
   ForgotPassword: undefined;
-  FillOTP: { phoneNumber: string, expectedOtp?: string };
-  NewPassword: { phoneNumber: string; otpCode: string };
+  FillOTP: { contactMethod: string; contactValue: string };
+  NewPassword: undefined;
   MainTabs: undefined;
   Search: { 
     type?: 'from' | 'destination' | 'search';

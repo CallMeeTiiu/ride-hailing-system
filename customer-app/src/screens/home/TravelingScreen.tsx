@@ -56,7 +56,6 @@ const TravelingScreen = ({ navigation }: any) => {
           plateNumber: "---",
           rating: 5.0,
           avatar: "https://i.pravatar.cc/150?img=11",
-          phone_number: "0123456789"
         });
       }
     };
@@ -176,7 +175,7 @@ const TravelingScreen = ({ navigation }: any) => {
     const newTrip = {
       id: tripId || Date.now().toString(),
       driver: driverData || {
-        name: "Bác tài xế", carModel: "Xe máy/Ô tô", plateNumber: "---", rating: 5, avatar: "https://i.pravatar.cc/150?img=11", phone_number: "0123456789"
+        name: "Bác tài xế", carModel: "Xe máy/Ô tô", plateNumber: "---", rating: 5, avatar: "https://i.pravatar.cc/150?img=11"
       },
       fromLocation: finalFrom,
       destinationLocation: finalDest,
@@ -202,24 +201,9 @@ const TravelingScreen = ({ navigation }: any) => {
             driverData={driverData}
             distance={distance} 
             arrivalTime={tripStatus === 'waiting' ? "Arriving in 5 mins" : ""}          
-            onCancel={async () => {
-              try {
-                if (tripId) {
-                  await apiClient.post(`/rides/${tripId}/cancel`);
-                  console.log('Đã hủy chuyến đi thành công trên server:', tripId);
-                }
-              } catch (error: any) {
-                console.log('Lỗi khi hủy chuyến:', error.response?.data || error.message);
-              } finally {
-                if (socketRef.current) {
-                  socketRef.current.disconnect();
-                  console.log('Đã ngắt kết nối Socket do khách hàng chủ động hủy');
-                }
-                
-                navigation.goBack();
-              };
-            }}
+            onCancel={() => navigation.navigate('MainTabs')}
             onChat={() => console.log("Chat with driver")}
+            onCall={() => console.log("Call driver")}
           />
         ) : (
           <View style={styles.loadingCard}>

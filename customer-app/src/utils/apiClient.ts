@@ -1,8 +1,8 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// const BASE_URL = 'http://localhost:3000'; // ip của máy tính chạy server
-const BASE_URL = 'https://ride-hailing-system-nuf0.onrender.com'; 
+const BASE_URL = 'http://localhost:3000'; // ip của máy tính chạy server
+// const BASE_URL = 'https://ride-hailing-system-nuf0.onrender.com'; 
 
 const apiClient = axios.create({
   baseURL: BASE_URL,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, DeviceEventEmitter } from 'react-native';
 
 import AppMap from '../../components/home/AppMap';
 import DriverBottomCard, { DriverData } from '../../components/booking/DriverBottomCard';
@@ -7,6 +7,7 @@ import MessagePopup from '../../components/common/MessagePopup';
 
 import { useBookingHistory } from '../../contexts/BookingHistoryContext';
 import { useLocation } from '../../contexts/LocationContext';
+import { useChat } from '../../contexts/ChatContext';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MapBackgroundRef } from '../../components/home/MapBackground';
@@ -26,6 +27,7 @@ const TravelingScreen = ({ navigation }: any) => {
 
   const { addTrip } = useBookingHistory();
   const { fromLocation, destinationLocation } = useLocation();
+  const { addMessage, clearChat } = useChat();
 
   const fromLocationRef = useRef(fromLocation);
   useEffect(() => {
@@ -76,9 +78,29 @@ const TravelingScreen = ({ navigation }: any) => {
       });
       socketRef.current = socket;
 
+      const chatListener = DeviceEventEmitter.addListener('emit_send_message', (payload) => {
+          if (socket) {
+              console.log('📤 Đang gửi tin nhắn lên server:', payload);
+              socket.emit('send_message', payload);
+          }
+      });
+
       socket.on('connect', () => {
         console.log('🚙 Traveling: Connect to socket successfully! Trip ID:', `trip_${tripId}`);
         socket.emit('customer:subscribe', { trip_id: tripId });
+        socket.emit('join_trip_room', { trip_id: tripId });
+      });
+
+      clearChat();
+      
+      socket.on('receive_message', (data: any) => {
+        console.log('=== KHÁCH HÀNG NHẬN ĐƯỢC TIN NHẮN ===', data);
+        
+        addMessage({
+          text: data.text,
+          sender: data.sender,
+          timestamp: data.timestamp || new Date().toISOString(),
+        });
       });
 
       socket.on('server:driver_location', (data) => {
@@ -111,9 +133,12 @@ const TravelingScreen = ({ navigation }: any) => {
     setupSocket();
 
     return () => {
-      if (socketRef.current) socketRef.current.disconnect();
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        DeviceEventEmitter.removeAllListeners('emit_send_message');
+      }
     };
-  }, [fromLocation, tripId]);
+  }, [addMessage, clearChat, tripId]);
 
   useEffect(() => {
     if (fromLocation && !driverLocation) {
@@ -202,7 +227,7 @@ const TravelingScreen = ({ navigation }: any) => {
             distance={distance} 
             arrivalTime={tripStatus === 'waiting' ? "Arriving in 5 mins" : ""}          
             onCancel={() => navigation.navigate('MainTabs')}
-            onChat={() => console.log("Chat with driver")}
+            onChat={() => navigation.navigate('Chat', { driverData: driverData, tripId: tripId })}
             onCall={() => console.log("Call driver")}
           />
         ) : (
@@ -231,7 +256,9 @@ const TravelingScreen = ({ navigation }: any) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { 
+    flex: 1 
+  },
   bottomContainer: {
     position: 'absolute',
     bottom: 0,

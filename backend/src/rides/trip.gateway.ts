@@ -32,7 +32,6 @@ export class TripGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const payload = this.jwtService.verify(token.replace('Bearer ', ''))
       client.data.user = payload
 
-      // Tham gia phòng chung tương ứng role nếu cần
       await client.join(`${payload.role.toLowerCase()}_${payload.sub}`)
       console.log(`Client connected: ${client.id} (User: ${payload.sub})`)
     } catch (err) {
@@ -58,16 +57,13 @@ export class TripGateway implements OnGatewayConnection, OnGatewayDisconnect {
     },
   ) {
     const userId = client.data.user.sub
-    // Cập nhật lên Redis lấy tài xế vào radar
     await this.locationService.updateDriverLocation(
       userId,
       data.latitude,
       data.longitude,
     )
 
-    // Nếu tài xế đang trong 1 chuyến xe, vứt tọa độ qua room của chuyến xe đó
     if (data.trip_id) {
-      // Lưu lịch sử vị trí vào database
       await this.ridesService.saveTripLocation({
         trip_id: data.trip_id,
         latitude: data.latitude,
@@ -99,15 +95,38 @@ export class TripGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   notifyDrivers(driverIds: string[], payload: any) {
     for (const driverId of driverIds) {
-      // Vì lúc connect, ta nối client vào room dạng: "driver_<userId>" hoặc "customer_<userId>"
-      // payload.role = "DRIVER", payload.sub = "<userId>"
-      // -> client.join(`driver_${payload.sub}`)
       this.server.to(`driver_${driverId}`).emit('server:ride_request', payload)
     }
   }
 
   notifyTripAccepted(tripId: string, payload: any) {
-    // Thông báo cho khách hàng trong room của chuyến đi
     this.server.to(`trip_${tripId}`).emit('server:trip_accepted', payload)
+  }
+
+  @SubscribeMessage('join_trip_room')
+  async handleJoinTripRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { trip_id: string },
+  ) {
+    if (data.trip_id) {
+      await client.join(`trip_${data.trip_id}`)
+      console.log(
+        `[Chat] Client ${client.id} đã join phòng trip_${data.trip_id}`,
+      )
+    }
+  }
+
+  @SubscribeMessage('send_message')
+  handleChatMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { trip_id: string; text: string; sender: string },
+  ) {
+    if (data.trip_id && data.text) {
+      client.to(`trip_${data.trip_id}`).emit('receive_message', {
+        text: data.text,
+        sender: data.sender,
+        timestamp: new Date().toISOString(),
+      })
+    }
   }
 }

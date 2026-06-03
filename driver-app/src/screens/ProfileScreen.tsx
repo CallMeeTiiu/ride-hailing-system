@@ -12,8 +12,10 @@ import { useAuthStore } from '../store/authStore';
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../theme';
 import Icon from 'react-native-vector-icons/Feather';
 import apiClient from '../services/apiClient';
+import { useNavigation } from '@react-navigation/native';
 
 export default function ProfileScreen() {
+    const navigation = useNavigation<any>();
     const driver = useAuthStore((state) => state.driver);
     const logout = useAuthStore((state) => state.logout);
 
@@ -89,6 +91,15 @@ export default function ProfileScreen() {
 
                 {/* Menu Items */}
                 <View style={styles.menuList}>
+                    <TouchableOpacity
+                        style={styles.menuItem}
+                        onPress={() => navigation.navigate('EditProfile')}
+                    >
+                        <Icon name="edit" size={20} color={COLORS.textSecondary} />
+                        <Text style={styles.menuText}>Chỉnh sửa hồ sơ</Text>
+                        <Icon name="chevron-right" size={18} color={COLORS.textTertiary} style={styles.chevron} />
+                    </TouchableOpacity>
+
                     <TouchableOpacity style={styles.menuItem}>
                         <Icon name="shield" size={20} color={COLORS.textSecondary} />
                         <Text style={styles.menuText}>Chứng chỉ & Giấy tờ</Text>

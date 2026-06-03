@@ -27,34 +27,40 @@ const MapBackground = React.memo(forwardRef<MapBackgroundRef, MapBackgroundProps
     useImperativeHandle(ref, () => ({
         flyToLocation: (newLat: number, newLng: number) => {
             const runJS = `
-        map.flyTo([${newLat}, ${newLng}], 17, {
-          animate: true,
-          duration: 1.5 
-        });
+        if (typeof map !== 'undefined' && map) {
+          map.flyTo([${newLat}, ${newLng}], 17, {
+            animate: true,
+            duration: 1.5 
+          });
+        }
         true; 
       `;
             webViewRef.current?.injectJavaScript(runJS);
         },
         drawRoute: (geoJsonData: any) => {
             const runJS = `
-        if (window.routeLayer) {
-          map.removeLayer(window.routeLayer);
-        }
-        
-        window.routeLayer = L.geoJSON(${JSON.stringify(geoJsonData)}, {
-          style: { color: '#FF4D4D', weight: 5, opacity: 0.8 }
-        }).addTo(map);
+        if (typeof map !== 'undefined' && map) {
+          if (window.routeLayer) {
+            map.removeLayer(window.routeLayer);
+          }
+          
+          window.routeLayer = L.geoJSON(${JSON.stringify(geoJsonData)}, {
+            style: { color: '#FF4D4D', weight: 5, opacity: 0.8 }
+          }).addTo(map);
 
-        map.fitBounds(window.routeLayer.getBounds(), { padding: [50, 50] });
+          map.fitBounds(window.routeLayer.getBounds(), { padding: [50, 50] });
+        }
         true;
       `;
             webViewRef.current?.injectJavaScript(runJS);
         },
         clearRoute: () => {
             const runJS = `
-        if (window.routeLayer) {
-          map.removeLayer(window.routeLayer);
-          window.routeLayer = null; 
+        if (typeof map !== 'undefined' && map) {
+          if (window.routeLayer) {
+            map.removeLayer(window.routeLayer);
+            window.routeLayer = null; 
+          }
         }
         true;
       `;
@@ -62,30 +68,32 @@ const MapBackground = React.memo(forwardRef<MapBackgroundRef, MapBackgroundProps
         },
         updateMarkers: (fromLat: number | null, fromLng: number | null, destLat: number | null, destLng: number | null) => {
             const runJS = `
-        if (window.fromMarker) { map.removeLayer(window.fromMarker); window.fromMarker = null; }
-        if (window.destMarker) { map.removeLayer(window.destMarker); window.destMarker = null; }
+        if (typeof map !== 'undefined' && map) {
+          if (window.fromMarker) { map.removeLayer(window.fromMarker); window.fromMarker = null; }
+          if (window.destMarker) { map.removeLayer(window.destMarker); window.destMarker = null; }
 
-        var fLat = ${fromLat}; var fLng = ${fromLng};
-        var dLat = ${destLat}; var dLng = ${destLng};
+          var fLat = ${fromLat}; var fLng = ${fromLng};
+          var dLat = ${destLat}; var dLng = ${destLng};
 
-        if (fLat && fLng) {
-          var fromIcon = L.divIcon({
-            html: "<div style='width: 44px; height: 44px; border-radius: 22px; border: 3px solid #FFBB1C; background: white; overflow: hidden; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3);'><img src='https://i.pravatar.cc/150?u=user' style='width: 40px; height: 40px; border-radius: 20px;'/></div>",
-            className: '',
-            iconSize: [44, 44],
-            iconAnchor: [22, 22]
-          });
-          window.fromMarker = L.marker([fLat, fLng], {icon: fromIcon}).addTo(map);
-        }
+          if (fLat && fLng) {
+            var fromIcon = L.divIcon({
+              html: "<div style='width: 44px; height: 44px; border-radius: 22px; border: 3px solid #FFBB1C; background: white; overflow: hidden; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3);'><img src='https://i.pravatar.cc/150?u=user' style='width: 40px; height: 40px; border-radius: 20px;'/></div>",
+              className: '',
+              iconSize: [44, 44],
+              iconAnchor: [22, 22]
+            });
+            window.fromMarker = L.marker([fLat, fLng], {icon: fromIcon}).addTo(map);
+          }
 
-        if (dLat && dLng) {
-          var destIcon = L.divIcon({
-            html: "<div style='width: 24px; height: 24px; background-color: #FF4D4D; border-radius: 12px; border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3);'></div>",
-            className: '',
-            iconSize: [24, 24],
-            iconAnchor: [12, 12]
-          });
-          window.destMarker = L.marker([dLat, dLng], {icon: destIcon}).addTo(map);
+          if (dLat && dLng) {
+            var destIcon = L.divIcon({
+              html: "<div style='width: 24px; height: 24px; background-color: #FF4D4D; border-radius: 12px; border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3);'></div>",
+              className: '',
+              iconSize: [24, 24],
+              iconAnchor: [12, 12]
+            });
+            window.destMarker = L.marker([dLat, dLng], {icon: destIcon}).addTo(map);
+          }
         }
         true;
       `;
@@ -93,33 +101,37 @@ const MapBackground = React.memo(forwardRef<MapBackgroundRef, MapBackgroundProps
         },
         drawDrivers: (drivers: Array<{ lat: number, lng: number }>) => {
             const runJS = `
-        try {
-          if (window.driverMarkers) {
-            window.driverMarkers.forEach(m => map.removeLayer(m));
-          }
-          window.driverMarkers = [];
-          
-          var driversData = ${JSON.stringify(drivers)};
-          driversData.forEach(d => {
-            var carIcon = L.divIcon({
-              html: "<div style='font-size: 26px; transform: scaleX(-1); filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.4));'>🚖</div>",
-              className: '',
-              iconSize: [30, 30],
-              iconAnchor: [15, 15]
+        if (typeof map !== 'undefined' && map) {
+          try {
+            if (window.driverMarkers) {
+              window.driverMarkers.forEach(m => map.removeLayer(m));
+            }
+            window.driverMarkers = [];
+            
+            var driversData = ${JSON.stringify(drivers)};
+            driversData.forEach(d => {
+              var carIcon = L.divIcon({
+                html: "<div style='font-size: 26px; transform: scaleX(-1); filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.4));'>🚖</div>",
+                className: '',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+              });
+              var marker = L.marker([d.lat, d.lng], {icon: carIcon}).addTo(map);
+              window.driverMarkers.push(marker);
             });
-            var marker = L.marker([d.lat, d.lng], {icon: carIcon}).addTo(map);
-            window.driverMarkers.push(marker);
-          });
-        } catch(e) {}
+          } catch(e) {}
+        }
         true;
       `;
             webViewRef.current?.injectJavaScript(runJS);
         },
         clearDrivers: () => {
             const runJS = `
-        if (window.driverMarkers) {
-          window.driverMarkers.forEach(m => map.removeLayer(m));
-          window.driverMarkers = [];
+        if (typeof map !== 'undefined' && map) {
+          if (window.driverMarkers) {
+            window.driverMarkers.forEach(m => map.removeLayer(m));
+            window.driverMarkers = [];
+          }
         }
         true;
       `;
@@ -182,7 +194,7 @@ const MapBackground = React.memo(forwardRef<MapBackgroundRef, MapBackgroundProps
             <WebView
                 ref={webViewRef}
                 originWhitelist={['*']}
-                source={{ html: leafletHTML }}
+                source={{ html: leafletHTML, baseUrl: 'https://unpkg.com' }}
                 style={StyleSheet.absoluteFillObject}
                 mixedContentMode="compatibility"
                 allowFileAccess={true}

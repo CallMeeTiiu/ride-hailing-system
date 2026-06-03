@@ -1,20 +1,32 @@
-Hãy viết lại cấu trúc JSX và StyleSheet cho component StatusToggle theo nguyên tắc Flexbox sau để đảm bảo chữ luôn nằm ngay ngắn ở giữa phần không gian còn lại:
+✂️ 1. Cắt Bỏ Hoàn Toàn Hạng Mục Backend
+Hủy can thiệp auth.service.ts và auth.module.ts: Backend sẽ giữ nguyên trạng thái cũ. Điều này đồng nghĩa với việc hàm driverRegister() vẫn chỉ tạo User mà không tạo bản ghi DriverProfile.
 
-Container (Pill): - Đặt chiều rộng cố định (VD: width: 150), chiều cao cố định (VD: height: 52), borderRadius: 26.
+Chấp nhận kết quả null: Khi Frontend gọi GET /drivers/me cho một tài khoản mới tinh, việc backend trả về profile: null là điều hiển nhiên và chúng ta sẽ mặc định coi đây là một behavior bình thường của hệ thống.
 
-Sử dụng paddingHorizontal: 6 (hoặc 8) để khoảng cách từ nút tròn tới viền ngoài luôn đều đặn ở cả 2 bên.
+🛡️ 2. Ép Xung Frontend (Cập nhật authStore.ts)
+Vì Backend không cấp data, đoạn code xử lý fallback trong hàm fetchProfile() của authStore.ts giờ đây trở thành chốt chặn sống còn. Khi nhận được profile null, Zustand bắt buộc phải tự "bơm" một profile giả mạo vào local state để chặn lệnh logout() và đẩy user qua ải đăng nhập.
 
-flexDirection: 'row', alignItems: 'center'.
+Bạn hãy triển khai chính xác đoạn logic này vào authStore.ts:
 
-Cách chia Layout bên trong (Inner Layout):
+TypeScript
+const profile = res.data.profile;
 
-Nút tròn (Thumb): Kích thước cố định (VD: width: 40, height: 40, borderRadius: 20).
+if (profile) {  
+    // Tài khoản cũ, đã có profile dưới DB
+    set({ driver: { ...profile } });
+    return true;
+}
 
-Đoạn Text ("ONLINE" / "OFFLINE"): Bắt buộc phải có flex: 1 và textAlign: 'center'. Điều này giúp khung text tự động giãn ra chiếm trọn phần không gian còn lại trong Container, đẩy chữ vào chính giữa phần không gian đó.
+// Tài khoản mới, backend trả null. Frontend tự tạo "phao cứu sinh"
+set({
+    driver: {
+        id: res.data.userId, // Vẫn lấy được ID từ response chung
+        name: 'Tài xế mới',
+        phone: '', 
+        rating: 5.0, // Nên set 5.0 thay vì 0 để UI hiển thị đẹp hơn
+        avatarUrl: 'https://ui-avatars.com/api/?name=TX&background=F5A623&color=fff', // Gắn tạm avatar mặc định
+        vehiclePlate: 'Chưa cập nhật',
+    },
+});
 
-Khi ở trạng thái OFFLINE: Render [Nút tròn] trước, [Text] sau.
-
-Khi ở trạng thái ONLINE: Render [Text] trước, [Nút tròn] sau. (Hoặc dùng flexDirection: 'row-reverse').
-
-Yêu cầu Output:
-Chỉ cần trả về đoạn code React Native (JSX + StyleSheet) đã được tối ưu hóa cho component StatusToggle. Chú ý dùng LayoutAnimation hoặc Reanimated để lúc gạt qua lại nó mượt mà.
+return true; // Ép app báo đăng nhập thành công

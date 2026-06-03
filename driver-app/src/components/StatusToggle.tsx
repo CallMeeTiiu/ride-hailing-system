@@ -1,12 +1,7 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, LayoutAnimation } from 'react-native';
 import { COLORS } from '../theme';
 import Icon from 'react-native-vector-icons/Feather';
-
-// Kích hoạt LayoutAnimation trên Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-    UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 interface StatusToggleProps {
     isOnline: boolean;

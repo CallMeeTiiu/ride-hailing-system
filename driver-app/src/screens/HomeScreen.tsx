@@ -61,6 +61,25 @@ export default function HomeScreen() {
     const { granted: hasLocationPermission, location: userLocation } = useLocationPermission();
     const mapRef = useRef<MapBackgroundRef>(null);
 
+    // Check for incomplete profiles (newly registered account check)
+    useEffect(() => {
+        if (driver && (driver.name === 'Tài xế mới' || driver.vehiclePlate === 'Chưa cập nhật')) {
+            Alert.alert(
+                'Yêu Cầu Hoàn Thiện Hồ Sơ',
+                'Hồ sơ cá nhân và thông tin phương tiện của bạn chưa được thiết lập đầy đủ. Vui lòng cập nhật thông tin ngay.',
+                [
+                    {
+                        text: 'Cập nhật ngay',
+                        onPress: () => {
+                            navigation.navigate('EditProfile');
+                        }
+                    }
+                ],
+                { cancelable: false }
+            );
+        }
+    }, [driver, navigation]);
+
     // Recenter/fly to driver position when GPS is available
     useEffect(() => {
         if (hasLocationPermission && userLocation && mapRef.current) {

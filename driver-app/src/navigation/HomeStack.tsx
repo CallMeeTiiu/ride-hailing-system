@@ -3,11 +3,13 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from '../screens/HomeScreen';
 import ChatScreen from '../screens/ChatScreen';
 import CallScreen from '../screens/CallScreen';
+import EditProfileScreen from '../screens/EditProfileScreen';
 
 export type HomeStackParamList = {
     HomeMain: undefined;
     Chat: undefined;
     Call: undefined;
+    EditProfile: undefined;
 };
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
@@ -25,6 +27,10 @@ export default function HomeStack() {
                 name="Call"
                 component={CallScreen}
                 options={{ presentation: 'fullScreenModal' }}
+            />
+            <Stack.Screen
+                name="EditProfile"
+                component={EditProfileScreen}
             />
         </Stack.Navigator>
     );

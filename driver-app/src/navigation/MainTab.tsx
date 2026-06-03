@@ -1,7 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeStack from './HomeStack';
-import ProfileScreen from '../screens/ProfileScreen';
+import ProfileStack from './ProfileStack';
 import { COLORS } from '../theme';
 import Icon from 'react-native-vector-icons/Feather';
 
@@ -43,7 +43,7 @@ export default function MainTab() {
             />
             <Tab.Screen
                 name="ProfileTab"
-                component={ProfileScreen}
+                component={ProfileStack}
                 options={{ tabBarLabel: 'Profile' }}
             />
         </Tab.Navigator>

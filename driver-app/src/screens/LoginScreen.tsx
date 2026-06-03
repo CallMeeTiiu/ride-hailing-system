@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { useAuthStore } from '../store/authStore';
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../theme';
-import { formatPhoneNumber } from '../utils/formatPhone';
 import Icon from 'react-native-vector-icons/Feather';
 
 export default function LoginScreen() {
@@ -25,17 +24,15 @@ export default function LoginScreen() {
     const serverError = useAuthStore((state) => state.error);
 
     const handlePhoneChange = (text: string) => {
-        // Dynamic phone formatting
-        const formatted = formatPhoneNumber(text);
-        setPhone(formatted);
+        const digitsOnly = text.replace(/\D/g, '');
+        setPhone(digitsOnly);
         setErrorText('');
         useAuthStore.setState({ error: null });
     };
 
     const handleLogin = async () => {
-        // Basic verification
-        const rawDigitLength = phone.replace(/\D/g, '').length;
-        if (rawDigitLength < 11) { // includes 84 + 9 digits: e.g. 84 987 654 321 (11 digits)
+        // Basic verification (9-10 digits, e.g. 036541577 or 0365415770)
+        if (phone.length < 9 || phone.length > 10) {
             setErrorText('Số điện thoại không hợp lệ');
             return;
         }
@@ -78,12 +75,12 @@ export default function LoginScreen() {
                         <Icon name="phone" size={20} color={COLORS.textSecondary} style={styles.inputIcon} />
                         <TextInput
                             style={styles.input}
-                            placeholder="+84 000 000 000"
+                            placeholder="0901234567"
                             placeholderTextColor={COLORS.textTertiary}
                             keyboardType="phone-pad"
                             value={phone}
                             onChangeText={handlePhoneChange}
-                            maxLength={17}
+                            maxLength={10}
                             editable={!loading}
                         />
                     </View>

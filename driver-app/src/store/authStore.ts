@@ -84,8 +84,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 return true;
             }
             return false;
-        } catch (err) {
-            console.error('[AuthStore] fetchProfile failed:', err);
+        } catch (err: any) {
+            if (err.response?.status === 401) {
+                console.log('[AuthStore] Session expired or invalid token.');
+            } else {
+                console.error('[AuthStore] fetchProfile failed:', err);
+            }
             return false;
         }
     },

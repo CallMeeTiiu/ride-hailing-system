@@ -5,9 +5,9 @@ import {
     View,
     Image,
     TouchableOpacity,
-    SafeAreaView,
     StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTripStore } from '../store/tripStore';
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../theme';
 import Icon from 'react-native-vector-icons/Feather';

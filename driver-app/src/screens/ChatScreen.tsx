@@ -9,9 +9,9 @@ import {
     KeyboardAvoidingView,
     Platform,
     Image,
-    SafeAreaView,
     StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTripStore } from '../store/tripStore';
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../theme';
 import { MOCK_CHAT_HISTORY } from '../data/mockData';

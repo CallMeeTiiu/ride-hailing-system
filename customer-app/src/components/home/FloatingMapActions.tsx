@@ -9,15 +9,15 @@ import {
 } from 'react-native';
 import Animated, { useAnimatedStyle, interpolate, Extrapolation } from 'react-native-reanimated';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faCrosshairs } from '@fortawesome/free-solid-svg-icons';
+// import { faCrosshairs } from '@fortawesome/free-solid-svg-icons';
 import { useNavigation } from '@react-navigation/native';
 
 import theme from '../../constants/theme';
-import { useTheme } from '../../contexts/ThemeContext';
+// import { useTheme } from '../../contexts/ThemeContext';
 
 import { useAddress } from '../../contexts/AddressContext';
 import { useLocation } from '../../contexts/LocationContext';
-import { getIconObject } from '../../screens/profile/AddressListScreen'; // Import hàm map icon ta đã viết
+import { getIconObject } from '../../screens/profile/AddressListScreen'; 
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -26,8 +26,8 @@ interface FloatingMapActionsProps {
   onLocationPress?: () => void;
 }
 
-const FloatingMapActions: React.FC<FloatingMapActionsProps> = ({ animatedIndex, onLocationPress }) => {
-  const { colors } = useTheme();
+const FloatingMapActions: React.FC<FloatingMapActionsProps> = ({ animatedIndex }) => {
+  // const { colors } = useTheme();
   const navigation = useNavigation<any>();
   
   const { addresses } = useAddress();
@@ -72,11 +72,11 @@ const FloatingMapActions: React.FC<FloatingMapActionsProps> = ({ animatedIndex, 
   return (
     <Animated.View style={[styles.floatingWrapper, floatingAnimatedStyle]} pointerEvents="box-none">
       
-      <View style={styles.locationButtonContainer}>
+      {/* <View style={styles.locationButtonContainer}>
         <TouchableOpacity style={styles.locationButton} activeOpacity={0.8} onPress={onLocationPress}>
           <FontAwesomeIcon icon={faCrosshairs} size={24} color={colors.textTitle} />
         </TouchableOpacity>
-      </View>
+      </View> */}
 
       <View style={styles.chipsContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>

@@ -17,7 +17,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { 
   faUser, 
   faLocationDot, 
-  faBell, 
+  // faBell, 
   faGlobe, 
   faEye, 
   faRightFromBracket,
@@ -167,11 +167,11 @@ const ProfileScreen = () => {
             title="Address" 
             onPress={() => navigation.navigate('AddressList')} 
           />
-          <MenuItem 
+          {/* <MenuItem 
             icon={faBell} 
             title="Notification" 
             onPress={() => console.log('Go to Notification')} 
-          />
+          /> */}
           <MenuItem 
             icon={faGlobe} 
             title="Language" 

@@ -9,9 +9,11 @@ import {
     KeyboardAvoidingView,
     Platform,
     StatusBar,
-    DeviceEventEmitter
+    DeviceEventEmitter,
+    Alert,
+    Linking
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 
@@ -63,6 +65,27 @@ export default function ChatScreen() {
         });
     };
 
+    const handleCall = async () => {
+        if (!driverData?.phone_number) {
+            Alert.alert('Lỗi', 'Không tìm thấy số điện thoại của tài xế.');
+            return;
+        }
+
+        const url = `tel:${driverData.phone_number}`;
+        
+        try {
+            const supported = await Linking.canOpenURL(url);
+            if (supported) {
+                await Linking.openURL(url);
+            } else {
+                Alert.alert('Lỗi', 'Thiết bị của bạn không hỗ trợ gọi điện.');
+            }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (error) {
+            Alert.alert('Lỗi', 'Đã có lỗi xảy ra khi cố gắng mở trình gọi điện.');
+        }
+    };
+
     const renderItem = ({ item }: { item: any }) => {
         const isCustomer = item.sender === 'CUSTOMER';
 
@@ -101,7 +124,7 @@ export default function ChatScreen() {
                         </Text>
                     </View>
 
-                    <TouchableOpacity style={styles.phoneBtn} activeOpacity={0.8}>
+                    <TouchableOpacity style={styles.phoneBtn} activeOpacity={0.8} onPress={handleCall}>
                         <FontAwesomeIcon icon={faPhone} size={20} color={colors.textTitle} />
                     </TouchableOpacity>
                 </View>

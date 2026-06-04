@@ -198,7 +198,6 @@ export default function HomeScreen() {
             <TripBottomSheet
                 tripStatus={tripStatus}
                 trip={currentTrip}
-                onCall={() => navigation.navigate('Call')}
                 onChat={() => navigation.navigate('Chat')}
                 onConfirmArrived={confirmArrived}
                 onStartTrip={startTrip}

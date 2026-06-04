@@ -14,15 +14,15 @@ import { UsersModule } from '../users/users.module'
 import { FirebaseModule } from '../firebase/firebase.module'
 import { Payment } from '../payments/entities/payment.entity'
 import { User } from '../users/entities/user.entity'
-import { ConfigModule, ConfigService } from '@nestjs/config'
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Trip, TripLocation, Rating, Payment, User]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'super-secret-key-12345',
+      useFactory: (configService: ConfigService) => ({
+        secret:
+          configService.get<string>('JWT_SECRET') || 'super-secret-key-12345',
       }),
       inject: [ConfigService],
     }),

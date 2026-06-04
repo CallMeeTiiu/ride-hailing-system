@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, DeviceEventEmitter } from 'react-native';
 
 import AppMap from '../../components/home/AppMap';
 import DriverBottomCard, { DriverData } from '../../components/booking/DriverBottomCard';
@@ -16,6 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../../utils/apiClient';
 import { RootStackParamList } from '../../../App';
 import { RouteProp, useRoute } from '@react-navigation/native';
+import { useChat } from '../../contexts/ChatContext';
 
 const TravelingScreen = ({ navigation }: any) => {
   const mapRef = useRef<MapBackgroundRef>(null);
@@ -26,6 +27,7 @@ const TravelingScreen = ({ navigation }: any) => {
 
   const { addTrip } = useBookingHistory();
   const { fromLocation, destinationLocation } = useLocation();
+  const { addMessage, clearChat } = useChat();
 
   const fromLocationRef = useRef(fromLocation);
   useEffect(() => {
@@ -67,6 +69,8 @@ const TravelingScreen = ({ navigation }: any) => {
   useEffect(() => {
     if (!tripId) return;
 
+    let chatListener: any;
+
     const setupSocket = async () => {
       let token = await AsyncStorage.getItem('access_token');
       if (token) token = token.replace(/"/g, ''); 
@@ -80,6 +84,25 @@ const TravelingScreen = ({ navigation }: any) => {
       socket.on('connect', () => {
         console.log('🚙 Traveling: Connect to socket successfully! Trip ID:', `trip_${tripId}`);
         socket.emit('customer:subscribe', { trip_id: tripId });
+        socket.emit('join_trip_room', { trip_id: tripId });
+      });
+
+      clearChat();
+
+      socket.on('receive_message', (data: any) => {
+        console.log('=== KHÁCH HÀNG NHẬN ĐƯỢC TIN NHẮN ===', data);
+        addMessage({
+          text: data.text,
+          sender: data.sender,
+          timestamp: data.timestamp || new Date().toISOString(),
+        });
+      });
+
+      chatListener = DeviceEventEmitter.addListener('emit_send_message', (payload) => {
+        if (socketRef.current) {
+          console.log('📤 Đang gửi tin nhắn lên server:', payload);
+          socketRef.current.emit('send_message', payload);
+        }
       });
 
       socket.on('server:driver_location', (data) => {
@@ -113,8 +136,9 @@ const TravelingScreen = ({ navigation }: any) => {
 
     return () => {
       if (socketRef.current) socketRef.current.disconnect();
+      if (chatListener) chatListener.remove();
     };
-  }, [fromLocation, tripId]);
+  }, [addMessage, clearChat, tripId]);
 
   useEffect(() => {
     if (fromLocation && !driverLocation) {
@@ -219,7 +243,7 @@ const TravelingScreen = ({ navigation }: any) => {
                 navigation.goBack();
               };
             }}
-            onChat={() => console.log("Chat with driver")}
+            onChat={() => navigation.navigate('Chat', { driverData: driverData, tripId: tripId })}
           />
         ) : (
           <View style={styles.loadingCard}>

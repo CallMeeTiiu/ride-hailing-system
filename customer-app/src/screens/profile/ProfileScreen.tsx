@@ -114,7 +114,6 @@ const ProfileScreen = () => {
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top + 20 }]}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         
-        {/* 1. Phần Thông tin User */}
         <View style={styles.userInfoSection}>
           <View style={styles.avatarContainer}>
             <Image 
@@ -154,7 +153,6 @@ const ProfileScreen = () => {
 
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-        {/* 2. Phần Các chức năng Menu */}
         <View style={styles.menuSection}>
           <MenuItem 
             icon={faUser} 
@@ -166,11 +164,11 @@ const ProfileScreen = () => {
             title="Address" 
             onPress={() => navigation.navigate('AddressList')} 
           />
-          <MenuItem 
+          {/* <MenuItem 
             icon={faBell} 
             title="Notification" 
             onPress={() => console.log('Go to Notification')} 
-          />
+          /> */}
           <MenuItem 
             icon={faGlobe} 
             title="Language" 

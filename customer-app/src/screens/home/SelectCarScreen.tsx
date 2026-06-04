@@ -172,7 +172,7 @@ const SelectCarScreen = () => {
           <View style={styles.statItem}>
             <FontAwesomeIcon icon={faWallet} size={16} color={colors.primary} />
             <Text style={[styles.statText, { color: colors.textTitle }]}>
-              {selectedVehicle ? `$${selectedVehicle.price.toFixed(2)}` : '--'}
+              {selectedVehicle ? `${selectedVehicle.price} VND` : '--'}
             </Text>
           </View>
         </View>

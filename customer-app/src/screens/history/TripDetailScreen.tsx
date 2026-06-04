@@ -22,6 +22,7 @@ export interface TripDetailData {
     vehicle_plate: string;
     vehicle_type: string;
     rating?: number;
+    avatar?: string;
   };
 }
 
@@ -76,11 +77,9 @@ const TripDetailScreen = () => {
   }
 
   const formatPrice = (price: number) => {
-    if (!price) return '$0';
+    if (!price) return '0 VND';
     
-    return "$" + Number(price)
-      .toString()
-      .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return Number(price).toLocaleString('vi-VN') + " VND";
   };
 
   if (isLoading) {
@@ -118,6 +117,19 @@ const TripDetailScreen = () => {
 
   const statusUI = getStatusDisplay(trip.status);
 
+  const displayDriver = trip.driver ? {
+    ...trip.driver,
+    fullName: trip.driver.fullName || 'Nguyễn Văn A',
+    avatar: trip.driver.avatar || 'https://randomuser.me/api/portraits/men/33.jpg',
+  } : {
+    fullName: 'Lê Văn Mock',
+    phone: '0909123456',
+    vehicle_plate: '59-S1 999.99',
+    vehicle_type: 'Honda Winner',
+    rating: 4.9,
+    avatar: 'https://randomuser.me/api/portraits/men/33.jpg',
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
       {/* HEADER */}
@@ -141,29 +153,31 @@ const TripDetailScreen = () => {
 
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-        {trip.driver ? (
-          <View style={styles.driverSection}>
-            <View style={[styles.avatarPlaceholder, { backgroundColor: colors.border }]}>
-              <FontAwesomeIcon icon={faUser} size={24} color={colors.textBody} />
-            </View>
-            <View style={styles.driverInfo}>
-              <Text style={[styles.driverName, { color: colors.textTitle }]}>{trip.driver.fullName}</Text>
-              <View style={styles.driverSubInfo}>
-                <Text style={[styles.vehicleText, { color: colors.textBody }]}>
-                  {trip.driver.vehicle_type} • {trip.driver.vehicle_plate}
-                </Text>
-                
-                {trip.driver.rating ? (
-                  <View style={styles.ratingBox}>
-                    <FontAwesomeIcon icon={faStar} size={12} color={theme.COLORS.primary} />
-                    <Text style={styles.ratingText}>{trip.driver.rating}</Text>
-                  </View>
-                ) : null}
-                
-              </View>
+        <View style={styles.driverSection}>
+          <Image 
+            source={{ uri: displayDriver.avatar }} 
+            style={styles.avatarPlaceholder} 
+          />
+          <View style={styles.driverInfo}>
+            <Text style={[styles.driverName, { color: colors.textTitle }]}>
+              {displayDriver.fullName}
+            </Text>
+            <View style={styles.driverSubInfo}>
+              <Text style={[styles.vehicleText, { color: colors.textBody }]}>
+                {displayDriver.vehicle_type} • {displayDriver.vehicle_plate}
+              </Text>
+              
+              {displayDriver.rating ? (
+                <View style={styles.ratingBox}>
+                  <FontAwesomeIcon icon={faStar} size={12} color={theme.COLORS.primary} />
+                  <Text style={styles.ratingText}>{displayDriver.rating}</Text>
+                </View>
+              ) : null}
             </View>
           </View>
-        ) : null}
+        </View>
+
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
         {trip.driver ? <View style={[styles.divider, { backgroundColor: colors.border }]} /> : null}
 

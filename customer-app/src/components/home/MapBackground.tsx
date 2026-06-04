@@ -1,6 +1,7 @@
 import React, { forwardRef, useImperativeHandle, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
+import { useUser } from '../../contexts/UserContext';
 
 export interface MapBackgroundProps {
   onMapMove?: (lat: number, lng: number) => void;
@@ -22,6 +23,17 @@ const MapBackground = forwardRef<MapBackgroundRef, MapBackgroundProps>(({ onMapM
   // UIT location
   const lat = 10.8700;
   const lng = 106.8031;
+
+  const BACKEND_URL = 'https://ride-hailing-system-nuf0.onrender.com';
+  let avatarUrl = 'https://ui-avatars.com/api/?name=User&background=F5A623&color=fff';
+
+  const { profile } = useUser();
+
+  if (profile?.avatar_url) {
+      avatarUrl = profile.avatar_url.startsWith('http') 
+          ? profile.avatar_url 
+          : `${BACKEND_URL}${profile.avatar_url}`;
+  }
 
   useImperativeHandle(ref, () => ({
     flyToLocation: (newLat: number, newLng: number) => {
@@ -73,7 +85,7 @@ const MapBackground = forwardRef<MapBackgroundRef, MapBackgroundProps>(({ onMapM
 
         if (fLat && fLng) {
           var fromIcon = L.divIcon({
-            html: "<div style='width: 44px; height: 44px; border-radius: 22px; border: 3px solid #FFBB1C; background: white; overflow: hidden; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3);'><img src='https://i.pravatar.cc/150?u=user' style='width: 40px; height: 40px; border-radius: 20px;'/></div>",
+            html: "<div style='width: 44px; height: 44px; border-radius: 22px; border: 3px solid #FFBB1C; background: white; overflow: hidden; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3);'><img src='${avatarUrl}' style='width: 40px; height: 40px; border-radius: 20px; object-fit: cover;'/></div>",
             className: '',
             iconSize: [44, 44],
             iconAnchor: [22, 22]

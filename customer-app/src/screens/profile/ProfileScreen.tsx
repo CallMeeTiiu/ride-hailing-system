@@ -57,7 +57,6 @@ const ProfileScreen = () => {
   const handleSelectLanguage = (langLabel: string) => {
     setCurrentLanguage(langLabel);
     setLangModalVisible(false);
-    // 💡 Nếu bạn có dùng i18next, bạn sẽ gọi i18n.changeLanguage(langCode) ở đây
   };
 
   const getAvatarUri = () => {

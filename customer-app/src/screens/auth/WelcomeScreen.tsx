@@ -41,29 +41,26 @@ const WelcomeScreen = () => {
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
       const userCredential = await auth().signInWithCredential(googleCredential);
       
-      console.log('🎉 Login with Google success:', userCredential.user);
+      console.log('Login with Google success:', userCredential.user);
 
       navigation.replace('MainTabs');
 
     } catch (error: any) {
-      console.log('🚨 Error while login with Google:', error);
+      console.log('Error while login with Google:', error);
     }
   };
 
   return (
     <SafeAreaView style={[ styles.container, {backgroundColor: colors.background} ]}>
       <View style={styles.contentContainer}>
-        {/* Hình ảnh minh họa */}
         <Image 
           source={require('../../assets/images/welcome.png')} 
           style={styles.illustration}
           resizeMode="contain"
         />
 
-        {/* Tiêu đề */}
         <Text style={styles.title}>Let's you in</Text>
 
-        {/* Nút đăng nhập Facebook */}
         <TouchableOpacity style={[ styles.socialButton, {backgroundColor: colors.inputBg} ]}>
           <Image 
             source={require('../../assets/images/facebook_icon.png')} 
@@ -72,7 +69,6 @@ const WelcomeScreen = () => {
           <Text style={[ styles.socialButtonText, {color: colors.textTitle} ]}>Continue with Facebook</Text>
         </TouchableOpacity>
 
-        {/* Nút đăng nhập Google */}
         <TouchableOpacity style={[ styles.socialButton, {backgroundColor: colors.inputBg} ]} onPress={handleGoogleLogin}>
           <Image 
             source={require('../../assets/images/google_icon.png')} 
@@ -81,14 +77,12 @@ const WelcomeScreen = () => {
           <Text style={[ styles.socialButtonText, {color: colors.textTitle} ]}>Continue with Google</Text>
         </TouchableOpacity>
 
-        {/* Thanh ngăn cách "or" */}
         <View style={styles.dividerContainer}>
           <View style={[ styles.dividerLine, { backgroundColor: colors.inputBg} ]} />
           <Text style={[ styles.dividerText, { color: colors.textBody} ]}>or</Text>
           <View style={[ styles.dividerLine, { backgroundColor: colors.inputBg} ]} />
         </View>
 
-        {/* Nút đăng nhập chính */}
         <PrimaryButton
             title="Sign in with password"
             onPress={() => navigation.navigate('Login')}
@@ -96,7 +90,6 @@ const WelcomeScreen = () => {
             style={{ marginTop: theme.SIZES.padding }} 
         />
 
-        {/* Chuyển sang trang Đăng ký */}
         <View style={styles.footerContainer}>
           <Text style={[ styles.footerText, {color: colors.textBody} ]}>Don't have an account? </Text>
           <Hyperlink 

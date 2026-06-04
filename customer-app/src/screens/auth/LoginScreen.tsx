@@ -117,10 +117,8 @@ const LoginScreen = () => {
         </TouchableOpacity>
 
         <View style={styles.content}>
-          {/* Tiêu đề */}
           <Text style={styles.title}>Login to your{"\n"}Account</Text>
 
-          {/* Form nhập liệu */}
           <CustomInput
             label="Phone Number"
             iconName={faPhone}
@@ -148,7 +146,6 @@ const LoginScreen = () => {
             errorText={passwordError}
           />
 
-          {/* Remember me & Forgot Password Row */}
           <View style={styles.rememberContainer}>
             <TouchableOpacity 
               style={styles.checkboxRow} 
@@ -162,27 +159,23 @@ const LoginScreen = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Nút Sign In */}
           <PrimaryButton
             title="Sign in"
             onPress={handleLogin}
             isLoading={isLoading}
           />
 
-          {/* Quên mật khẩu */}
           <Hyperlink 
             title="Forgot Password?" 
             onPress={() => navigation.navigate('ForgotPassword')} 
           />
 
-          {/* Divider */}
           <View style={styles.dividerContainer}>
             <View style={styles.dividerLine} />
             <Text style={[ styles.dividerText, {color: colors.textBody} ]}>or continue with</Text>
             <View style={styles.dividerLine} />
           </View>
 
-          {/* Social Login */}
           <View style={styles.socialContainer}>
             <TouchableOpacity style={[ styles.socialSquareButton, {backgroundColor: colors.background} ]}>
               <Image 
@@ -199,7 +192,6 @@ const LoginScreen = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Footer Sign up */}
           <View style={styles.footerContainer}>
             <Text style={[ styles.footerText, {color: colors.textBody} ]}>Don't have an account? </Text>
             <Hyperlink 

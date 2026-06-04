@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, DeviceEventEmitter } from 'react-native';
 
 import AppMap from '../../components/home/AppMap';
 import DriverBottomCard, { DriverData } from '../../components/booking/DriverBottomCard';
@@ -16,6 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../../utils/apiClient';
 import { RootStackParamList } from '../../../App';
 import { RouteProp, useRoute } from '@react-navigation/native';
+import { useChat } from '../../contexts/ChatContext';
 
 const TravelingScreen = ({ navigation }: any) => {
   const mapRef = useRef<MapBackgroundRef>(null);
@@ -26,6 +27,7 @@ const TravelingScreen = ({ navigation }: any) => {
 
   const { addTrip } = useBookingHistory();
   const { fromLocation, destinationLocation } = useLocation();
+  const { addMessage, clearChat } = useChat();
 
   const fromLocationRef = useRef(fromLocation);
   useEffect(() => {
@@ -56,6 +58,7 @@ const TravelingScreen = ({ navigation }: any) => {
           plateNumber: "---",
           rating: 5.0,
           avatar: "https://i.pravatar.cc/150?img=11",
+          phone_number: "0123456789"
         });
       }
     };
@@ -65,6 +68,8 @@ const TravelingScreen = ({ navigation }: any) => {
 
   useEffect(() => {
     if (!tripId) return;
+
+    let chatListener: any;
 
     const setupSocket = async () => {
       let token = await AsyncStorage.getItem('access_token');
@@ -79,6 +84,34 @@ const TravelingScreen = ({ navigation }: any) => {
       socket.on('connect', () => {
         console.log('🚙 Traveling: Connect to socket successfully! Trip ID:', `trip_${tripId}`);
         socket.emit('customer:subscribe', { trip_id: tripId });
+        socket.emit('join_trip_room', { trip_id: tripId });
+      });
+
+      clearChat();
+
+      socket.on('receive_message', (data: any) => {
+        if (data.sender !== 'CUSTOMER') {
+          console.log('=== KHÁCH HÀNG NHẬN ĐƯỢC TIN NHẮN ===', data);
+
+          const dateObj = data.timestamp ? new Date(data.timestamp) : new Date();
+          const formattedTime = dateObj.toLocaleTimeString('vi-VN', { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+          });
+
+          addMessage({
+            text: data.text,
+            sender: data.sender,
+            timestamp: formattedTime,
+          });
+        }
+      });
+
+      chatListener = DeviceEventEmitter.addListener('emit_send_message', (payload) => {
+        if (socketRef.current) {
+          console.log('📤 Đang gửi tin nhắn lên server:', payload);
+          socketRef.current.emit('send_message', payload);
+        }
       });
 
       socket.on('server:driver_location', (data) => {
@@ -112,8 +145,9 @@ const TravelingScreen = ({ navigation }: any) => {
 
     return () => {
       if (socketRef.current) socketRef.current.disconnect();
+      if (chatListener) chatListener.remove();
     };
-  }, [fromLocation, tripId]);
+  }, [addMessage, clearChat, tripId]);
 
   useEffect(() => {
     if (fromLocation && !driverLocation) {
@@ -175,7 +209,7 @@ const TravelingScreen = ({ navigation }: any) => {
     const newTrip = {
       id: tripId || Date.now().toString(),
       driver: driverData || {
-        name: "Bác tài xế", carModel: "Xe máy/Ô tô", plateNumber: "---", rating: 5, avatar: "https://i.pravatar.cc/150?img=11"
+        name: "Bác tài xế", carModel: "Xe máy/Ô tô", plateNumber: "---", rating: 5, avatar: "https://i.pravatar.cc/150?img=11", phone_number: "0123456789"
       },
       fromLocation: finalFrom,
       destinationLocation: finalDest,
@@ -201,9 +235,24 @@ const TravelingScreen = ({ navigation }: any) => {
             driverData={driverData}
             distance={distance} 
             arrivalTime={tripStatus === 'waiting' ? "Arriving in 5 mins" : ""}          
-            onCancel={() => navigation.navigate('MainTabs')}
-            onChat={() => console.log("Chat with driver")}
-            onCall={() => console.log("Call driver")}
+            onCancel={async () => {
+              try {
+                if (tripId) {
+                  await apiClient.post(`/rides/${tripId}/cancel`);
+                  console.log('Đã hủy chuyến đi thành công trên server:', tripId);
+                }
+              } catch (error: any) {
+                console.log('Lỗi khi hủy chuyến:', error.response?.data || error.message);
+              } finally {
+                if (socketRef.current) {
+                  socketRef.current.disconnect();
+                  console.log('Đã ngắt kết nối Socket do khách hàng chủ động hủy');
+                }
+                
+                navigation.goBack();
+              };
+            }}
+            onChat={() => navigation.navigate('Chat', { driverData: driverData, tripId: tripId })}
           />
         ) : (
           <View style={styles.loadingCard}>

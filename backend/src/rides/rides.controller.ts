@@ -117,6 +117,8 @@ export class RidesController {
     @Request() req,
     @Body() createRideDto: CreateRideDto,
   ): Promise<TripResponseDto> {
+    console.log('=== THÔNG TIN REQ.USER LÀ: ===', req.user)
+
     const quoteData = await this.redisService.get<any>(
       createRideDto.fare_quote_id,
     )
@@ -151,9 +153,12 @@ export class RidesController {
       quoteData.pickup_longitude,
       5,
     )
+    console.log(`[Rides] Pickup: ${quoteData.pickup_latitude},${quoteData.pickup_longitude} | nearbyDrivers (5km): [${nearbyDrivers.join(', ')}]`)
 
     const requestPayload = {
       trip_id: newTrip.id,
+      customer_id: req.user.userId,
+      customer_phone: req.user.phone_number,
       pickup: {
         lat: quoteData.pickup_latitude,
         lng: quoteData.pickup_longitude,

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
+import { ConfigModule, ConfigService } from '@nestjs/config'
 import { RidesController } from './rides.controller'
 import { TripGateway } from './trip.gateway'
 import { JwtModule } from '@nestjs/jwt'
@@ -13,7 +14,6 @@ import { UsersModule } from '../users/users.module'
 import { FirebaseModule } from '../firebase/firebase.module'
 import { Payment } from '../payments/entities/payment.entity'
 import { User } from '../users/entities/user.entity'
-import { ConfigModule, ConfigService } from '@nestjs/config'
 
 @Module({
   imports: [

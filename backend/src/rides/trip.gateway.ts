@@ -132,10 +132,10 @@ export class TripGateway implements OnGatewayConnection, OnGatewayDisconnect {
       `[Chat] ${payload.sender} gửi tin nhắn vào phòng ${roomName}: ${payload.text}`,
     )
 
-    client.to(roomName).emit('receive_message', {
+    this.server.to(roomName).emit('receive_message', {
       text: payload.text,
       sender: payload.sender,
       timestamp: new Date().toISOString(),
-    })
+    });
   }
 }

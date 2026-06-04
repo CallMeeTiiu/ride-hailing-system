@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface ChatMessage {
@@ -46,20 +46,20 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     saveChat();
   }, [messages]);
 
-  const addMessage = (msg: ChatMessage) => {
+  const addMessage = useCallback((msg: ChatMessage) => {
     setMessages((prev) => [...prev, msg]);
     setHasUnread(true); 
-  };
+  }, []);
 
-  const clearChat = async () => {
+  const clearChat = useCallback(async () => {
     setMessages([]);
     setHasUnread(false);
     await AsyncStorage.removeItem('chat_history');
-  };
+  }, []);
 
-  const setUnread = (status: boolean) => {
+  const setUnread = useCallback((status: boolean) => {
     setHasUnread(status);
-  };
+  }, []);
 
   return (
     <ChatContext.Provider value={{ messages, hasUnread, addMessage, clearChat, setUnread }}>

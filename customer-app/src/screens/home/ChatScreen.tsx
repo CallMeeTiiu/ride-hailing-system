@@ -1,24 +1,24 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
-    StyleSheet, 
-    Text, 
-    View, 
-    FlatList, 
-    TextInput, 
+    StyleSheet,
+    Text,
+    View,
+    FlatList,
+    TextInput,
     TouchableOpacity,
-    KeyboardAvoidingView, 
-    Platform, 
-    Image, 
-    StatusBar, 
+    KeyboardAvoidingView,
+    Platform,
+    StatusBar,
     DeviceEventEmitter
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/Feather';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 
-import { useTheme } from '../../contexts/ThemeContext'; 
+import { useTheme } from '../../contexts/ThemeContext';
 import theme from '../../constants/theme';
 import { useChat } from '../../contexts/ChatContext';
+import { faArrowLeft, faPaperPlane, faPhone } from '@fortawesome/free-solid-svg-icons';
 
 export default function ChatScreen() {
     const navigation = useNavigation();
@@ -68,15 +68,10 @@ export default function ChatScreen() {
 
         return (
             <View style={[styles.messageRow, isCustomer ? styles.rowCustomer : styles.rowDriver]}>
-                {!isCustomer && driverData && (
-                    <Image source={{ uri: driverData.avatar }} style={styles.chatAvatar} />
-                )}
                 <View style={[styles.bubble, isCustomer ? styles.bubbleCustomer : styles.bubbleDriver]}>
-                    {item.text ? (
-                        <Text style={[styles.messageText, isCustomer ? styles.textCustomer : styles.textDriver]}>
-                            {item.text}
-                        </Text>
-                    ) : null}
+                    <Text style={[styles.messageText, isCustomer ? styles.textCustomer : styles.textDriver]}>
+                        {item.text}
+                    </Text>
                     <Text style={[styles.timeText, isCustomer ? styles.timeCustomer : styles.timeDriver]}>
                         {item.timestamp}
                     </Text>
@@ -86,42 +81,45 @@ export default function ChatScreen() {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={styles.safeArea} >
             <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
 
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.8}>
-                    <Icon name="arrow-left" size={24} color={colors.textTitle} />
-                </TouchableOpacity>
+            <KeyboardAvoidingView 
+                style={styles.keyboardContainer}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+            >
 
-                {driverData && (
-                    <>
-                        <Image source={{ uri: driverData.avatar }} style={styles.headerAvatar} />
-                        <View style={styles.headerTitleContainer}>
-                            <Text style={styles.headerTitle}>Bác tài {driverData.name}</Text>
-                            <Text style={styles.headerStatus}>Biển số: {driverData.plateNumber}</Text>
-                        </View>
-                    </>
-                )}
-            </View>
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                        <FontAwesomeIcon icon={faArrowLeft} size={20} color={colors.textTitle} />
+                    </TouchableOpacity>
 
-            {/* Body */}
-            <FlatList
-                ref={flatListRef}
-                data={messages}
-                renderItem={renderItem}
-                keyExtractor={(_, index) => index.toString()}
-                contentContainerStyle={styles.listContent}
-                keyboardShouldPersistTaps="handled"
-            />
+                    <View style={styles.headerTitleContainer}>
+                        <Text style={styles.headerTitle}>
+                            {driverData?.name ? `${driverData.name}` : 'Bác tài'}
+                        </Text>
+                    </View>
 
-            {/* Footer */}
-            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
-                <View style={styles.inputContainer}>
+                    <TouchableOpacity style={styles.phoneBtn} activeOpacity={0.8}>
+                        <FontAwesomeIcon icon={faPhone} size={20} color={colors.textTitle} />
+                    </TouchableOpacity>
+                </View>
+
+                <FlatList
+                    ref={flatListRef}
+                    data={messages}
+                    renderItem={renderItem}
+                    keyExtractor={(_, index) => index.toString()}
+                    contentContainerStyle={styles.listContent}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                />
+
+                <View style={styles.footer}>
                     <TextInput
                         style={styles.input}
-                        placeholder="Nhập tin nhắn..."
+                        placeholder="Send a message..."
                         placeholderTextColor={colors.textBody}
                         value={inputText}
                         onChangeText={setInputText}
@@ -134,7 +132,9 @@ export default function ChatScreen() {
                         onPress={handleSend} 
                         activeOpacity={0.8}
                     >
-                        <Icon name="send" size={18} color={colors.textBtn} />
+                        <View style={styles.iconOffset}>
+                            <FontAwesomeIcon icon={faPaperPlane} size={20} color={colors.textTitle} />
+                        </View>
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
@@ -143,27 +143,21 @@ export default function ChatScreen() {
 }
 
 const getStyles = (colors: any) => StyleSheet.create({
-    container: {
+    safeArea: {
         flex: 1,
-        backgroundColor: colors.backgroundLight,
+        backgroundColor: 'white',
     },
     header: {
         height: 60,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: colors.background,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border,
+        backgroundColor: theme.COLORS.primary,
         paddingHorizontal: theme.SIZES.padding,
+        ...theme.SHADOWS.light, 
+        zIndex: 10,
     },
-    backBtn: {
+    backButton: {
         padding: theme.SIZES.base,
-        marginRight: theme.SIZES.base,
-    },
-    headerAvatar: {
-        width: 38,
-        height: 38,
-        borderRadius: 19,
         marginRight: theme.SIZES.base,
     },
     headerTitleContainer: {
@@ -174,14 +168,17 @@ const getStyles = (colors: any) => StyleSheet.create({
         fontFamily: theme.FONTS.bold,
         fontSize: theme.SIZES.h3,
     },
-    headerStatus: {
-        color: colors.textBody,
-        fontFamily: theme.FONTS.regular,
-        fontSize: theme.SIZES.small,
+    phoneBtn: {
+        padding: theme.SIZES.base,
+    },
+    keyboardContainer: {
+        flex: 1,
     },
     listContent: {
         paddingHorizontal: theme.SIZES.padding,
         paddingVertical: theme.SIZES.padding,
+        flexGrow: 1,
+        justifyContent: 'flex-end',
     },
     messageRow: {
         flexDirection: 'row',
@@ -190,44 +187,28 @@ const getStyles = (colors: any) => StyleSheet.create({
     },
     rowCustomer: {
         alignSelf: 'flex-end',
-        flexDirection: 'row-reverse',
     },
     rowDriver: {
         alignSelf: 'flex-start',
-        alignItems: 'flex-end',
-    },
-    chatAvatar: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        marginRight: theme.SIZES.base,
     },
     bubble: {
         borderRadius: theme.SIZES.radiusCard,
         paddingHorizontal: theme.SIZES.padding,
-        paddingVertical: theme.SIZES.base,
-        shadowColor: colors.black,
-        shadowOffset: { 
-            width: 0, 
-            height: 1 
-        },
-        shadowOpacity: 0.05,
-        shadowRadius: 1,
+        paddingVertical: 12,
+        ...theme.SHADOWS.light,
     },
     bubbleCustomer: {
-        backgroundColor: colors.primary,
-        borderTopRightRadius: 4,
+        backgroundColor: colors.primary, 
+        borderBottomRightRadius: 4,
     },
     bubbleDriver: {
-        backgroundColor: colors.surface,
-        borderTopLeftRadius: 4,
-        borderWidth: 1,
-        borderColor: colors.border,
+        backgroundColor: colors.background,
+        borderBottomLeftRadius: 4,
     },
     messageText: {
-        lineHeight: 20,
         fontFamily: theme.FONTS.medium,
         fontSize: theme.SIZES.body2,
+        lineHeight: 22,
     },
     textCustomer: {
         color: colors.textBtn,
@@ -237,48 +218,54 @@ const getStyles = (colors: any) => StyleSheet.create({
     },
     timeText: {
         fontSize: 10,
-        marginTop: 4,
-        alignSelf: 'flex-end',
+        marginTop: 6,
         fontFamily: theme.FONTS.regular,
     },
     timeCustomer: {
+        alignSelf: 'flex-end',
         color: colors.textBtn,
-        opacity: 0.8,
+        opacity: 0.7,
     },
     timeDriver: {
+        alignSelf: 'flex-start',
         color: colors.textBody,
     },
-    inputContainer: {
+    footer: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: theme.SIZES.base,
+        paddingHorizontal: theme.SIZES.padding,
+        paddingVertical: theme.SIZES.base,
         backgroundColor: colors.background,
         borderTopWidth: 1,
         borderTopColor: colors.border,
     },
     input: {
         flex: 1,
-        minHeight: 40,
+        minHeight: 45,
         maxHeight: 100,
         backgroundColor: colors.inputBg,
         borderRadius: theme.SIZES.radiusInput,
         paddingHorizontal: theme.SIZES.padding,
-        paddingTop: 8,
-        paddingBottom: 8,
+        paddingTop: 12,
+        paddingBottom: 12,
         color: colors.textTitle,
-        fontSize: theme.SIZES.body1,
-        fontFamily: theme.FONTS.regular,
+        fontSize: theme.SIZES.body2,
+        fontFamily: theme.FONTS.medium,
         marginRight: theme.SIZES.base,
     },
     sendBtn: {
-        width: 40,
-        height: 40,
-        borderRadius: theme.SIZES.radiusButton,
+        width: 45,
+        height: 45,
+        borderRadius: 22.5,
         backgroundColor: colors.primary,
         alignItems: 'center',
         justifyContent: 'center',
     },
     sendBtnDisabled: {
-        backgroundColor: colors.iconDisable,
+        backgroundColor: colors.circleButtonBg,
     },
+    iconOffset: {
+        paddingRight: 3,
+        paddingTop: 1,
+    }
 });

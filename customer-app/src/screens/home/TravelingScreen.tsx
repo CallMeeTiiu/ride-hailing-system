@@ -90,12 +90,21 @@ const TravelingScreen = ({ navigation }: any) => {
       clearChat();
 
       socket.on('receive_message', (data: any) => {
-        console.log('=== KHÁCH HÀNG NHẬN ĐƯỢC TIN NHẮN ===', data);
-        addMessage({
-          text: data.text,
-          sender: data.sender,
-          timestamp: data.timestamp || new Date().toISOString(),
-        });
+        if (data.sender !== 'CUSTOMER') {
+          console.log('=== KHÁCH HÀNG NHẬN ĐƯỢC TIN NHẮN ===', data);
+
+          const dateObj = data.timestamp ? new Date(data.timestamp) : new Date();
+          const formattedTime = dateObj.toLocaleTimeString('vi-VN', { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+          });
+
+          addMessage({
+            text: data.text,
+            sender: data.sender,
+            timestamp: formattedTime,
+          });
+        }
       });
 
       chatListener = DeviceEventEmitter.addListener('emit_send_message', (payload) => {

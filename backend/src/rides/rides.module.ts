@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
+import { ConfigModule, ConfigService } from '@nestjs/config'
 import { RidesController } from './rides.controller'
 import { TripGateway } from './trip.gateway'
 import { JwtModule } from '@nestjs/jwt'
@@ -17,7 +18,13 @@ import { User } from '../users/entities/user.entity'
 @Module({
   imports: [
     TypeOrmModule.forFeature([Trip, TripLocation, Rating, Payment, User]),
-    JwtModule.register({}),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET') || 'super-secret-key-12345',
+      }),
+      inject: [ConfigService],
+    }),
     LocationModule,
     GoogleModule,
     UsersModule,

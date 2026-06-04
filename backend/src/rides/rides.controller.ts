@@ -113,6 +113,7 @@ export class RidesController {
       quoteData.pickup_longitude,
       5, // km
     )
+    console.log(`[Rides] Pickup: ${quoteData.pickup_latitude},${quoteData.pickup_longitude} | nearbyDrivers (5km): [${nearbyDrivers.join(', ')}]`)
 
     // 3. Gửi event WebSockets cho các tài xế trong mảng `nearbyDrivers`
     const requestPayload = {

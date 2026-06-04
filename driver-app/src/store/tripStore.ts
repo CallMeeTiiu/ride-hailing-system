@@ -49,7 +49,12 @@ export const useTripStore = create<TripState>((set, get) => ({
             if (online) {
                 const token = useAuthStore.getState().token;
                 if (token) {
+                    // FIX: Force disconnect socket cũ trước để đảm bảo kết nối mới tới đúng server
+                    // Prevents stale socket singleton pointing to old server (e.g. Render after hot-reload)
+                    disconnectSocket();
+
                     const socket = connectSocket(token);
+                    console.log('[TripStore] Socket created, connecting to server...');
 
                     // Gỡ hết listener cũ để tránh trùng lặp khi toggle lại
                     socket.off('server:ride_request');
@@ -59,6 +64,7 @@ export const useTripStore = create<TripState>((set, get) => ({
 
                     // Lắng nghe yêu cầu chuyến đi từ backend
                     socket.on('server:ride_request', (payload) => {
+                        console.log('[TripStore] ✅ Received ride_request:', payload.trip_id);
                         const tripData: TripData = {
                             id: payload.trip_id,
                             customer: {
@@ -108,6 +114,7 @@ export const useTripStore = create<TripState>((set, get) => ({
 
                     // Reconnect Sync: cập nhật trạng thái thực tế từ BE phòng khi rớt mạng
                     socket.on('connect', async () => {
+                        console.log('[TripStore] Socket connected, id:', socket.id);
                         const trip = get().currentTrip;
                         if (!trip?.id) return;
                         try {

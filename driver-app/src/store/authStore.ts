@@ -77,6 +77,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     loadToken: async () => {
         const token = await AsyncStorage.getItem('access_token');
         if (token) {
+            console.log('🔑 DRIVER ACCESS_TOKEN ON EMULATOR:', token);
             set({ isLoggedIn: true, token });
             const profileOk = await get().fetchProfile();
             if (!profileOk) {

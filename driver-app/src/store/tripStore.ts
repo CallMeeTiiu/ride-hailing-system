@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { TripData, TripStatus } from '../types';
+import { ChatMessage, TripData, TripStatus } from '../types';
 import { toFrontendStatus } from '../utils/tripStatusMapper';
 import { connectSocket, disconnectSocket, getSocket } from '../services/socketClient';
 import apiClient from '../services/apiClient';
@@ -31,6 +31,14 @@ interface TripState {
     // Rating actions
     submitMood: (moodId: string | null) => void;
     submitRating: (rating: number) => Promise<void>;
+
+    // Chat States
+    chatMessages: ChatMessage[];
+    hasUnreadChat: boolean;
+    setUnreadChat: (status: boolean) => void;
+    addChatMessage: (msg: ChatMessage) => void;
+    sendChatMessage: (text: string) => void;
+    clearChat: () => void;
 }
 
 export const useTripStore = create<TripState>((set, get) => ({
@@ -39,6 +47,39 @@ export const useTripStore = create<TripState>((set, get) => ({
     customerMood: null,
     customerRating: 0,
     ratingStep: null,
+
+    chatMessages: [],
+    hasUnreadChat: false,
+    setUnreadChat: (status) => set({ hasUnreadChat: status }),
+    addChatMessage: (msg) => set((state) => ({
+        chatMessages: [...state.chatMessages, msg],
+        hasUnreadChat: true
+    })),
+    clearChat: () => set({ chatMessages: [], hasUnreadChat: false }),
+
+    sendChatMessage: (text: string) => {
+        const { currentTrip } = get();
+        if (!currentTrip) return;
+
+        const newMsg: ChatMessage = {
+            id: `msg_drv_${Date.now()}`,
+            senderId: 'DRIVER',
+            text: text,
+            timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+            isDriver: true,
+        };
+
+        set((state) => ({ chatMessages: [...state.chatMessages, newMsg] }));
+
+        const socket = getSocket();
+        if (socket?.connected) {
+            socket.emit('send_message', {
+                trip_id: currentTrip.id,
+                text: text,
+                sender: 'DRIVER',
+            });
+        }
+    },
 
     setTripStatus: (status) => set({ tripStatus: status }),
     setCurrentTrip: (trip) => set({ currentTrip: trip }),
@@ -49,20 +90,17 @@ export const useTripStore = create<TripState>((set, get) => ({
             if (online) {
                 const token = useAuthStore.getState().token;
                 if (token) {
-                    // FIX: Force disconnect socket cũ trước để đảm bảo kết nối mới tới đúng server
-                    // Prevents stale socket singleton pointing to old server (e.g. Render after hot-reload)
                     disconnectSocket();
 
                     const socket = connectSocket(token);
                     console.log('[TripStore] Socket created, connecting to server...');
 
-                    // Gỡ hết listener cũ để tránh trùng lặp khi toggle lại
                     socket.off('server:ride_request');
                     socket.off('server:offer_expired');
                     socket.off('server:trip_cancelled');
                     socket.off('connect');
+                    socket.off('receive_message');
 
-                    // Lắng nghe yêu cầu chuyến đi từ backend
                     socket.on('server:ride_request', (payload) => {
                         console.log('[TripStore] ✅ Received ride_request:', payload.trip_id);
                         const tripData: TripData = {
@@ -94,14 +132,12 @@ export const useTripStore = create<TripState>((set, get) => ({
                         });
                     });
 
-                    // Cuốc hết hạn
                     socket.on('server:offer_expired', () => {
                         if (get().tripStatus === TripStatus.BOOKING_INCOMING) {
                             set({ tripStatus: TripStatus.ONLINE, currentTrip: null });
                         }
                     });
 
-                    // Khách hủy chuyến
                     socket.on('server:trip_cancelled', () => {
                         const trip = get().currentTrip;
                         if (trip) {
@@ -112,11 +148,31 @@ export const useTripStore = create<TripState>((set, get) => ({
                         }
                     });
 
-                    // Reconnect Sync: cập nhật trạng thái thực tế từ BE phòng khi rớt mạng
+                    socket.on('receive_message', (data: any) => {
+                        if (data.sender !== 'DRIVER') {
+                            console.log('=== TÀI XẾ NHẬN ĐƯỢC TIN NHẮN ===', data);
+                            
+                            const dateObj = data.timestamp ? new Date(data.timestamp) : new Date();
+                            const formattedTime = dateObj.toLocaleTimeString('vi-VN', { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                            });
+
+                            get().addChatMessage({
+                            id: `msg_cust_${Date.now()}`,
+                            senderId: 'CUSTOMER',
+                            text: data.text,
+                            timestamp: formattedTime,
+                            isDriver: false,
+                            });
+                        }
+                    });
+
                     socket.on('connect', async () => {
                         console.log('[TripStore] Socket connected, id:', socket.id);
                         const trip = get().currentTrip;
                         if (!trip?.id) return;
+                        socket.emit('join_trip_room', { trip_id: trip.id });
                         try {
                             const res = await apiClient.get(`/rides/${trip.id}`);
                             const latestStatus = toFrontendStatus(res.data.status);
@@ -147,12 +203,17 @@ export const useTripStore = create<TripState>((set, get) => ({
     },
 
     acceptTrip: async () => {
+        get().clearChat();
         const trip = get().currentTrip;
         if (!trip) return;
         try {
             const res = await apiClient.post(`/rides/${trip.id}/accept`);
             const beStatus = res.data.status; // "ACCEPTED"
             const feStatus = toFrontendStatus(beStatus); // TripStatus.ARRIVING
+            const socket = getSocket();
+            if (socket?.connected) {
+                socket.emit('join_trip_room', { trip_id: trip.id });
+            }
             set({
                 tripStatus: feStatus,
                 currentTrip: { ...trip, status: feStatus },
@@ -220,6 +281,8 @@ export const useTripStore = create<TripState>((set, get) => ({
         } catch (err) {
             console.error('[TripStore] finishTrip failed:', err);
         }
+        get().clearChat(); 
+        set({ currentTrip: null, tripStatus: TripStatus.ONLINE });
     },
 
     cancelTrip: async () => {
@@ -234,6 +297,8 @@ export const useTripStore = create<TripState>((set, get) => ({
         } catch (err) {
             console.error('[TripStore] cancelTrip failed:', err);
         }
+        get().clearChat();
+        set({ currentTrip: null, tripStatus: TripStatus.ONLINE });
     },
 
     completeFinish: () => {

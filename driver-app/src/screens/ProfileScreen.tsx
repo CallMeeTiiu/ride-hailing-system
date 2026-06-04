@@ -100,7 +100,10 @@ export default function ProfileScreen() {
                         <Icon name="chevron-right" size={18} color={COLORS.textTertiary} style={styles.chevron} />
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.menuItem}>
+                    <TouchableOpacity
+                        style={styles.menuItem}
+                        onPress={() => navigation.navigate('Documents')}
+                    >
                         <Icon name="shield" size={20} color={COLORS.textSecondary} />
                         <Text style={styles.menuText}>Chứng chỉ & Giấy tờ</Text>
                         <Icon name="chevron-right" size={18} color={COLORS.textTertiary} style={styles.chevron} />

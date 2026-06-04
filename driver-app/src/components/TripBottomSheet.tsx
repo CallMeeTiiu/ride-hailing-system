@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Image } from 'react-native';
+import { StyleSheet, Text, View, Image, Alert, Linking } from 'react-native';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { TripStatus, TripData } from '../types';
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../theme';
@@ -15,7 +15,6 @@ import { useTripStore } from '../store/tripStore';
 interface TripBottomSheetProps {
     tripStatus: TripStatus;
     trip: TripData | null;
-    onCall: () => void;
     onChat: () => void;
 
     // Trip control hooks
@@ -29,7 +28,6 @@ interface TripBottomSheetProps {
 export default function TripBottomSheet({
     tripStatus,
     trip,
-    onCall,
     onChat,
     onConfirmArrived,
     onStartTrip,
@@ -50,6 +48,29 @@ export default function TripBottomSheet({
     const [selectedMood, setSelectedMood] = useState<string | null>(null);
     const [hasSelectedMood, setHasSelectedMood] = useState(false);
     const [selectedRating, setSelectedRating] = useState<number>(0);
+
+    const handleCallCustomer = async () => {
+        const phone = trip?.customer?.phone;
+        
+        if (!phone) {
+            Alert.alert('Lỗi', 'Không tìm thấy số điện thoại của khách hàng.');
+            return;
+        }
+
+        const url = `tel:${phone}`;
+        
+        try {
+            const supported = await Linking.canOpenURL(url);
+            if (supported) {
+                await Linking.openURL(url);
+            } else {
+                Alert.alert('Lỗi', 'Thiết bị của bạn không hỗ trợ gọi điện.');
+            }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (error) {
+            Alert.alert('Lỗi', 'Đã có lỗi xảy ra khi cố gắng mở trình gọi điện.');
+        }
+    };
 
     // Reset local selection states when trip finished starts
     useEffect(() => {
@@ -99,7 +120,7 @@ export default function TripBottomSheet({
                 return (
                     <View style={styles.activeContainer}>
                         <StepIndicator currentStep={0} />
-                        <CustomerInfo customer={trip!.customer} onCall={onCall} onChat={onChat} />
+                        <CustomerInfo customer={trip!.customer} onCall={handleCallCustomer} onChat={onChat} />
 
                         <View style={styles.addressRow}>
                             <Icon name="circle" size={14} color={COLORS.primary} style={{ marginRight: 8, marginTop: 4 }} />
@@ -130,7 +151,7 @@ export default function TripBottomSheet({
                 return (
                     <View style={styles.activeContainer}>
                         <StepIndicator currentStep={1} />
-                        <CustomerInfo customer={trip!.customer} onCall={onCall} onChat={onChat} />
+                        <CustomerInfo customer={trip!.customer} onCall={handleCallCustomer} onChat={onChat} />
 
                         <View style={[styles.addressRow, { backgroundColor: '#FFFDF0', borderColor: '#FFE8A3', borderWidth: 1 }]}>
                             <Icon name="clock" size={16} color="#FF9800" style={{ marginRight: 8 }} />
@@ -160,7 +181,7 @@ export default function TripBottomSheet({
                 return (
                     <View style={styles.activeContainer}>
                         <StepIndicator currentStep={2} />
-                        <CustomerInfo customer={trip!.customer} onCall={onCall} onChat={onChat} />
+                        <CustomerInfo customer={trip!.customer} onCall={handleCallCustomer} onChat={onChat} />
 
                         <View style={styles.addressRow}>
                             <Icon name="map-pin" size={14} color={COLORS.error} style={{ marginRight: 8, marginTop: 4 }} />

@@ -3,6 +3,7 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Customer } from '../types';
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../theme';
 import Icon from 'react-native-vector-icons/Feather';
+import { useTripStore } from '../store/tripStore';
 
 interface CustomerInfoProps {
     customer: Customer;
@@ -11,6 +12,8 @@ interface CustomerInfoProps {
 }
 
 export default function CustomerInfo({ customer, onCall, onChat }: CustomerInfoProps) {
+    const hasUnreadChat = useTripStore(state => state.hasUnreadChat);
+
     return (
         <View style={styles.container}>
             <Image source={{ uri: customer.avatarUrl }} style={styles.avatar} />
@@ -28,6 +31,21 @@ export default function CustomerInfo({ customer, onCall, onChat }: CustomerInfoP
             <View style={styles.actions}>
                 <TouchableOpacity style={styles.iconBtn} onPress={onChat} activeOpacity={0.7}>
                     <Icon name="message-square" size={20} color={COLORS.primaryDark} />
+
+                    {hasUnreadChat && (
+                        // eslint-disable-next-line react-native/no-inline-styles
+                        <View style={{
+                            position: 'absolute',
+                            top: -2,
+                            right: -2,
+                            width: 10,
+                            height: 10,
+                            borderRadius: 5,
+                            backgroundColor: 'red',
+                            borderWidth: 1,
+                            borderColor: 'white'
+                        }} />
+                    )}
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.iconBtn, styles.callBtn]} onPress={onCall} activeOpacity={0.7}>
                     <Icon name="phone" size={20} color={COLORS.white} />

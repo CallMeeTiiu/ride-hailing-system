@@ -11,6 +11,7 @@ import {
     Platform,
     ScrollView,
     StatusBar,
+    Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../store/authStore';
@@ -18,9 +19,11 @@ import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../theme';
 import Icon from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
 
+const BRANDS = ['Honda', 'Yamaha', 'Suzuki', 'Piaggio', 'VinFast', 'Khác'];
+
 export default function EditProfileScreen() {
     const navigation = useNavigation();
-    const { driver, isLoading, error, updateDriverProfile } = useAuthStore();
+    const { driver, isLoading, error, updateDriverProfile, uploadAvatar } = useAuthStore();
 
     const [name, setName] = useState(driver?.name === 'Tài xế mới' ? '' : driver?.name || '');
     const [vehiclePlate, setVehiclePlate] = useState(
@@ -28,10 +31,45 @@ export default function EditProfileScreen() {
     );
     const [licenseNumber, setLicenseNumber] = useState(driver?.licenseNumber || '');
 
+    // Cập nhật chi tiết xe mới
+    const [brand, setBrand] = useState(driver?.brand || 'Honda');
+    const [model, setModel] = useState(driver?.model || '');
+    const [color, setColor] = useState(driver?.color || '');
+
+    // Avatar state
+    const [avatarUri, setAvatarUri] = useState(
+        driver?.avatarUrl || 'https://ui-avatars.com/api/?name=TX&background=F5A623&color=fff'
+    );
+    const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
+    // Chụp & upload avatar lên server
+    const handleAvatarChange = () => {
+        setIsUploadingAvatar(true);
+        setTimeout(async () => {
+            try {
+                const initials = encodeURIComponent(name || 'TX');
+                const mockupUrl = `https://ui-avatars.com/api/?name=${initials}&background=F5A623&color=fff&size=200`;
+                const serverUrl = await uploadAvatar({ uri: mockupUrl });
+                if (serverUrl) {
+                    setAvatarUri(serverUrl);
+                    Alert.alert('Thành công', 'Đã cập nhật ảnh đại diện mới trên máy chủ.');
+                } else {
+                    Alert.alert('Cảnh báo', 'Tải ảnh đại diện lên server thất bại, đang dùng cache.');
+                }
+            } catch (err) {
+                console.log('Upload avatar error:', err);
+            } finally {
+                setIsUploadingAvatar(false);
+            }
+        }, 1200);
+    };
+
     const handleSave = async () => {
         const nameTrim = name.trim();
         const plateTrim = vehiclePlate.trim();
         const licenseTrim = licenseNumber.trim();
+        const modelTrim = model.trim();
+        const colorTrim = color.trim();
 
         if (!nameTrim) {
             Alert.alert('Thiếu thông tin', 'Vui lòng nhập họ và tên của bạn.');
@@ -45,10 +83,25 @@ export default function EditProfileScreen() {
             Alert.alert('Thiếu thông tin', 'Vui lòng nhập biển số xe.');
             return;
         }
+        if (!modelTrim) {
+            Alert.alert('Thiếu thông tin', 'Vui lòng điền dòng xe.');
+            return;
+        }
+        if (!colorTrim) {
+            Alert.alert('Thiếu thông tin', 'Vui lòng điền màu xe.');
+            return;
+        }
 
-        const success = await updateDriverProfile(nameTrim, plateTrim, licenseTrim);
+        const success = await updateDriverProfile(
+            nameTrim,
+            plateTrim,
+            licenseTrim,
+            brand,
+            modelTrim,
+            colorTrim
+        );
         if (success) {
-            Alert.alert('Thành công', 'Thông tin đăng ký hồ sơ đã được đồng bộ lên hệ thống.', [
+            Alert.alert('Thành công', 'Hồ sơ tài xế và thông tin phương tiện đã cập nhật.', [
                 { text: 'OK', onPress: () => navigation.goBack() },
             ]);
         } else {
@@ -76,11 +129,21 @@ export default function EditProfileScreen() {
                 style={styles.keyboardView}
             >
                 <ScrollView contentContainerStyle={styles.scrollContent}>
-                    <View style={styles.alertBanner}>
-                        <Icon name="info" size={20} color={COLORS.primaryDark} />
-                        <Text style={styles.alertText}>
-                            Vui lòng cập nhật thông tin tài xế chính xác để khách hàng nhận diện và bắt đầu chạy chuyến.
-                        </Text>
+                    {/* Hộp cập nhật Avatar ở đầu trang */}
+                    <View style={styles.avatarContainer}>
+                        <View style={styles.avatarWrapper}>
+                            <Image source={{ uri: avatarUri }} style={styles.avatarImg} />
+                            {isUploadingAvatar ? (
+                                <View style={styles.avatarLoader}>
+                                    <ActivityIndicator size="small" color={COLORS.white} />
+                                </View>
+                            ) : (
+                                <TouchableOpacity style={styles.avatarEditBtn} onPress={handleAvatarChange}>
+                                    <Icon name="camera" size={14} color={COLORS.white} />
+                                </TouchableOpacity>
+                            )}
+                        </View>
+                        <Text style={styles.avatarTitleText}>Ảnh Chân Dung</Text>
                     </View>
 
                     {/* Form Group */}
@@ -115,6 +178,59 @@ export default function EditProfileScreen() {
                             </View>
                         </View>
 
+                        {/* GPLX */}
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Số Giấy phép lái xe (GPLX)</Text>
+                            <View style={styles.inputWrapper}>
+                                <Icon name="credit-card" size={20} color={COLORS.textSecondary} style={styles.inputIcon} />
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Nhập số bằng lái xe của bạn"
+                                    value={licenseNumber}
+                                    onChangeText={setLicenseNumber}
+                                    placeholderTextColor={COLORS.textTertiary}
+                                    editable={!isLoading}
+                                    keyboardType="numeric"
+                                />
+                            </View>
+                        </View>
+
+                        <View style={styles.divider} />
+                        <Text style={[styles.sectionTitle, TYPOGRAPHY.h3]}>Chi tiết phương tiện</Text>
+
+                        {/* Chip chọn Hãng xe */}
+                        <Text style={styles.label}>Hãng sản xuất xe *</Text>
+                        <View style={styles.brandRow}>
+                            {BRANDS.map((item) => (
+                                <TouchableOpacity
+                                    key={item}
+                                    style={[styles.brandChip, brand === item && styles.brandChipActive]}
+                                    onPress={() => setBrand(item)}
+                                    disabled={isLoading}
+                                >
+                                    <Text style={[styles.brandChipText, brand === item && styles.brandChipTextActive]}>
+                                        {item}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+
+                        {/* Dòng xe / Model */}
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Dòng / Mẫu xe máy *</Text>
+                            <View style={styles.inputWrapper}>
+                                <Icon name="tag" size={20} color={COLORS.textSecondary} style={styles.inputIcon} />
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Ví dụ: Wave Alpha, Air Blade"
+                                    value={model}
+                                    onChangeText={setModel}
+                                    placeholderTextColor={COLORS.textTertiary}
+                                    editable={!isLoading}
+                                />
+                            </View>
+                        </View>
+
                         {/* Biển số xe */}
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Biển kiểm soát xe *</Text>
@@ -132,19 +248,18 @@ export default function EditProfileScreen() {
                             </View>
                         </View>
 
-                        {/* Giấy phép lái xe */}
+                        {/* Màu xe */}
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Số Giấy phép lái xe (GPLX)</Text>
+                            <Text style={styles.label}>Màu sơn xe *</Text>
                             <View style={styles.inputWrapper}>
-                                <Icon name="credit-card" size={20} color={COLORS.textSecondary} style={styles.inputIcon} />
+                                <Icon name="aperture" size={20} color={COLORS.textSecondary} style={styles.inputIcon} />
                                 <TextInput
                                     style={styles.input}
-                                    placeholder="Nhập số bằng lái xe của bạn"
-                                    value={licenseNumber}
-                                    onChangeText={setLicenseNumber}
+                                    placeholder="Ví dụ: Đen, Đỏ Đen"
+                                    value={color}
+                                    onChangeText={setColor}
                                     placeholderTextColor={COLORS.textTertiary}
                                     editable={!isLoading}
-                                    keyboardType="numeric"
                                 />
                             </View>
                         </View>
@@ -205,22 +320,51 @@ const styles = StyleSheet.create({
     scrollContent: {
         padding: SPACING.md,
     },
-    alertBanner: {
-        flexDirection: 'row',
-        backgroundColor: COLORS.primaryLight,
-        padding: SPACING.md,
-        borderRadius: RADIUS.md,
+    avatarContainer: {
         alignItems: 'center',
-        marginBottom: SPACING.lg,
-        borderWidth: 1,
-        borderColor: 'rgba(245, 166, 35, 0.2)',
+        marginVertical: SPACING.md,
     },
-    alertText: {
-        flex: 1,
-        fontSize: 14,
-        color: COLORS.textPrimary,
-        marginLeft: SPACING.sm,
-        lineHeight: 20,
+    avatarWrapper: {
+        width: 84,
+        height: 84,
+        position: 'relative',
+    },
+    avatarImg: {
+        width: 84,
+        height: 84,
+        borderRadius: 42,
+        borderWidth: 2,
+        borderColor: COLORS.primaryLight,
+    },
+    avatarLoader: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        borderRadius: 42,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    avatarEditBtn: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        width: 26,
+        height: 26,
+        borderRadius: 13,
+        backgroundColor: COLORS.primary,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1.5,
+        borderColor: COLORS.white,
+    },
+    avatarTitleText: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: COLORS.textSecondary,
+        marginTop: 6,
     },
     form: {
         backgroundColor: COLORS.background,
@@ -265,6 +409,42 @@ const styles = StyleSheet.create({
     disabledInput: {
         color: COLORS.textSecondary,
     },
+    divider: {
+        height: 1,
+        backgroundColor: '#EEEEEE',
+        marginVertical: SPACING.md,
+    },
+    sectionTitle: {
+        color: COLORS.textPrimary,
+        marginBottom: SPACING.md,
+    },
+    brandRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        marginBottom: SPACING.md,
+    },
+    brandChip: {
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+        borderRadius: RADIUS.md,
+        marginRight: 6,
+        marginBottom: 8,
+        backgroundColor: COLORS.background,
+    },
+    brandChipActive: {
+        borderColor: COLORS.primary,
+        backgroundColor: COLORS.primaryLight,
+    },
+    brandChipText: {
+        fontSize: 13,
+        color: COLORS.textSecondary,
+    },
+    brandChipTextActive: {
+        color: COLORS.primaryDark,
+        fontWeight: '600',
+    },
     saveBtn: {
         flexDirection: 'row',
         backgroundColor: COLORS.primaryDark,
@@ -277,6 +457,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 6,
         elevation: 4,
+        marginBottom: SPACING.xl,
     },
     btnIcon: {
         marginRight: SPACING.sm,

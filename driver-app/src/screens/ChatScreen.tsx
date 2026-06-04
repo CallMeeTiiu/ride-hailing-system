@@ -22,9 +22,17 @@ import { useNavigation } from '@react-navigation/native';
 export default function ChatScreen() {
     const navigation = useNavigation();
     const currentTrip = useTripStore((state) => state.currentTrip);
-    const [messages, setMessages] = useState<ChatMessage[]>(MOCK_CHAT_HISTORY);
+    const [messages] = useState<ChatMessage[]>(MOCK_CHAT_HISTORY);
     const [inputText, setInputText] = useState('');
     const flatListRef = useRef<FlatList>(null);
+
+    const chatMessages = useTripStore((state) => state.chatMessages);
+    const sendChatMessage = useTripStore((state) => state.sendChatMessage);
+    const setUnreadChat = useTripStore((state) => state.setUnreadChat);
+
+    React.useEffect(() => {
+        setUnreadChat(false);
+    }, [setUnreadChat]);
 
     // Auto scroll to bottom when opening/sending
     useEffect(() => {
@@ -34,36 +42,10 @@ export default function ChatScreen() {
     }, [messages]);
 
     const handleSend = () => {
-        if (!inputText.trim()) return;
-
-        const newMsg: ChatMessage = {
-            id: `msg_drv_${Date.now()}`,
-            senderId: 'drv_001',
-            text: inputText.trim(),
-            timestamp: new Date().toLocaleTimeString('vi-VN', {
-                hour: '2-digit',
-                minute: '2-digit',
-            }),
-            isDriver: true,
-        };
-
-        setMessages((prev) => [...prev, newMsg]);
-        setInputText('');
-
-        // Simulated quick customer auto-reply after 2.5s for cool demo!
-        setTimeout(() => {
-            const autoReply: ChatMessage = {
-                id: `msg_cust_${Date.now()}`,
-                senderId: currentTrip?.customer.id || 'cust_987',
-                text: 'Ok anh, tôi thấy anh rồi.',
-                timestamp: new Date().toLocaleTimeString('vi-VN', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                }),
-                isDriver: false,
-            };
-            setMessages((prev) => [...prev, autoReply]);
-        }, 2500);
+        if (inputText.trim().length > 0) {
+            sendChatMessage(inputText.trim());
+            setInputText(''); 
+        }
     };
 
     const renderItem = ({ item }: { item: ChatMessage }) => {
@@ -148,7 +130,7 @@ export default function ChatScreen() {
             {/* Messages FlatList Body */}
             <FlatList
                 ref={flatListRef}
-                data={messages}
+                data={chatMessages}
                 renderItem={renderItem}
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.listContent}

@@ -47,7 +47,7 @@ const ProfileScreen = () => {
   const { profile, uploadAvatar } = useUser();
   const navigation = useNavigation<any>();
 
-  const BACKEND_URL = 'http://localhost:3000';
+  const BACKEND_URL = 'https://ride-hailing-system-nuf0.onrender.com';
 
   const LANGUAGES = [
     { code: 'en', label: 'English (US)' },

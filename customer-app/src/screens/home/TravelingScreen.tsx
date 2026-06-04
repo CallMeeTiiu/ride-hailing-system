@@ -75,7 +75,7 @@ const TravelingScreen = ({ navigation }: any) => {
       let token = await AsyncStorage.getItem('access_token');
       if (token) token = token.replace(/"/g, ''); 
       
-      const socket = io('http://localhost:3000', {
+      const socket = io('https://ride-hailing-system-nuf0.onrender.com', {
         auth: { token },
         transports: ['websocket'],
       });

@@ -9,6 +9,7 @@ import { BookingHistoryProvider } from './src/contexts/BookingHistoryContext';
 import { UserProvider } from './src/contexts/UserContext';
 import { AddressProvider } from './src/contexts/AddressContext';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
+import { ChatProvider } from './src/contexts/ChatContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -32,6 +33,9 @@ import EditAddressScreen from './src/screens/profile/EditAddressScreen';
 import AddressListScreen from './src/screens/profile/AddressListScreen';
 import HistoryScreen from './src/screens/history/HistoryScreen';
 import TripDetailScreen from './src/screens/history/TripDetailScreen';
+import ChatScreen from './src/screens/home/ChatScreen';
+
+import { DriverData } from './src/components/booking/DriverBottomCard';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -63,6 +67,10 @@ export type RootStackParamList = {
   Traveling: {
     tripId?: string;
     driverId?: string;
+  };
+  Chat: {
+    driverData: DriverData;
+    tripId: string;
   };
   Rating: {tripId: string };
   RatingList: undefined;
@@ -109,6 +117,7 @@ const RootNavigator = () => {
             <Stack.Screen name="SelectCar" component={SelectCarScreen}/>
             <Stack.Screen name="SearchingDriver" component={SearchingDriverScreen}  />
             <Stack.Screen name="Traveling" component={TravelingScreen} />
+            <Stack.Screen name="Chat" component={ChatScreen} />
             <Stack.Screen name="Rating" component={RatingScreen} />
             <Stack.Screen name="RatingList" component={RatingListScreen} />
             <Stack.Screen name="EditProfile" component={EditProfileScreen} />
@@ -130,19 +139,21 @@ const App = () => {
     // eslint-disable-next-line react-native/no-inline-styles
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <AuthProvider>
-          <UserProvider>
-            <BookingHistoryProvider>
-              <AddressProvider>
-                <LocationProvider>
-                  <ThemeProvider>
-                    <RootNavigator />
-                  </ThemeProvider>
-                </LocationProvider>
-              </AddressProvider>
-            </BookingHistoryProvider>
-          </UserProvider>
-        </AuthProvider>
+        <ChatProvider>
+          <AuthProvider>
+            <UserProvider>
+              <BookingHistoryProvider>
+                <AddressProvider>
+                  <LocationProvider>
+                    <ThemeProvider>
+                      <RootNavigator />
+                    </ThemeProvider>
+                  </LocationProvider>
+                </AddressProvider>
+              </BookingHistoryProvider>
+            </UserProvider>
+          </AuthProvider>
+        </ChatProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

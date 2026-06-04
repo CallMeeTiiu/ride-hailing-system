@@ -35,7 +35,7 @@ export class Rating {
   @Column({ name: 'driver_id', nullable: true })
   driver_id: string
 
-  @Column({ type: 'decimal', precision: 2, scale: 1 })
+  @Column({ type: 'decimal', precision: 2, scale: 1, default: 0 })
   rating: number
 
   @Column({ type: 'text', nullable: true })

@@ -86,7 +86,7 @@ const SearchingDriverScreen = () => {
 
     const setupSocket = async () => {
       const token = await AsyncStorage.getItem('access_token'); 
-      const SOCKET_URL = 'https://ride-hailing-system-nuf0.onrender.com'; 
+      const SOCKET_URL = 'http://localhost:3000'; 
 
       const socket = io(SOCKET_URL, {
         auth: { token: token }, 

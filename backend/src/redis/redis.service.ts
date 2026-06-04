@@ -1,40 +1,61 @@
-import { Injectable, OnModuleDestroy } from '@nestjs/common'
+import {
+  Injectable,
+  OnModuleDestroy,
+  OnModuleInit,
+  Logger,
+} from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import Redis from 'ioredis'
+import { createClient, RedisClientType } from 'redis'
 
 @Injectable()
-export class RedisService implements OnModuleDestroy {
-  private readonly redisClient: Redis
+export class RedisService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(RedisService.name)
+  private redisClient: RedisClientType
 
   constructor(private configService: ConfigService) {
-    this.redisClient = new Redis({
-        host: this.configService.get<string>('REDIS_HOST', 'localhost'),
-        port: this.configService.get<number>('REDIS_PORT', 6379),
-        // Tự động thử kết nối lại khi Redis restart, tránh crash process
-        retryStrategy: (times) => Math.min(times * 100, 3000),
-        maxRetriesPerRequest: null,
-        enableOfflineQueue: true,
+    const host = this.configService.get<string>('REDIS_HOST', 'localhost')
+    const port = this.configService.get<number>('REDIS_PORT', 6379)
+    const password = this.configService.get<string>('REDIS_PASSWORD', '')
+    const username = this.configService.get<string>('REDIS_USERNAME', 'default')
+
+    this.redisClient = createClient({
+      username,
+      password,
+      socket: {
+        host,
+        port,
+      },
     })
+
     // Bắt lỗi thay vì để crash unhandled
     this.redisClient.on('error', (err) => {
-        console.error('[Redis] Connection error:', err.message)
+      this.logger.error('[Redis] Connection error:', err)
     })
-    this.redisClient.on('reconnecting', () => {
-        console.log('[Redis] Reconnecting...')
+    this.redisClient.on('connect', () => {
+      this.logger.log('[Redis] Connecting...')
     })
     this.redisClient.on('ready', () => {
-        console.log('[Redis] Connected and ready')
+      this.logger.log('[Redis] Connected and ready')
     })
   }
 
-  getClient(): Redis {
+  async onModuleInit() {
+    try {
+      await this.redisClient.connect()
+      this.logger.log('Connected to Redis')
+    } catch (e) {
+      this.logger.warn('Redis connect failed', e)
+    }
+  }
+
+  getClient(): RedisClientType {
     return this.redisClient
   }
 
   async set(key: string, value: any, ttlSeconds?: number): Promise<void> {
     const stringValue = JSON.stringify(value)
     if (ttlSeconds) {
-      await this.redisClient.setex(key, ttlSeconds, stringValue)
+      await this.redisClient.set(key, stringValue, { EX: ttlSeconds })
     } else {
       await this.redisClient.set(key, stringValue)
     }
@@ -46,7 +67,13 @@ export class RedisService implements OnModuleDestroy {
     return JSON.parse(value) as T
   }
 
-  onModuleDestroy() {
-    this.redisClient.quit()
+  async onModuleDestroy() {
+    try {
+      await this.redisClient.quit()
+    } catch (e) {
+      try {
+        this.redisClient.disconnect()
+      } catch {}
+    }
   }
 }

@@ -8,8 +8,22 @@ export class RedisService implements OnModuleDestroy {
 
   constructor(private configService: ConfigService) {
     this.redisClient = new Redis({
-      host: this.configService.get<string>('REDIS_HOST', 'localhost'),
-      port: this.configService.get<number>('REDIS_PORT', 6379),
+        host: this.configService.get<string>('REDIS_HOST', 'localhost'),
+        port: this.configService.get<number>('REDIS_PORT', 6379),
+        // Tự động thử kết nối lại khi Redis restart, tránh crash process
+        retryStrategy: (times) => Math.min(times * 100, 3000),
+        maxRetriesPerRequest: null,
+        enableOfflineQueue: true,
+    })
+    // Bắt lỗi thay vì để crash unhandled
+    this.redisClient.on('error', (err) => {
+        console.error('[Redis] Connection error:', err.message)
+    })
+    this.redisClient.on('reconnecting', () => {
+        console.log('[Redis] Reconnecting...')
+    })
+    this.redisClient.on('ready', () => {
+        console.log('[Redis] Connected and ready')
     })
   }
 

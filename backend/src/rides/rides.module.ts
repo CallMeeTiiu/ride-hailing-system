@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
+import { ConfigModule, ConfigService } from '@nestjs/config'
 import { RidesController } from './rides.controller'
 import { TripGateway } from './trip.gateway'
 import { JwtModule } from '@nestjs/jwt'
@@ -20,9 +21,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config'
     TypeOrmModule.forFeature([Trip, TripLocation, Rating, Payment, User]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        secret:
-          configService.get<string>('JWT_SECRET') || 'super-secret-key-12345',
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET') || 'super-secret-key-12345',
       }),
       inject: [ConfigService],
     }),

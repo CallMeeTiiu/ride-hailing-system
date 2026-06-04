@@ -1,6 +1,6 @@
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../theme';
+import React, { useEffect } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View, LayoutAnimation } from 'react-native';
+import { COLORS } from '../theme';
 import Icon from 'react-native-vector-icons/Feather';
 
 interface StatusToggleProps {
@@ -9,23 +9,32 @@ interface StatusToggleProps {
 }
 
 export default function StatusToggle({ isOnline, onToggle }: StatusToggleProps) {
+    useEffect(() => {
+        // Tự động chạy animation khi isOnline thay đổi
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    }, [isOnline]);
+
     return (
         <TouchableOpacity
-            activeOpacity={0.9}
+            activeOpacity={0.85}
             style={[
                 styles.container,
+                { flexDirection: isOnline ? 'row-reverse' : 'row' },
                 isOnline ? styles.onlineBg : styles.offlineBg,
             ]}
             onPress={onToggle}
         >
-            <View style={[styles.pill, isOnline ? styles.pillRight : styles.pillLeft]}>
+            {/* Nút tròn (Thumb) */}
+            <View style={styles.thumb}>
                 <Icon
                     name="power"
                     size={16}
                     color={isOnline ? COLORS.success : COLORS.textSecondary}
                 />
             </View>
-            <Text style={[styles.text, TYPOGRAPHY.body]}>
+
+            {/* Khung Text co giãn chiếm trọn phần còn lại và căn giữa */}
+            <Text style={styles.text}>
                 {isOnline ? 'ONLINE' : 'OFFLINE'}
             </Text>
         </TouchableOpacity>
@@ -34,19 +43,16 @@ export default function StatusToggle({ isOnline, onToggle }: StatusToggleProps) 
 
 const styles = StyleSheet.create({
     container: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        width: 140,
-        height: 48,
-        borderRadius: RADIUS.full,
+        width: 150,
+        height: 52,
+        borderRadius: 26,
         paddingHorizontal: 6,
-        position: 'relative',
+        alignItems: 'center',
         shadowColor: '#000000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.15,
         shadowRadius: 4,
         elevation: 3,
-        justifyContent: 'center',
     },
     onlineBg: {
         backgroundColor: COLORS.success,
@@ -54,25 +60,25 @@ const styles = StyleSheet.create({
     offlineBg: {
         backgroundColor: COLORS.textSecondary,
     },
-    pill: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+    thumb: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
         backgroundColor: COLORS.white,
         alignItems: 'center',
         justifyContent: 'center',
-        position: 'absolute',
-        top: 6,
-    },
-    pillLeft: {
-        left: 6,
-    },
-    pillRight: {
-        right: 6,
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 1,
     },
     text: {
+        flex: 1,
+        textAlign: 'center',
         color: COLORS.white,
         fontWeight: '700',
-        marginLeft: 12,
+        fontSize: 15,
+        letterSpacing: 0.5,
     },
 });

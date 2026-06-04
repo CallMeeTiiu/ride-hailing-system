@@ -5,10 +5,10 @@ import {
     Text,
     Alert,
     TouchableOpacity,
-    SafeAreaView,
     StatusBar,
     Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocationPermission } from '../hooks/useLocationPermission';
 import { useLocationStream } from '../hooks/useLocationStream';
 import MapBackground, { MapBackgroundRef } from '../components/MapBackground';
@@ -37,6 +37,7 @@ const MAP_INITIAL_REGION = {
 export default function HomeScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
     const driver = useAuthStore((state) => state.driver);
+    const insets = useSafeAreaInsets();
 
     // Bắn GPS stream liên tục khi online
     useLocationStream();
@@ -59,6 +60,25 @@ export default function HomeScreen() {
 
     const { granted: hasLocationPermission, location: userLocation } = useLocationPermission();
     const mapRef = useRef<MapBackgroundRef>(null);
+
+    // Check for incomplete profiles (newly registered account check)
+    useEffect(() => {
+        if (driver && (driver.name === 'Tài xế mới' || driver.vehiclePlate === 'Chưa cập nhật')) {
+            Alert.alert(
+                'Yêu Cầu Hoàn Thiện Hồ Sơ',
+                'Hồ sơ cá nhân và thông tin phương tiện của bạn chưa được thiết lập đầy đủ. Vui lòng cập nhật thông tin ngay.',
+                [
+                    {
+                        text: 'Cập nhật ngay',
+                        onPress: () => {
+                            navigation.navigate('EditProfile');
+                        }
+                    }
+                ],
+                { cancelable: false }
+            );
+        }
+    }, [driver, navigation]);
 
     // Recenter/fly to driver position when GPS is available
     useEffect(() => {
@@ -127,7 +147,7 @@ export default function HomeScreen() {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
             <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
 
             {/* Render Leaflet WebView Map block */}
@@ -138,7 +158,7 @@ export default function HomeScreen() {
             />
 
             {/* Top Floating Pill Toggle bar */}
-            <View style={styles.topControlFloating}>
+            <View style={[styles.topControlFloating, { top: insets.top + 12 }]}>
                 <StatusToggle
                     isOnline={tripStatus !== TripStatus.OFFLINE}
                     onToggle={handleToggleOnline}
@@ -147,7 +167,7 @@ export default function HomeScreen() {
 
             {/* Recaps maps overlay button */}
             <TouchableOpacity
-                style={styles.recenterBtn}
+                style={[styles.recenterBtn, { top: insets.top + 68 }]}
                 activeOpacity={0.8}
                 onPress={() => {
                     const lat = userLocation?.latitude ?? MAP_INITIAL_REGION.latitude;
@@ -186,7 +206,7 @@ export default function HomeScreen() {
                 onSimulateCancel={cancelTrip}
                 onCompleteFinish={completeFinish}
             />
-        </SafeAreaView>
+        </View>
     );
 }
 
@@ -199,13 +219,11 @@ const styles = StyleSheet.create({
     },
     topControlFloating: {
         position: 'absolute',
-        top: Platform.OS === 'ios' ? 60 : 36,
         alignSelf: 'center',
         zIndex: 10,
     },
     recenterBtn: {
         position: 'absolute',
-        top: Platform.OS === 'ios' ? 120 : 96,
         right: SPACING.md,
         backgroundColor: COLORS.background,
         width: 44,

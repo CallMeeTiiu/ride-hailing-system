@@ -151,6 +151,7 @@ export class RidesController {
       quoteData.pickup_longitude,
       5,
     )
+    console.log(`[Rides] Pickup: ${quoteData.pickup_latitude},${quoteData.pickup_longitude} | nearbyDrivers (5km): [${nearbyDrivers.join(', ')}]`)
 
     const requestPayload = {
       trip_id: newTrip.id,

@@ -18,6 +18,8 @@ export interface DriverProfile {
     avatarUrl: string;
     rating: number;
     vehiclePlate: string;
+    licenseNumber?: string;
+    vehicleId?: string;
 }
 
 export interface Customer {

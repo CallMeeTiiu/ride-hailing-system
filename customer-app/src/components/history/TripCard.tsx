@@ -48,11 +48,9 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPressRebook, onPressDetail 
   const statusConfig = getStatusDisplay(trip.status);
 
   const formatPrice = (price: number) => {
-    if (!price) return '$0';
+    if (!price) return '0 VND';
     
-    return "$" + Number(price)
-      .toString()
-      .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return Number(price).toLocaleString('vi-VN') + " VND";
   };
 
   const formatDate = (dateString?: string) => {

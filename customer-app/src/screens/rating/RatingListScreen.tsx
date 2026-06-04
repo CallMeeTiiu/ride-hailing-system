@@ -13,7 +13,91 @@ const RatingListScreen = () => {
   const navigation = useNavigation<any>();
   const { trips } = useBookingHistory();
 
-  const unratedTrips = trips.filter(trip => trip.rating === null);
+  const realUnratedTrips = trips.filter(trip => trip.rating === null);
+
+  const MOCK_UNRATED_TRIPS = [
+    {
+      id: 'mock_trip_1',
+      driver: {
+        name: 'Nguyễn Văn A',
+        carModel: 'Honda Winner X',
+        plateNumber: '59-S1 123.45',
+        rating: 4.9,
+        // Dùng ảnh chân dung thật để chắc chắn load được
+        avatar: 'https://randomuser.me/api/portraits/men/32.jpg', 
+        phone_number: '0901234567',
+      },
+      fromLocation: {
+        name: 'Ký túc xá Khu A',
+        address: 'ĐHQG TP.HCM, Phường Linh Trung, Thủ Đức',
+        latitude: 10.8782,
+        longitude: 106.8063,
+      },
+      destinationLocation: {
+        name: 'Trường Đại học Công nghệ Thông tin (UIT)',
+        address: 'Khu phố 6, Phường Linh Trung, Thủ Đức',
+        latitude: 10.8700,
+        longitude: 106.8031,
+      },
+      completionTime: 'Jun 4, 10:30 AM', 
+      rating: null,
+    },
+    {
+      id: 'mock_trip_2',
+      driver: {
+        name: 'Trần Thị B',
+        carModel: 'Toyota Vios 4 Chỗ',
+        plateNumber: '51G-987.65',
+        rating: 4.8,
+        // Dùng ảnh chân dung nữ
+        avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
+        phone_number: '0987654321',
+      },
+      fromLocation: {
+        name: 'Gigamall Phạm Văn Đồng',
+        address: '240-242 Phạm Văn Đồng, Hiệp Bình Chánh, Thủ Đức',
+        latitude: 10.8276,
+        longitude: 106.7216,
+      },
+      destinationLocation: {
+        name: 'Landmark 81',
+        address: '720A Điện Biên Phủ, Vinhomes Tân Cảng, Bình Thạnh',
+        latitude: 10.7946,
+        longitude: 106.7226,
+      },
+      completionTime: 'Jun 3, 08:15 PM',
+      rating: null,
+    },
+    {
+      id: 'mock_trip_3',
+      driver: {
+        name: 'Lê Hoàng C',
+        carModel: 'Kia Morning',
+        plateNumber: '51H-112.33',
+        rating: 5.0,
+        // Dùng ảnh chân dung nam khác
+        avatar: 'https://randomuser.me/api/portraits/men/46.jpg',
+        phone_number: '0911223344',
+      },
+      fromLocation: {
+        name: 'Sân bay Tân Sơn Nhất',
+        address: 'Trường Sơn, Phường 2, Tân Bình',
+        latitude: 10.8149,
+        longitude: 106.6634,
+      },
+      destinationLocation: {
+        name: 'Chợ Bến Thành',
+        address: 'Lê Lợi, Phường Bến Thành, Quận 1',
+        latitude: 10.7725,
+        longitude: 106.6980,
+      },
+      completionTime: 'Jun 2, 02:45 PM',
+      rating: null,
+    }
+  ];
+
+  // 3. Nối mảng thật và mảng giả lại với nhau (đưa mock lên đầu để dễ thấy)
+  const unratedTrips = [...MOCK_UNRATED_TRIPS, ...realUnratedTrips];
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top + 10 }]}>

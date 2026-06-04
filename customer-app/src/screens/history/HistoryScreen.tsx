@@ -18,6 +18,51 @@ import { RootStackParamList } from '../../../App';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useNavigation } from '@react-navigation/core';
 
+const MOCK_HISTORY_TRIPS: TripHistoryItem[] = [
+  {
+    id: 'hist_mock_1',
+    status: 'COMPLETED',
+    estimated_fare: 125000,
+    created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 tiếng trước
+    pickup_name: 'Trường Đại học Công nghệ Thông tin (UIT)',
+    pickup_address: 'Khu phố 6, Phường Linh Trung, TP. Thủ Đức',
+    dropoff_name: 'Landmark 81',
+    dropoff_address: '720A Điện Biên Phủ, Phường 22, Bình Thạnh',
+    pickup_latitude: 10.8700,
+    pickup_longitude: 106.8031,
+    dropoff_latitude: 10.7946,
+    dropoff_longitude: 106.7226,
+  },
+  {
+    id: 'hist_mock_2',
+    status: 'CANCELLED_BY_DRIVER',
+    estimated_fare: 45000,
+    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 ngày trước
+    pickup_name: 'Ký túc xá Khu A',
+    pickup_address: 'ĐHQG TP.HCM, Phường Linh Trung, TP. Thủ Đức',
+    dropoff_name: 'Suối Tiên Theme Park',
+    dropoff_address: '120 Xa lộ Hà Nội, Phường Tân Phú, TP. Thủ Đức',
+    pickup_latitude: 10.8782,
+    pickup_longitude: 106.8063,
+    dropoff_latitude: 10.8634,
+    dropoff_longitude: 106.8028,
+  },
+  {
+    id: 'hist_mock_3',
+    status: 'COMPLETED',
+    estimated_fare: 210000,
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 ngày trước
+    pickup_name: 'Sân bay Tân Sơn Nhất (Quốc nội)',
+    pickup_address: 'Trường Sơn, Phường 2, Tân Bình',
+    dropoff_name: 'Chợ Bến Thành',
+    dropoff_address: 'Lê Lợi, Phường Bến Thành, Quận 1',
+    pickup_latitude: 10.8149,
+    pickup_longitude: 106.6634,
+    dropoff_latitude: 10.7725,
+    dropoff_longitude: 106.6980,
+  }
+];
+
 const HistoryScreen = () => {
   const { colors } = useTheme();
   const { setFromLocation, setDestinationLocation } = useLocation();
@@ -35,7 +80,7 @@ const HistoryScreen = () => {
       const data = response.data;
       
       if (Array.isArray(data)) {
-        setTrips(data);
+        setTrips([...MOCK_HISTORY_TRIPS, ...data]);
       }
     } catch (error) {
       console.error("Lỗi khi tải lịch sử chuyến đi:", error);
@@ -56,14 +101,14 @@ const HistoryScreen = () => {
 
   const handleRebook = (trip: TripHistoryItem) => {
     setFromLocation({
-      name: trip.pickup_address || 'Pickup Location',
+      name: trip.pickup_name || 'Pickup Location',
       address: trip.pickup_address,
       latitude: Number(trip.pickup_latitude),
       longitude: Number(trip.pickup_longitude),
     });
 
     setDestinationLocation({
-      name: trip.dropoff_address || 'Destination',
+      name: trip.dropoff_name || 'Destination',
       address: trip.dropoff_address,
       latitude: Number(trip.dropoff_latitude),
       longitude: Number(trip.dropoff_longitude),
@@ -72,7 +117,6 @@ const HistoryScreen = () => {
     navigation.navigate('HomeTab'); 
   };
 
-  // UI khi danh sách trống
   const renderEmptyComponent = () => {
     if (loading) return null;
     return (

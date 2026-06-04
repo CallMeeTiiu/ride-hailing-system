@@ -15,17 +15,28 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   constructor(private configService: ConfigService) {
     const host = this.configService.get<string>('REDIS_HOST', 'localhost')
     const port = this.configService.get<number>('REDIS_PORT', 6379)
-    const password = this.configService.get<string>('REDIS_PASSWORD', '')
-    const username = this.configService.get<string>('REDIS_USERNAME', 'default')
+    const password =
+      this.configService.get<string>('REDIS_PASSWORD') ||
+      process.env.REDIS_PASSWORD
+    const username =
+      this.configService.get<string>('REDIS_USERNAME') ||
+      process.env.REDIS_USERNAME
 
-    this.redisClient = createClient({
-      username,
-      password,
+    const options: any = {
       socket: {
         host,
         port,
       },
-    })
+    }
+
+    if (username && username !== 'default') {
+      options.username = username
+    }
+    if (password) {
+      options.password = password
+    }
+
+    this.redisClient = createClient(options)
 
     // Bắt lỗi thay vì để crash unhandled
     this.redisClient.on('error', (err) => {

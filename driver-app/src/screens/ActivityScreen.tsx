@@ -20,7 +20,8 @@ interface TripItem {
     estimated_fare?: number;
     pickup_address?: string;
     dropoff_address?: string;
-    createdAt?: string;
+    created_at?: string;
+    updated_at?: string;
 }
 
 export default function ActivityScreen() {
@@ -35,8 +36,8 @@ export default function ActivityScreen() {
             if (res.data) {
                 // Sắp xếp chuyến mới nhất lên trên
                 const sorted = (res.data as TripItem[]).sort((a, b) => {
-                    const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-                    const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                    const tA = a.created_at ? new Date(a.created_at).getTime() : 0;
+                    const tB = b.created_at ? new Date(b.created_at).getTime() : 0;
                     return tB - tA;
                 });
                 setTrips(sorted);
@@ -65,13 +66,22 @@ export default function ActivityScreen() {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
     };
 
-    const formatDate = (dateStr?: string) => {
-        if (!dateStr) return 'Hôm nay';
+    const formatTimeRange = (createdStr?: string, updatedStr?: string) => {
+        if (!createdStr) return 'Đang diễn ra';
         try {
-            const d = new Date(dateStr);
-            return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')} - ${d.getDate()}/${d.getMonth() + 1}`;
+            const start = new Date(createdStr);
+            const startStr = `${start.getHours().toString().padStart(2, '0')}:${start.getMinutes().toString().padStart(2, '0')}`;
+            
+            const datePart = `${start.getDate().toString().padStart(2, '0')}/${(start.getMonth() + 1).toString().padStart(2, '0')}`;
+            
+            if (updatedStr) {
+                const end = new Date(updatedStr);
+                const endStr = `${end.getHours().toString().padStart(2, '0')}:${end.getMinutes().toString().padStart(2, '0')}`;
+                return `${startStr} → ${endStr} · ${datePart}`;
+            }
+            return `${startStr} · ${datePart}`;
         } catch {
-            return dateStr;
+            return 'Hôm nay';
         }
     };
 
@@ -82,7 +92,7 @@ export default function ActivityScreen() {
                 <View style={styles.cardHeader}>
                     <View style={styles.timeWrapper}>
                         <Icon name="clock" size={14} color={COLORS.textSecondary} />
-                        <Text style={styles.timeText}>{formatDate(item.createdAt)}</Text>
+                        <Text style={styles.timeText}>{formatTimeRange(item.created_at, item.updated_at)}</Text>
                     </View>
                     <View style={[styles.statusWrapper, isCompleted ? styles.statusSuccess : styles.statusCancel]}>
                         <Text style={[styles.statusText, isCompleted ? styles.statusTextSuccess : styles.statusTextCancel]}>

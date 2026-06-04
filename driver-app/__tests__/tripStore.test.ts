@@ -167,4 +167,134 @@ describe('tripStore Unit Tests', () => {
         expect(apiClient.patch).toHaveBeenCalledWith('/trips/trip-999/status', { status: 'ARRIVED' });
         expect(useTripStore.getState().tripStatus).toBe(TripStatus.ARRIVED);
     });
+
+    test('finishTrip should set FINISHED and ratingStep mood without immediately clearing state', async () => {
+        const trip = {
+            id: 'trip-999',
+            status: TripStatus.SERVING,
+            customer: { id: '', name: '', phone: '', rating: 5, avatarUrl: '' },
+            pickup: { address: '', latitude: 0, longitude: 0 },
+            dropoff: { address: '', latitude: 0, longitude: 0 },
+            createdAt: '',
+        };
+        useTripStore.setState({
+            tripStatus: TripStatus.SERVING,
+            currentTrip: trip,
+        });
+
+        (apiClient.patch as jest.Mock).mockResolvedValueOnce({});
+
+        await useTripStore.getState().finishTrip();
+
+        expect(apiClient.patch).toHaveBeenCalledWith('/trips/trip-999/status', { status: 'COMPLETED' });
+        
+        const state = useTripStore.getState();
+        expect(state.tripStatus).toBe(TripStatus.FINISHED);
+        expect(state.ratingStep).toBe('mood');
+        expect(state.currentTrip).toEqual({ ...trip, status: TripStatus.FINISHED });
+    });
+
+    test('cancelTrip should set CANCELED without immediately clearing state', async () => {
+        const trip = {
+            id: 'trip-999',
+            status: TripStatus.ARRIVING,
+            customer: { id: '', name: '', phone: '', rating: 5, avatarUrl: '' },
+            pickup: { address: '', latitude: 0, longitude: 0 },
+            dropoff: { address: '', latitude: 0, longitude: 0 },
+            createdAt: '',
+        };
+        useTripStore.setState({
+            tripStatus: TripStatus.ARRIVING,
+            currentTrip: trip,
+        });
+
+        (apiClient.patch as jest.Mock).mockResolvedValueOnce({});
+
+        await useTripStore.getState().cancelTrip();
+
+        expect(apiClient.patch).toHaveBeenCalledWith('/trips/trip-999/status', { status: 'CANCELLED_BY_DRIVER' });
+        
+        const state = useTripStore.getState();
+        expect(state.tripStatus).toBe(TripStatus.CANCELED);
+        expect(state.currentTrip).toEqual({ ...trip, status: TripStatus.CANCELED });
+    });
+
+    test('completeFinish should clear chat and reset to ONLINE', () => {
+        const clearChatSpy = jest.spyOn(useTripStore.getState(), 'clearChat');
+        useTripStore.setState({
+            tripStatus: TripStatus.FINISHED,
+            currentTrip: {
+                id: 'trip-999',
+                status: TripStatus.FINISHED,
+                customer: { id: '', name: '', phone: '', rating: 5, avatarUrl: '' },
+                pickup: { address: '', latitude: 0, longitude: 0 },
+                dropoff: { address: '', latitude: 0, longitude: 0 },
+                createdAt: '',
+            },
+            ratingStep: 'mood',
+        });
+
+        useTripStore.getState().completeFinish();
+
+        const state = useTripStore.getState();
+        expect(clearChatSpy).toHaveBeenCalled();
+        expect(state.tripStatus).toBe(TripStatus.ONLINE);
+        expect(state.currentTrip).toBeNull();
+        expect(state.ratingStep).toBeNull();
+    });
+
+    test('submitRating should send rating API, clear chat, and reset to ONLINE', async () => {
+        const clearChatSpy = jest.spyOn(useTripStore.getState(), 'clearChat');
+        useTripStore.setState({
+            tripStatus: TripStatus.FINISHED,
+            currentTrip: {
+                id: 'trip-999',
+                status: TripStatus.FINISHED,
+                customer: { id: '', name: '', phone: '', rating: 5, avatarUrl: '' },
+                pickup: { address: '', latitude: 0, longitude: 0 },
+                dropoff: { address: '', latitude: 0, longitude: 0 },
+                createdAt: '',
+            },
+            customerMood: 'happy',
+            ratingStep: 'star',
+        });
+
+        (apiClient.post as jest.Mock).mockResolvedValueOnce({});
+
+        await useTripStore.getState().submitRating(5);
+
+        expect(apiClient.post).toHaveBeenCalledWith('/rides/trip-999/rate', {
+            rating: 5,
+            comment: 'happy',
+        });
+        
+        const state = useTripStore.getState();
+        expect(clearChatSpy).toHaveBeenCalled();
+        expect(state.tripStatus).toBe(TripStatus.ONLINE);
+        expect(state.currentTrip).toBeNull();
+        expect(state.customerRating).toBe(5);
+        expect(state.ratingStep).toBeNull();
+    });
+
+    test('dismissCancel should clear chat and reset to ONLINE', () => {
+        const clearChatSpy = jest.spyOn(useTripStore.getState(), 'clearChat');
+        useTripStore.setState({
+            tripStatus: TripStatus.CANCELED,
+            currentTrip: {
+                id: 'trip-999',
+                status: TripStatus.CANCELED,
+                customer: { id: '', name: '', phone: '', rating: 5, avatarUrl: '' },
+                pickup: { address: '', latitude: 0, longitude: 0 },
+                dropoff: { address: '', latitude: 0, longitude: 0 },
+                createdAt: '',
+            },
+        });
+
+        useTripStore.getState().dismissCancel();
+
+        const state = useTripStore.getState();
+        expect(clearChatSpy).toHaveBeenCalled();
+        expect(state.tripStatus).toBe(TripStatus.ONLINE);
+        expect(state.currentTrip).toBeNull();
+    });
 });

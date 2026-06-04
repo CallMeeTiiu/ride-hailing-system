@@ -14,6 +14,7 @@ import { UsersModule } from '../users/users.module'
 import { FirebaseModule } from '../firebase/firebase.module'
 import { Payment } from '../payments/entities/payment.entity'
 import { User } from '../users/entities/user.entity'
+import { ConfigModule, ConfigService } from '@nestjs/config'
 
 @Module({
   imports: [

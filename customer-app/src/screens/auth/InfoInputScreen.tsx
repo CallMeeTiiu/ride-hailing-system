@@ -6,11 +6,13 @@ import {
   SafeAreaView, 
   ScrollView, 
   TouchableOpacity,
-  Platform 
+  Platform, 
+  Alert
 } from 'react-native';
 import theme from '../../constants/theme';
+import apiClient from '../../utils/apiClient';
+import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useAddress } from '../../contexts/AddressContext';
 
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -22,12 +24,13 @@ import CustomInput from '../../components/common/CustomInput';
 import PrimaryButton from '../../components/common/PrimaryButton';
 
 import { faUser, faPhone, faLocationDot, faEnvelope } from '@fortawesome/free-solid-svg-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const InfoInputScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'InfoInput'>>();
   const receivedName = route.params?.userName || "Friend";
-
   const receivedPhone = route.params?.phoneNumber || "";
+  const receivedPassword = route.params?.password || "";
 
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
@@ -41,8 +44,9 @@ const InfoInputScreen = () => {
   });
 
   const { colors }= useTheme();
-  const { addAddress } = useAddress();
+  const { login } = useAuth();
 
+  const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [addressError, setAddressError] = useState('');
 
@@ -70,7 +74,7 @@ const InfoInputScreen = () => {
     });
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     setEmailError('');
     setAddressError('');
     let isValid = true;
@@ -89,24 +93,44 @@ const InfoInputScreen = () => {
     }
 
     if (!isValid) return;
+    setIsLoading(true);
 
     try {
-      addAddress({
-        id: Date.now().toString(), 
-        name: 'Default Address', 
-        details: formData.address,
-        lat: formData.lat, 
-        lng: formData.lng, 
-        icon: 'home' 
+      const response = await apiClient.post('/auth/customer/register', {
+        username: formData.userName,       
+        phone_number: formData.phoneNumber, 
+        password: receivedPassword,        
+        email: formData.email,        
       });
-      console.log("Added default address to AddressContext:", formData.address);
-    } catch (error) {
-      console.log("Error saving default address:", error);
-    }
 
-    console.log("Mockup data prepared for Backend sync:", formData);
-    
-    navigation.replace('MainTabs');
+      const { access_token, user } = response.data;
+      await AsyncStorage.setItem('access_token', access_token);
+
+      try {
+        await apiClient.post('/users/addresses', {
+          customer_user_id: user.id, 
+          label: 'Default Address',
+          address_text: formData.address,
+          latitude: formData.lat,
+          longitude: formData.lng,
+          icon: 'home'
+        });
+        console.log("Đã lưu địa chỉ mặc định lúc đăng ký!");
+      } catch (err) {
+        console.log("Lỗi lưu địa chỉ mặc định:", err);
+      }
+
+      await login(access_token, user);
+
+    } catch (error: any) {
+      console.log('API Register Error:', error.response?.data || error);
+      Alert.alert(
+        "Đăng ký thất bại",
+        error.response?.data?.message || "Không thể kết nối đến máy chủ hoặc số điện thoại đã tồn tại."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -188,6 +212,7 @@ const InfoInputScreen = () => {
           <PrimaryButton 
             title="Confirm" 
             onPress={handleConfirm}
+            isLoading={isLoading}
             style={styles.confirmButton}
           />
         </View>

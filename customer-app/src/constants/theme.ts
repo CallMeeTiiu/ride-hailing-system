@@ -34,6 +34,13 @@ export const darkColors = {
   textBtn: '#35383F',
 };
 
+export const stateColors = {
+  completed: '#10B981',
+  cancelled: '#EF4444',
+  inProgress: '#3B82F6',
+  pending: '#FFBB1C'
+}
+
 export const COLORS = lightColors;
 
 export const SIZES = {
@@ -76,5 +83,5 @@ export const SHADOWS = {
   }
 };
 
-const theme = { COLORS, SIZES, FONTS, SHADOWS, lightColors, darkColors };
+const theme = { COLORS, SIZES, FONTS, SHADOWS, lightColors, darkColors, stateColors };
 export default theme;

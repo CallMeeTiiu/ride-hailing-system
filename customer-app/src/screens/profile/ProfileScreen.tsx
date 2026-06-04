@@ -6,7 +6,11 @@ import {
   Image, 
   TouchableOpacity, 
   ScrollView, 
-  Switch 
+  Switch, 
+  Alert,
+  ActivityIndicator,
+  Modal,
+  TouchableWithoutFeedback
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
@@ -17,33 +21,94 @@ import {
   faGlobe, 
   faEye, 
   faRightFromBracket,
-  faPen
+  faPen,
+  faCheck
 } from '@fortawesome/free-solid-svg-icons';
 import theme from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
 
+import ConfirmBottomSheet from '../../components/profile/ConfirmBottomSheet';
 import MenuItem from '../../components/profile/MenuItem';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUser } from '../../contexts/UserContext';
-import ConfirmBottomSheet from '../../components/profile/ConfirmBottomSheet';
 import { useNavigation } from '@react-navigation/native';
+import { launchImageLibrary, ImageLibraryOptions } from 'react-native-image-picker';
 
 const ProfileScreen = () => {
   const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState('English (US)');
+  const [isLangModalVisible, setLangModalVisible] = useState(false);
 
   const { colors, isDarkMode, toggleTheme } = useTheme();
   const insets = useSafeAreaInsets();
 
-  const { user } = useAuth();
-  const { profile } = useUser();
+  const { logout } = useAuth();
+  const { profile, uploadAvatar } = useUser();
   const navigation = useNavigation<any>();
 
-  const handleLogoutAction = () => {
-    setIsLogoutModalVisible(false);
-    
-    // Handle logic Logout: clear UserContext và AsyncStorageToken
-    
-    navigation.replace('Login');
+  const BACKEND_URL = 'http://localhost:3000';
+
+  const LANGUAGES = [
+    { code: 'en', label: 'English (US)' },
+    { code: 'vi', label: 'Tiếng Việt' },
+  ];
+
+  const handleSelectLanguage = (langLabel: string) => {
+    setCurrentLanguage(langLabel);
+    setLangModalVisible(false);
+    // 💡 Nếu bạn có dùng i18next, bạn sẽ gọi i18n.changeLanguage(langCode) ở đây
+  };
+
+  const getAvatarUri = () => {
+    if (!profile?.avatar_url) {
+      return 'https://cdn-icons-png.flaticon.com/512/219/219988.png';
+    }
+    if (profile.avatar_url.startsWith('http')) {
+      return profile.avatar_url;
+    }
+    return `${BACKEND_URL}${profile.avatar_url}`;
+  };
+
+  const handleLogoutAction = async () => {
+    try {
+      await logout();
+      
+    } catch (error) {
+      console.log("Logout error:", error);
+    }
+  };
+
+  const handleUpdateAvatar = () => {
+    const options: ImageLibraryOptions = {
+      mediaType: 'photo' as const,
+      quality: 0.8,
+    };
+
+    launchImageLibrary(options, async (response) => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.errorCode) {
+        console.log('ImagePicker Error: ', response.errorMessage);
+        Alert.alert('Error', 'Unable to open image library');
+      } else if (response.assets && response.assets.length > 0) {
+        const asset = response.assets[0];
+        
+        if (asset.uri) {
+          try {
+            setIsUploading(true);
+            const mimeType = asset.type || 'image/jpeg';
+            const fileName = asset.fileName || `avatar_${Date.now()}.jpg`;
+            await uploadAvatar(asset.uri, mimeType, fileName);
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          } catch (error) {
+            Alert.alert('Failed', 'Unable to upload image. Please try again!');
+          } finally {
+            setIsUploading(false);
+          }
+        }
+      }
+    });
   };
 
   return (
@@ -54,16 +119,37 @@ const ProfileScreen = () => {
         <View style={styles.userInfoSection}>
           <View style={styles.avatarContainer}>
             <Image 
-              source={{ uri: profile?.avatar || 'https://cdn-icons-png.flaticon.com/512/219/219988.png' }} 
+              source={{ uri: getAvatarUri() }} 
               style={styles.avatar} 
             />
-            <TouchableOpacity style={[styles.editAvatarButton, { backgroundColor: theme.COLORS.primary }]} activeOpacity={0.8}>
+
+            <TouchableOpacity 
+              style={[styles.editAvatarButton, { backgroundColor: theme.COLORS.primary }]} 
+              activeOpacity={0.8}
+              onPress={handleUpdateAvatar}
+              disabled={isUploading}
+            >
               <FontAwesomeIcon icon={faPen} size={12} color={colors.white} />
             </TouchableOpacity>
+
+            {isUploading && (
+              <View style={[
+                StyleSheet.absoluteFill,
+                // eslint-disable-next-line react-native/no-inline-styles
+                { 
+                  backgroundColor: 'rgba(0, 0, 0, 0.4)', 
+                  borderRadius: 100,
+                  justifyContent: 'center', 
+                  alignItems: 'center' 
+                }
+              ]}>
+                <ActivityIndicator size="small" color={colors.white} />
+              </View>
+            )}
           </View>
           
           <Text style={[styles.userName, { color: colors.textTitle }]}>{profile?.name || "New User"}</Text>
-          <Text style={[styles.userPhone, { color: colors.textBody }]}>{user?.phone_number || ""}</Text>
+          <Text style={[styles.userPhone, { color: colors.textBody }]}>{profile?.phone_number || ""}</Text>
           <Text style={[styles.userPhone, { color: colors.textBody }]}>{profile?.email || ""}</Text>
         </View>
 
@@ -89,9 +175,47 @@ const ProfileScreen = () => {
           <MenuItem 
             icon={faGlobe} 
             title="Language" 
-            value="English (US)"
-            onPress={() => console.log('Change Language')} 
+            value={currentLanguage}
+            onPress={() => setLangModalVisible(true)} 
           />
+
+          <Modal
+            visible={isLangModalVisible}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setLangModalVisible(false)}
+          >
+            <TouchableWithoutFeedback onPress={() => setLangModalVisible(false)}>
+              <View style={styles.modalOverlay}>
+                <TouchableWithoutFeedback>
+                  <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+                    <Text style={[styles.modalTitle, { color: colors.textTitle }]}>
+                      Select Language
+                    </Text>
+                    
+                    {LANGUAGES.map((lang) => (
+                      <TouchableOpacity 
+                        key={lang.code}
+                        style={styles.langOption}
+                        onPress={() => handleSelectLanguage(lang.label)}
+                      >
+                        <Text style={[
+                          styles.langText, 
+                          { color: currentLanguage === lang.label ? colors.primary : colors.textTitle }
+                        ]}>
+                          {lang.label}
+                        </Text>
+                        
+                        {currentLanguage === lang.label && (
+                          <FontAwesomeIcon icon={faCheck} size={20} color={colors.primary} />
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </TouchableWithoutFeedback>
+              </View>
+            </TouchableWithoutFeedback>
+          </Modal>
           
           <MenuItem 
             icon={faEye} 
@@ -187,6 +311,40 @@ const styles = StyleSheet.create({
   menuSection: {
     paddingHorizontal: theme.SIZES.padding,
     paddingTop: 20,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '80%',
+    borderRadius: 16,
+    padding: 20,
+    elevation: 5,
+    shadowColor: 'black',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  modalTitle: {
+    fontFamily: theme.FONTS.bold,
+    fontSize: 20,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  langOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEEEEE', 
+  },
+  langText: {
+    fontFamily: theme.FONTS.medium,
+    fontSize: 16,
   },
 });
 

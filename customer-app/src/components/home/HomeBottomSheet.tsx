@@ -196,7 +196,8 @@ const BottomSearchBoard: React.FC<BottomSearchBoardProps> = ({ animatedIndex, di
   const isOrderReady = 
     fromLocation !== null && 
     destinationLocation !== null && 
-    fromLocation.id !== destinationLocation.id;
+    (fromLocation.latitude !== destinationLocation.latitude || 
+     fromLocation.longitude !== destinationLocation.longitude);
 
   useEffect(() => {
     if (fromLocation || destinationLocation) {

@@ -36,7 +36,7 @@ export class TripGateway implements OnGatewayConnection, OnGatewayDisconnect {
       await client.join(`${payload.role.toLowerCase()}_${payload.sub}`)
       console.log(`Client connected: ${client.id} (User: ${payload.sub})`)
     } catch (err) {
-      console.error('[TripGateway] Connection auth failed:', err.message || err)
+      console.log('❌ Lỗi xác thực Socket:', err.message);
       client.disconnect()
     }
   }
@@ -109,5 +109,33 @@ export class TripGateway implements OnGatewayConnection, OnGatewayDisconnect {
   notifyTripAccepted(tripId: string, payload: any) {
     // Thông báo cho khách hàng trong room của chuyến đi
     this.server.to(`trip_${tripId}`).emit('server:trip_accepted', payload)
+  }
+
+  @SubscribeMessage('join_trip_room')
+  handleJoinTripRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { trip_id: string | number },
+  ) {
+    const roomName = `trip_${payload.trip_id}`
+    void client.join(roomName)
+    console.log(`[Chat] Client ${client.id} vừa tham gia phòng: ${roomName}`)
+  }
+
+  @SubscribeMessage('send_message')
+  handleSendMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody()
+    payload: { trip_id: string | number; text: string; sender: string },
+  ) {
+    const roomName = `trip_${payload.trip_id}`
+    console.log(
+      `[Chat] ${payload.sender} gửi tin nhắn vào phòng ${roomName}: ${payload.text}`,
+    )
+
+    this.server.to(roomName).emit('receive_message', {
+      text: payload.text,
+      sender: payload.sender,
+      timestamp: new Date().toISOString(),
+    });
   }
 }

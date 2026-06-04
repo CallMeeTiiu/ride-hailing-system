@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, DeviceEventEmitter } from 'react-native';
 
 import AppMap from '../../components/home/AppMap';
 import DriverBottomCard, { DriverData } from '../../components/booking/DriverBottomCard';
@@ -11,27 +11,143 @@ import { useLocation } from '../../contexts/LocationContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MapBackgroundRef } from '../../components/home/MapBackground';
 
-const mockDriverData: DriverData = {
-  name: "Daniel Austin",
-  carModel: "Mercedes-Benz E-Class",
-  plateNumber: "HSW 4736 XK",
-  rating: 4.8,
-  avatar: "https://i.pravatar.cc/150?u=daniel",
-};
+import io, { Socket } from 'socket.io-client';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import apiClient from '../../utils/apiClient';
+import { RootStackParamList } from '../../../App';
+import { RouteProp, useRoute } from '@react-navigation/native';
+import { useChat } from '../../contexts/ChatContext';
 
 const TravelingScreen = ({ navigation }: any) => {
   const mapRef = useRef<MapBackgroundRef>(null);
   const insets = useSafeAreaInsets();
 
+  const route = useRoute<RouteProp<RootStackParamList, 'Traveling'>>();
+  const { tripId, driverId } = route.params || {};
+
   const { addTrip } = useBookingHistory();
-  const { fromLocation, destinationLocation, setFromLocation, setDestinationLocation } = useLocation();
+  const { fromLocation, destinationLocation } = useLocation();
+  const { addMessage, clearChat } = useChat();
+
+  const fromLocationRef = useRef(fromLocation);
+  useEffect(() => {
+    fromLocationRef.current = fromLocation;
+  }, [fromLocation]);
   
   const [tripStatus, setTripStatus] = useState<'waiting' | 'traveling'>('waiting');
+  const [driverData, setDriverData] = useState<DriverData | null>(null);
   const [driverLocation, setDriverLocation] = useState<{lat: number, lng: number} | null>(null);
-  const [distance, setDistance] = useState<string>('...'); // Để truyền xuống Bottom Card
+  const [distance, setDistance] = useState<string>('...'); 
   
   const [showArrivalPopup, setShowArrivalPopup] = useState(false);
   const [showDestinationPopup, setShowDestinationPopup] = useState(false);
+
+  const socketRef = useRef<Socket | null>(null);
+
+  useEffect(() => {
+    const fetchDriverInfo = async () => {
+      if (!driverId) return;
+      try {
+        const response = await apiClient.get(`/drivers/${driverId}`);
+        setDriverData(response.data);
+      } catch (error) {
+        console.log('Error while fetching driver info:', error);
+        setDriverData({
+          name: "Driver (Error)",
+          carModel: "Bike/Car",
+          plateNumber: "---",
+          rating: 5.0,
+          avatar: "https://i.pravatar.cc/150?img=11",
+          phone_number: "0123456789"
+        });
+      }
+    };
+
+    fetchDriverInfo();
+  }, [driverId]);
+
+  useEffect(() => {
+    if (!tripId) return;
+
+    let chatListener: any;
+
+    const setupSocket = async () => {
+      let token = await AsyncStorage.getItem('access_token');
+      if (token) token = token.replace(/"/g, ''); 
+      
+      const socket = io('http://localhost:3000', {
+        auth: { token },
+        transports: ['websocket'],
+      });
+      socketRef.current = socket;
+
+      socket.on('connect', () => {
+        console.log('🚙 Traveling: Connect to socket successfully! Trip ID:', `trip_${tripId}`);
+        socket.emit('customer:subscribe', { trip_id: tripId });
+        socket.emit('join_trip_room', { trip_id: tripId });
+      });
+
+      clearChat();
+
+      socket.on('receive_message', (data: any) => {
+        if (data.sender !== 'CUSTOMER') {
+          console.log('=== KHÁCH HÀNG NHẬN ĐƯỢC TIN NHẮN ===', data);
+
+          const dateObj = data.timestamp ? new Date(data.timestamp) : new Date();
+          const formattedTime = dateObj.toLocaleTimeString('vi-VN', { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+          });
+
+          addMessage({
+            text: data.text,
+            sender: data.sender,
+            timestamp: formattedTime,
+          });
+        }
+      });
+
+      chatListener = DeviceEventEmitter.addListener('emit_send_message', (payload) => {
+        if (socketRef.current) {
+          console.log('📤 Đang gửi tin nhắn lên server:', payload);
+          socketRef.current.emit('send_message', payload);
+        }
+      });
+
+      socket.on('server:driver_location', (data) => {
+        setDriverLocation({ lat: data.latitude, lng: data.longitude });
+      });
+
+      socket.on('server:trip_status_updated', (payload) => {
+        console.log('Trạng thái chuyến đi thay đổi thành:', payload.status);
+        
+        if (payload.status === 'ARRIVED') {
+          setShowArrivalPopup(true); 
+          if (fromLocationRef.current) {
+            setDriverLocation({ lat: fromLocationRef.current.latitude, lng: fromLocationRef.current.longitude });
+          }
+        } else if (payload.status === 'IN_PROGRESS') {
+          setTripStatus('traveling'); 
+          if (fromLocationRef.current) {
+            setDriverLocation({ lat: fromLocationRef.current.latitude, lng: fromLocationRef.current.longitude });
+          }
+        } else if (payload.status === 'COMPLETED') {
+          setShowDestinationPopup(true); 
+        }
+      });
+      
+      socket.on('disconnect', (reason) => {
+        console.log('❌ Disconnect from Socket (Traveling):', reason);
+      });
+    };
+
+    setupSocket();
+
+    return () => {
+      if (socketRef.current) socketRef.current.disconnect();
+      if (chatListener) chatListener.remove();
+    };
+  }, [addMessage, clearChat, tripId]);
 
   useEffect(() => {
     if (fromLocation && !driverLocation) {
@@ -58,60 +174,50 @@ const TravelingScreen = ({ navigation }: any) => {
           setDistance(distInKm);
         }
       } catch (error) {
-        console.error("Lỗi API OSRM tại TravelingScreen:", error);
+        console.error("Error API OSRM:", error);
       }
     };
 
     if (tripStatus === 'waiting') {
-      mapRef.current?.updateMarkers(fromLocation.latitude, fromLocation.longitude, null, null); // Cắm Avatar, Ẩn Đích
-      mapRef.current?.drawDrivers([{ lat: driverLocation.lat, lng: driverLocation.lng }]); // Cắm Taxi
-      fetchRoute(driverLocation.lng, driverLocation.lat, fromLocation.longitude, fromLocation.latitude); // Vẽ đường: Xe -> User
+      mapRef.current?.updateMarkers(fromLocation.latitude, fromLocation.longitude, null, null); 
+      mapRef.current?.drawDrivers([{ lat: driverLocation.lat, lng: driverLocation.lng }]);
+      fetchRoute(driverLocation.lng, driverLocation.lat, fromLocation.longitude, fromLocation.latitude);
     } else {
-      mapRef.current?.updateMarkers(null, null, destinationLocation.latitude, destinationLocation.longitude); // Ẩn Avatar, Cắm Đích
-      mapRef.current?.drawDrivers([{ lat: driverLocation.lat, lng: driverLocation.lng }]); // Cắm Taxi
-      fetchRoute(driverLocation.lng, driverLocation.lat, destinationLocation.longitude, destinationLocation.latitude); // Vẽ đường: Xe -> Đích
+      mapRef.current?.updateMarkers(null, null, destinationLocation.latitude, destinationLocation.longitude);
+      mapRef.current?.drawDrivers([{ lat: driverLocation.lat, lng: driverLocation.lng }]);
+      fetchRoute(driverLocation.lng, driverLocation.lat, destinationLocation.longitude, destinationLocation.latitude); 
     }
   }, [tripStatus, driverLocation, fromLocation, destinationLocation]);
 
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
-
-    if (tripStatus === 'waiting') {
-      timer = setTimeout(() => {
-        setShowArrivalPopup(true);
-      }, 5000);
-    } else if (tripStatus === 'traveling') {
-      timer = setTimeout(() => {
-        setShowDestinationPopup(true);
-      }, 5000);
-    }
-
-    return () => clearTimeout(timer);
-  }, [tripStatus]);
-
   const handleAcknowledgeArrival = () => {
     setShowArrivalPopup(false);
-    setTripStatus('traveling'); 
-    if (fromLocation) {
-      setDriverLocation({ lat: fromLocation.latitude, lng: fromLocation.longitude });
-    }
   };
 
   const handleAcknowledgeDestination = () => {
     setShowDestinationPopup(false);
+
+    const finalFrom = fromLocation || { 
+      id: 'fallback_from', name: 'Điểm đón (Dự phòng)', address: 'Không thể tải địa chỉ',
+      latitude: 10.8700, longitude: 106.8031, distance: '0 km' 
+    }; 
     
+    const finalDest = destinationLocation || { 
+      id: 'fallback_dest', name: 'Điểm đến (Dự phòng)', address: 'Không thể tải địa chỉ',
+      latitude: 10.7626, longitude: 106.6601, distance: '0 km'
+    };
+
     const newTrip = {
-      id: Date.now().toString(),
-      driver: mockDriverData,
-      fromLocation: fromLocation!,
-      destinationLocation: destinationLocation!,
+      id: tripId || Date.now().toString(),
+      driver: driverData || {
+        name: "Bác tài xế", carModel: "Xe máy/Ô tô", plateNumber: "---", rating: 5, avatar: "https://i.pravatar.cc/150?img=11", phone_number: "0123456789"
+      },
+      fromLocation: finalFrom,
+      destinationLocation: finalDest,
       completionTime: new Date().toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true, month: 'short', day: 'numeric' }),
       rating: null, 
     };
-    addTrip(newTrip);
 
-    setFromLocation(null);
-    setDestinationLocation(null);
+    addTrip(newTrip);
 
     navigation.navigate('Rating', { tripId: newTrip.id });
   };
@@ -123,15 +229,36 @@ const TravelingScreen = ({ navigation }: any) => {
 
       {/* BOTTOM CARD */}
       <View style={[ styles.bottomContainer, { paddingBottom: Math.max(insets.bottom, 20) } ]}>
-        <DriverBottomCard 
-          tripStatus={tripStatus}
-          driverData={mockDriverData}
-          distance={distance} 
-          arrivalTime={tripStatus === 'waiting' ? "Arriving in 5 mins" : ""}          
-          onCancel={() => navigation.navigate('MainTabs')}
-          onChat={() => console.log("Chat with driver")}
-          onCall={() => console.log("Call driver")}
-        />
+        {driverData ? (
+          <DriverBottomCard 
+            tripStatus={tripStatus}
+            driverData={driverData}
+            distance={distance} 
+            arrivalTime={tripStatus === 'waiting' ? "Arriving in 5 mins" : ""}          
+            onCancel={async () => {
+              try {
+                if (tripId) {
+                  await apiClient.post(`/rides/${tripId}/cancel`);
+                  console.log('Đã hủy chuyến đi thành công trên server:', tripId);
+                }
+              } catch (error: any) {
+                console.log('Lỗi khi hủy chuyến:', error.response?.data || error.message);
+              } finally {
+                if (socketRef.current) {
+                  socketRef.current.disconnect();
+                  console.log('Đã ngắt kết nối Socket do khách hàng chủ động hủy');
+                }
+                
+                navigation.goBack();
+              };
+            }}
+            onChat={() => navigation.navigate('Chat', { driverData: driverData, tripId: tripId })}
+          />
+        ) : (
+          <View style={styles.loadingCard}>
+            <ActivityIndicator size="large" color="#0000ff" />
+          </View>
+        )}
       </View>
 
       {/* POPUPS */}
@@ -158,6 +285,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     width: '100%',
+  },
+  loadingCard: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 150,
   }
 });
 

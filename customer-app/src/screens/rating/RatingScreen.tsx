@@ -1,23 +1,26 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ScrollView } from 'react-native';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faStar as faStarSolid } from '@fortawesome/free-solid-svg-icons';
-import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons';
+import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import theme from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
-import PrimaryButton from '../../components/common/PrimaryButton';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBookingHistory } from '../../contexts/BookingHistoryContext';
+import { CommonActions } from '@react-navigation/native';
+import { useLocation } from '../../contexts/LocationContext';
 import Hyperlink from '../../components/common/Hyperlink';
+import PrimaryButton from '../../components/common/PrimaryButton';
+import CustomSwipeRating from '../../components/rating/CustomSwipeRating';
+import apiClient from '../../utils/apiClient';
 
 const RatingScreen = ({ navigation, route }: any) => {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { trips, updateTripRating } = useBookingHistory();
+  const { setFromLocation, setDestinationLocation } = useLocation();
   
   const { tripId } = route.params || {};
   const tripData = trips.find(t => t.id === tripId);
 
+  const [isLoading, setIsLoading] = useState(false);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
 
@@ -26,21 +29,48 @@ const RatingScreen = ({ navigation, route }: any) => {
       <View style={[styles.container, { backgroundColor: colors.background,  }]}>
         <Text style={{ color: colors.textTitle }}>Trip not found</Text>
         <TouchableOpacity onPress={() => navigation.navigate('MainTabs')}>
+          { /* eslint-disable-next-line react-native/no-inline-styles */ }
           <Text style={{ color: theme.COLORS.primary, marginTop: 10 }}>Go Back Home</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  const handleSubmit = () => {
-    if (rating > 0) {
+  const handleSubmit = async () => {
+    setIsLoading(true);
+
+    try {
+      console.log(`Đang gửi đánh giá tới: /rides/${tripId}/rate`);
+      await apiClient.post(`/rides/${tripId}/rate`, {
+        rating: rating,
+        comment: comment, 
+      });
       updateTripRating(tripId, rating, comment);
-      navigation.navigate('MainTabs');
+      Alert.alert('Success', 'Thank you for your feedback!', [
+        { text: 'OK', onPress: finishAndGoHome }
+      ]);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      Alert.alert('Error', 'Failed to submit rating. Please try again later.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleMaybeLater = () => {
-    navigation.navigate('MainTabs');
+    finishAndGoHome();
+  };
+
+  const finishAndGoHome = () => {
+    setFromLocation(null);
+    setDestinationLocation(null);
+    
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'MainTabs' }],
+      })
+    );
   };
 
   return (
@@ -72,17 +102,11 @@ const RatingScreen = ({ navigation, route }: any) => {
         {/* 2. Phần chọn Sao */}
         <View style={styles.ratingSection}>
           <Text style={[styles.sectionLabel, { color: colors.textTitle }]}>How was your driver?</Text>
-          <View style={styles.starsRow}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity key={star} onPress={() => setRating(star)} activeOpacity={0.7}>
-                <FontAwesomeIcon 
-                  icon={star <= rating ? faStarSolid : faStarRegular} 
-                  size={42} 
-                  color={theme.COLORS.primary} 
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
+          <CustomSwipeRating 
+            rating={rating} 
+            onRatingChange={setRating} 
+            starSize={42} 
+          />
         </View>
 
         {/* 3. Ô nhập Feedback */}
@@ -108,6 +132,7 @@ const RatingScreen = ({ navigation, route }: any) => {
           onPress={handleSubmit}
           disabled={rating === 0}
           style={styles.submitButton}
+          isLoading={isLoading}
         />
         
         <Hyperlink 
@@ -201,9 +226,12 @@ const styles = StyleSheet.create({
     fontFamily: theme.FONTS.bold, 
     marginBottom: 15 
   },
-  starsRow: { 
-    flexDirection: 'row', 
-    gap: 12 },
+  ratingText: { 
+    marginTop: 10, 
+    fontSize: 18, 
+    fontWeight: 'bold', 
+    color: theme.COLORS.primary 
+  },
   feedbackSection: { 
     width: '100%', 
     marginBottom: 20 

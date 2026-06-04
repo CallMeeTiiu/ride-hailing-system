@@ -1,0 +1,47 @@
+  console.log
+    [TripStore] Socket created, connecting to server...
+
+      at Object.log (src/store/tripStore.ts:96:29)
+
+  console.log
+    [TripStore] Socket created, connecting to server...
+
+      at Object.log (src/store/tripStore.ts:96:29)
+
+  console.log
+    [TripStore] ✅ Received ride_request: trip-999
+
+      at log (src/store/tripStore.ts:105:33)
+
+FAIL __tests__/tripStore.test.ts
+  tripStore Unit Tests
+    √ toggleOnline(true) should connect socket and listen to events (21 ms)
+    √ should handle server:ride_request socket payload and parse customer info correctly (5 ms)
+    × acceptTrip should call accept API and join socket room (2 ms)
+    √ confirmArrived should call arrived patch API (1 ms)
+
+  ● tripStore Unit Tests › acceptTrip should call accept API and join socket room
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "join_trip_room", {"trip_id": "trip-999"}
+
+    Number of calls: 0
+
+    [0m [90m 143 |[39m
+     [90m 144 |[39m         expect(apiClient[33m.[39mpost)[33m.[39mtoHaveBeenCalledWith([32m'/rides/trip-999/accept'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 145 |[39m         expect(mockSocket[33m.[39memit)[33m.[39mtoHaveBeenCalledWith([32m'join_trip_room'[39m[33m,[39m { trip_id[33m:[39m [32m'trip-999'[39m })[33m;[39m
+     [90m     |[39m                                 [31m[1m^[22m[39m
+     [90m 146 |[39m         expect(useTripStore[33m.[39mgetState()[33m.[39mtripStatus)[33m.[39mtoBe([33mTripStatus[39m[33m.[39m[33mARRIVING[39m)[33m;[39m
+     [90m 147 |[39m     })[33m;[39m
+     [90m 148 |[39m[0m
+
+      at Object.toHaveBeenCalledWith (__tests__/tripStore.test.ts:145:33)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 3 passed, 4 total
+Snapshots:   0 total
+Time:        0.467 s, estimated 1 s
+Ran all test suites matching /__tests__\\tripStore.test.ts/i.

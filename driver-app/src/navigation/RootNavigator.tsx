@@ -3,9 +3,11 @@ import { NavigationContainer } from '@react-navigation/native';
 import { useAuthStore } from '../store/authStore';
 import AuthStack from './AuthStack';
 import MainTab from './MainTab';
+import SetupScreen from '../screens/SetupScreen';
 
 export default function RootNavigator() {
     const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+    const isProfileComplete = useAuthStore((state) => state.isProfileComplete);
     const loadToken = useAuthStore((state) => state.loadToken);
 
     useEffect(() => {
@@ -14,7 +16,13 @@ export default function RootNavigator() {
 
     return (
         <NavigationContainer>
-            {isLoggedIn ? <MainTab /> : <AuthStack />}
+            {!isLoggedIn ? (
+                <AuthStack />
+            ) : !isProfileComplete ? (
+                <SetupScreen />
+            ) : (
+                <MainTab />
+            )}
         </NavigationContainer>
     );
 }

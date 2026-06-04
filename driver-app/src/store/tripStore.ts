@@ -106,11 +106,11 @@ export const useTripStore = create<TripState>((set, get) => ({
                         const tripData: TripData = {
                             id: payload.trip_id,
                             customer: {
-                                id: payload.customer?.id || payload.customer_id || 'unknown',
-                                name: payload.customer?.full_name || payload.customer_name || 'Khách hàng',
-                                phone: payload.customer?.phone || payload.customer_phone || '',
-                                rating: payload.customer?.rating || payload.customer_rating || 5.0,
-                                avatarUrl: payload.customer?.avatar_url || payload.customer_avatar || '',
+                                id: payload.customer_id || 'unknown',
+                                name: payload.customer_name || 'Khách hàng',
+                                phone: payload.customer_phone || '',
+                                rating: payload.customer_rating || 5.0,
+                                avatarUrl: payload.customer_avatar || '',
                             },
                             pickup: {
                                 address: payload.pickup?.address || payload.pickup_address || '',

@@ -2,9 +2,11 @@ import { create } from 'zustand';
 import { DriverProfile } from '../types';
 import apiClient from '../services/apiClient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 interface AuthState {
     isLoggedIn: boolean;
+    isProfileComplete: boolean;
     token: string | null;
     driver: DriverProfile | null;
     isLoading: boolean;
@@ -13,11 +15,20 @@ interface AuthState {
     logout: () => void;
     loadToken: () => Promise<void>;
     fetchProfile: () => Promise<boolean>;
-    updateDriverProfile: (name: string, vehiclePlate: string, licenseNumber?: string) => Promise<boolean>;
+    updateDriverProfile: (
+        name: string,
+        vehiclePlate: string,
+        licenseNumber?: string,
+        brand?: string,
+        model?: string,
+        color?: string
+    ) => Promise<boolean>;
+    uploadAvatar: (file: { uri: string; name?: string; type?: string }) => Promise<string | null>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
     isLoggedIn: false,
+    isProfileComplete: false,
     token: null,
     driver: null,
     isLoading: false,
@@ -96,17 +107,31 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             // Fetch vehicle
             let vehiclePlate = 'Chưa cập nhật';
             let vehicleId = '';
+            let brand = '';
+            let model = '';
+            let color = '';
             try {
                 const vehicleRes = await apiClient.get('/drivers/vehicles');
                 if (vehicleRes.data && vehicleRes.data.length > 0) {
                     vehiclePlate = vehicleRes.data[0].plate_number || 'Chưa cập nhật';
                     vehicleId = vehicleRes.data[0].id;
+                    brand = vehicleRes.data[0].brand || '';
+                    model = vehicleRes.data[0].model || '';
+                    color = vehicleRes.data[0].color || '';
                 }
             } catch (vErr) {
                 console.log('[AuthStore] Fetch vehicles failed:', vErr);
             }
 
             if (profile) {
+                const isComplete = profile.name && 
+                                   profile.name !== 'Tài xế mới' &&
+                                   vehiclePlate && 
+                                   vehiclePlate !== 'Chưa cập nhật' &&
+                                   profile.license_number &&
+                                   brand &&
+                                   model &&
+                                   color;
                 set({
                     driver: {
                         id: res.data.userId || String(res.data.id),
@@ -117,7 +142,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                         vehiclePlate: vehiclePlate,
                         licenseNumber: profile.license_number || '',
                         vehicleId: vehicleId,
+                        brand: brand,
+                        model: model,
+                        color: color,
                     },
+                    isProfileComplete: !!isComplete,
                 });
                 return true;
             }
@@ -136,6 +165,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             }
 
             set({
+                isProfileComplete: false,
                 driver: {
                     id: res.data.userId || 'new-driver',
                     name: defaultName,
@@ -160,7 +190,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
     },
 
-    updateDriverProfile: async (name: string, vehiclePlate: string, licenseNumber?: string) => {
+    updateDriverProfile: async (
+        name: string,
+        vehiclePlate: string,
+        licenseNumber?: string,
+        brand?: string,
+        model?: string,
+        color?: string
+    ) => {
         const driver = get().driver;
         if (!driver) return false;
 
@@ -175,21 +212,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             // 2. Cập nhật biển số xe lên DB
             let updatedVehicleId = driver.vehicleId || '';
             const plateClean = vehiclePlate.trim();
+            const brandClean = brand || driver.brand || 'Xe máy';
+            const modelClean = model || driver.model || 'Thông thường';
+            const colorClean = color || driver.color || 'Đen';
             
             if (plateClean && plateClean !== 'Chưa cập nhật') {
                 if (updatedVehicleId) {
                     await apiClient.put(`/drivers/vehicles/${updatedVehicleId}`, {
                         plate_number: plateClean,
-                        brand: 'Xe máy',
-                        model: 'Thông thường',
-                        color: 'Đen',
+                        brand: brandClean,
+                        model: modelClean,
+                        color: colorClean,
                     });
                 } else {
                     const vRes = await apiClient.post('/drivers/vehicles', {
                         plate_number: plateClean,
-                        brand: 'Xe máy',
-                        model: 'Thông thường',
-                        color: 'Đen',
+                        brand: brandClean,
+                        model: modelClean,
+                        color: colorClean,
                     });
                     if (vRes.data && vRes.data.id) {
                         updatedVehicleId = vRes.data.id;
@@ -198,14 +238,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             }
 
             // 3. Cập nhật local state
+            const isCompleteNow = name && 
+                                  name !== 'Tài xế mới' && 
+                                  plateClean && 
+                                  plateClean !== 'Chưa cập nhật' && 
+                                  licenseNumber &&
+                                  brandClean &&
+                                  modelClean &&
+                                  colorClean;
             set({
                 isLoading: false,
+                isProfileComplete: !!isCompleteNow,
                 driver: {
                     ...driver,
                     name: name,
                     vehiclePlate: plateClean || 'Chưa cập nhật',
                     licenseNumber: licenseNumber || '',
                     vehicleId: updatedVehicleId,
+                    brand: brandClean,
+                    model: modelClean,
+                    color: colorClean,
                 }
             });
             return true;
@@ -215,5 +267,39 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             return false;
         }
     },
-}));
 
+    uploadAvatar: async (file: { uri: string; name?: string; type?: string }) => {
+        const driver = get().driver;
+        if (!driver) return null;
+
+        set({ isLoading: true, error: null });
+        try {
+            const formData = new FormData();
+            formData.append('file', {
+                uri: Platform.OS === 'android' ? file.uri : file.uri.replace('file://', ''),
+                type: file.type || 'image/jpeg',
+                name: file.name || 'avatar.jpg',
+            } as any);
+
+            const res = await apiClient.post('/drivers/me/avatar', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            const updatedAvatar = res.data.avatar_url;
+            set({
+                isLoading: false,
+                driver: {
+                    ...driver,
+                    avatarUrl: updatedAvatar,
+                }
+            });
+            return updatedAvatar;
+        } catch (err: any) {
+            console.error('[AuthStore] uploadAvatar failed:', err);
+            set({ isLoading: false, error: 'Tải ảnh đại diện lên server thất bại' });
+            return null;
+        }
+    },
+}));

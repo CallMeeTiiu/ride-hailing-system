@@ -20,6 +20,9 @@ export interface DriverProfile {
     vehiclePlate: string;
     licenseNumber?: string;
     vehicleId?: string;
+    brand?: string;
+    model?: string;
+    color?: string;
 }
 
 export interface Customer {

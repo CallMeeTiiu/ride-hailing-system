@@ -27,6 +27,7 @@ import { TripGateway } from './trip.gateway'
 import { RidesService } from './rides.service'
 import { NotificationService } from '../firebase/notification.service'
 import { UsersService } from '../users/users.service'
+import { CustomersService } from '../customers/customers.service'
 
 @ApiTags('Rides')
 @ApiBearerAuth()
@@ -41,6 +42,7 @@ export class RidesController {
     private readonly ridesService: RidesService,
     private readonly notificationService: NotificationService,
     private readonly usersService: UsersService,
+    private readonly customersService: CustomersService,
   ) {}
 
   @Post('quote')
@@ -155,10 +157,24 @@ export class RidesController {
     )
     console.log(`[Rides] Pickup: ${quoteData.pickup_latitude},${quoteData.pickup_longitude} | nearbyDrivers (5km): [${nearbyDrivers.join(', ')}]`)
 
+    const customerUser = await this.usersService.findById(req.user.userId)
+    let customerName = 'Khách hàng'
+    let customerAvatar = ''
+    try {
+      const custProfile = await this.customersService.findOneByUserId(req.user.userId)
+      customerName = custProfile.profile?.name || 'Khách hàng'
+      customerAvatar = custProfile.profile?.avatar_url || ''
+    } catch (e: any) {
+      console.warn('[Rides] Could not fetch customer profile:', e.message)
+    }
+
     const requestPayload = {
       trip_id: newTrip.id,
       customer_id: req.user.userId,
       customer_phone: req.user.phone_number,
+      customer_name: customerName,
+      customer_avatar: customerAvatar,
+      customer_rating: customerUser?.average_rating || 5.0,
       pickup: {
         lat: quoteData.pickup_latitude,
         lng: quoteData.pickup_longitude,

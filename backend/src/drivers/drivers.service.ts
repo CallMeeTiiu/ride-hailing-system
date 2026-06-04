@@ -89,28 +89,28 @@ export class DriversService {
     })
   }
 
-  // Mock wallet: return balance and recent transactions
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  getWallet(userId: string) {
+  async getWallet(userId: string) {
+    const completedTrips = await this.tripRepo.find({
+      where: { driver_id: userId, status: TripStatus.COMPLETED },
+      order: { updated_at: 'DESC' },
+    })
+
+    const balance = completedTrips.reduce((sum, trip) => {
+      return sum + (trip.actual_fare || trip.estimated_fare || 0)
+    }, 0)
+
+    const transactions = completedTrips.map((trip) => ({
+      id: `w_txn_${trip.id}`,
+      amount: trip.actual_fare || trip.estimated_fare || 0,
+      type: 'CREDIT',
+      description: `Trip payout`,
+      date: trip.updated_at.toISOString(),
+    }))
+
     return {
-      balance: 125000,
+      balance,
       currency: 'VND',
-      transactions: [
-        {
-          id: 't1',
-          amount: 50000,
-          type: 'CREDIT',
-          description: 'Trip payout',
-          date: new Date().toISOString(),
-        },
-        {
-          id: 't2',
-          amount: -20000,
-          type: 'WITHDRAW',
-          description: 'Withdrawal',
-          date: new Date().toISOString(),
-        },
-      ],
+      transactions,
     }
   }
 

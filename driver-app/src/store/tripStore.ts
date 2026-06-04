@@ -281,8 +281,6 @@ export const useTripStore = create<TripState>((set, get) => ({
         } catch (err) {
             console.error('[TripStore] finishTrip failed:', err);
         }
-        get().clearChat(); 
-        set({ currentTrip: null, tripStatus: TripStatus.ONLINE });
     },
 
     cancelTrip: async () => {
@@ -297,11 +295,10 @@ export const useTripStore = create<TripState>((set, get) => ({
         } catch (err) {
             console.error('[TripStore] cancelTrip failed:', err);
         }
-        get().clearChat();
-        set({ currentTrip: null, tripStatus: TripStatus.ONLINE });
     },
 
     completeFinish: () => {
+        get().clearChat();
         set({
             tripStatus: TripStatus.ONLINE,
             currentTrip: null,
@@ -312,6 +309,7 @@ export const useTripStore = create<TripState>((set, get) => ({
     },
 
     dismissCancel: () => {
+        get().clearChat();
         set({
             tripStatus: TripStatus.ONLINE,
             currentTrip: null,
@@ -337,6 +335,8 @@ export const useTripStore = create<TripState>((set, get) => ({
         } catch (err) {
             console.error('[TripStore] submitRating failed:', err);
         }
+
+        get().clearChat();
 
         // Hoàn tất luồng, cập nhật State về lại trạng thái chờ cuốc mới (ONLINE)
         set({

@@ -158,11 +158,11 @@ export class RidesController {
     console.log(`[Rides] Pickup: ${quoteData.pickup_latitude},${quoteData.pickup_longitude} | nearbyDrivers (5km): [${nearbyDrivers.join(', ')}]`)
 
     const customerUser = await this.usersService.findById(req.user.userId)
-    let customerName = 'Khách hàng'
+    let customerName = customerUser?.phone_number || 'Khách hàng'
     let customerAvatar = ''
     try {
       const custProfile = await this.customersService.findOneByUserId(req.user.userId)
-      customerName = custProfile.profile?.name || 'Khách hàng'
+      customerName = custProfile.profile?.name || customerUser?.phone_number || 'Khách hàng'
       customerAvatar = custProfile.profile?.avatar_url || ''
     } catch (e: any) {
       console.warn('[Rides] Could not fetch customer profile:', e.message)

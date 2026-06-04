@@ -42,7 +42,7 @@ const MethodCard: React.FC<MethodCardProps> = ({
 
       <View style={styles.priceContainer}>
         <Text style={[styles.priceText, { color: colors.textTitle }]}>
-          ${price.toFixed(2)}
+          {price} VND
         </Text>
         
         <View style={[

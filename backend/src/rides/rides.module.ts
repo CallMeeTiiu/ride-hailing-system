@@ -20,8 +20,9 @@ import { User } from '../users/entities/user.entity'
     TypeOrmModule.forFeature([Trip, TripLocation, Rating, Payment, User]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'super-secret-key-12345',
+      useFactory: (configService: ConfigService) => ({
+        secret:
+          configService.get<string>('JWT_SECRET') || 'super-secret-key-12345',
       }),
       inject: [ConfigService],
     }),

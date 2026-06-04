@@ -90,8 +90,6 @@ export const useTripStore = create<TripState>((set, get) => ({
             if (online) {
                 const token = useAuthStore.getState().token;
                 if (token) {
-                    // FIX: Force disconnect socket cũ trước để đảm bảo kết nối mới tới đúng server
-                    // Prevents stale socket singleton pointing to old server (e.g. Render after hot-reload)
                     disconnectSocket();
 
                     const socket = connectSocket(token);

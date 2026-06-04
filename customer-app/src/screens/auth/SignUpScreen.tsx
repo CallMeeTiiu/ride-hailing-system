@@ -7,6 +7,7 @@ import {
   TouchableOpacity, 
   ScrollView,
   Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import theme from '../../constants/theme';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -63,91 +64,96 @@ const SignupScreen = () => {
 
   return (
     <SafeAreaView style={[ styles.safeArea, {backgroundColor: colors.background} ]}>
-      <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        
-        {/* Nút Back */}
-        <TouchableOpacity 
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}>
-          <Text style={[ styles.backIcon, {color: colors.textTitle} ]}>←</Text>
-        </TouchableOpacity>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+          
+          {/* Nút Back */}
+          <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}>
+            <Text style={[ styles.backIcon, {color: colors.textTitle} ]}>←</Text>
+          </TouchableOpacity>
 
-        <View style={styles.content}>
-          {/* Tiêu đề */}
-          <Text style={styles.title}>Create your{"\n"}Account</Text>
+          <View style={styles.content}>
+            {/* Tiêu đề */}
+            <Text style={styles.title}>Create your{"\n"}Account</Text>
 
-          {/* Form nhập liệu */}
-          <CustomInput
-            label="User Name"
-            iconName={faUser}
-            placeholder="yourname"
-            autoCapitalize="none"
-            value={userName}
-            onChangeText={(text) => {
-              setUserName(text);
-              if (nameError) setNameError('');
-            }}
-            errorText={nameError}
-          />
-
-          <CustomInput
-            label="Phone Number"
-            iconName={faPhone}
-            placeholder="090xxxx123"
-            keyboardType="phone-pad"
-            value={phoneNumber}
-            onChangeText={(text) => {
-              setPhoneNumber(text);
-              if (phoneError) setPhoneError('');
-            }}
-            errorText={phoneError}
-          />
-
-          <CustomInput
-            label="Password"
-            iconName={faLock}
-            placeholder="••••••••••••"
-            isPassword={true}
-            value={password}
-            onChangeText={(text) => {
-              setPassword(text);
-              if (passwordError) setPasswordError('');
-            }}
-            errorText={passwordError}
-          />
-
-          <CustomInput
-            label="Confirm Password"
-            iconName={faLock}
-            placeholder="••••••••••••"
-            isPassword={true}
-            value={confirmPassword}
-            onChangeText={(text) => {
-              setConfirmPassword(text);
-              if (confirmError) setConfirmError('');
-            }}
-            errorText={confirmError}
-          />
-
-          {/* Nút Đăng ký */}
-          <PrimaryButton
-          title="Create"
-          onPress={handleSignUp}
-          // eslint-disable-next-line react-native/no-inline-styles
-          style={{ marginTop: 15 }}
-        />
-
-          {/* Footer chuyển về Login */}
-          <View style={styles.footerContainer}>
-            <Text style={[ styles.footerText, {color: colors.textBody} ]}>You have already an account? </Text>
-            <Hyperlink 
-              title="Sign in" 
-              onPress={() => navigation.navigate('Login')} 
+            {/* Form nhập liệu */}
+            <CustomInput
+              label="User Name"
+              iconName={faUser}
+              placeholder="yourname"
+              autoCapitalize="none"
+              value={userName}
+              onChangeText={(text) => {
+                setUserName(text);
+                if (nameError) setNameError('');
+              }}
+              errorText={nameError}
             />
-          </View>
 
-        </View>
-      </ScrollView>
+            <CustomInput
+              label="Phone Number"
+              iconName={faPhone}
+              placeholder="090xxxx123"
+              keyboardType="phone-pad"
+              value={phoneNumber}
+              onChangeText={(text) => {
+                setPhoneNumber(text);
+                if (phoneError) setPhoneError('');
+              }}
+              errorText={phoneError}
+            />
+
+            <CustomInput
+              label="Password"
+              iconName={faLock}
+              placeholder="••••••••••••"
+              isPassword={true}
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                if (passwordError) setPasswordError('');
+              }}
+              errorText={passwordError}
+            />
+
+            <CustomInput
+              label="Confirm Password"
+              iconName={faLock}
+              placeholder="••••••••••••"
+              isPassword={true}
+              value={confirmPassword}
+              onChangeText={(text) => {
+                setConfirmPassword(text);
+                if (confirmError) setConfirmError('');
+              }}
+              errorText={confirmError}
+            />
+
+            {/* Nút Đăng ký */}
+            <PrimaryButton
+            title="Create"
+            onPress={handleSignUp}
+            // eslint-disable-next-line react-native/no-inline-styles
+            style={{ marginTop: 15 }}
+          />
+
+            {/* Footer chuyển về Login */}
+            <View style={styles.footerContainer}>
+              <Text style={[ styles.footerText, {color: colors.textBody} ]}>You have already an account? </Text>
+              <Hyperlink 
+                title="Sign in" 
+                onPress={() => navigation.navigate('Login')} 
+              />
+            </View>
+
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };

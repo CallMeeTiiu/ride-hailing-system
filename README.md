@@ -7,6 +7,17 @@
 [![Redis](https://img.shields.io/badge/cache-Redis-red?style=for-the-badge&logo=redis)](https://redis.io/)
 [![OpenStreetMap](https://img.shields.io/badge/maps-OpenStreetMap-brightgreen?style=for-the-badge&logo=openstreetmap)](https://www.openstreetmap.org/)
 
+## 👥 Đội ngũ phát triển (Team Members)
+
+Dự án được thực hiện với sự đóng góp của các thành viên:
+
+| Họ và Tên | MSSV | GitHub Profile |
+| :--- | :---: | :--- |
+| **Nguyễn Đăng Khánh** | `24520790` | Khanh23-code |
+| **Trần Đỗ Anh Tú** | `24521914` | 24521914-ux |
+| **Nguyễn Xuân Nhật Tân** | `24521582` | CallMeeTiiu |
+| **Lý Phước Thuận** | `24521739` | phuocthuan123vt |
+
 Hệ thống Đặt xe công nghệ thời gian thực hoàn chỉnh bao gồm phân hệ máy chủ Backend (NestJS) điều phối và hai ứng dụng di động dành cho **Khách hàng (Customer)** và **Tài xế (Driver)** viết bằng React Native. Dự án tích hợp các giải pháp nguồn mở hoàn toàn miễn phí như bản đồ **OpenStreetMap (Leaflet)**, OSRM router và Photon geocoder.
 
 ---
